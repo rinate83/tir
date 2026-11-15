@@ -242,6 +242,15 @@ details.sub>summary::before{content:'▸ ';}details.sub[open]>summary::before{co
 details.sub[open]{display:flex;flex-direction:column;gap:10px}
 .empty-card{align-items:center;text-align:center;gap:8px;padding:22px 18px}.empty-card>svg{width:38px;height:38px;color:var(--acv)}
 .empty-card b{font-size:17px}.empty-card .btn{margin-top:6px}
+
+/* v12 : barre d'outils et bandeau sous la photo */
+.stage{height:min(44vh,640px);min-height:260px}
+.toolbar{display:flex;gap:6px;align-items:center}.toolbar .sp{flex:1}
+.toolbar .fab{width:46px;height:44px;box-shadow:none;background:var(--s2);backdrop-filter:none;-webkit-backdrop-filter:none}
+.banner{position:static;padding:8px 12px;font-size:14px;background:var(--card)}
+.banner:empty,.banner span:empty{display:none}
+.ttot{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:6px;padding:12px;border-radius:14px;background:var(--s2);margin-bottom:10px}
+.ttot .v{font-size:19px;font-weight:800}.ttot .v small{font-size:12px;color:var(--mu);font-weight:600}
 </style>
 </head>
 <body data-step="photo" data-view="analyse">
@@ -267,22 +276,19 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
           <div class="empty-t">Photographiez votre cible</div>
           <div class="hint">Bien en face, entière, lumière homogène</div>
         </div>
-        <div class="banner" id="banner"><span id="bannerTxt">Chargez une photo de cible pour commencer</span><button id="bannerDone" hidden>Terminer</button></div>
-        <div class="fab-col left">
-          <button class="fab" id="sUndo" aria-label="Annuler la dernière action"><i data-ic="undo"></i></button>
-          <button class="fab" id="sRedo" aria-label="Rétablir"><i data-ic="redo"></i></button>
-        </div>
-        <div class="fab-col left bottom">
-          <button class="fab" id="sGrid" aria-label="Grille de précision"><i data-ic="grid"></i></button>
-          <button class="fab" id="sDark" aria-label="Éclaircir le noir"><i data-ic="sun"></i></button>
-        </div>
-        <div class="fab-col right bottom zoom">
-          <button class="fab" id="zIn" aria-label="Zoomer"><i data-ic="plus"></i></button>
-          <button class="fab" id="zOut" aria-label="Dézoomer"><i data-ic="minus"></i></button>
-          <button class="fab" id="zFit" aria-label="Vue entière"><i data-ic="fit"></i></button>
-        </div>
         <div class="coord" id="coordPill" hidden></div>
       </div>
+      <div class="toolbar">
+        <button class="fab" id="sUndo" aria-label="Annuler la dernière action"><i data-ic="undo"></i></button>
+        <button class="fab" id="sRedo" aria-label="Rétablir"><i data-ic="redo"></i></button>
+        <button class="fab" id="sGrid" aria-label="Grille de précision"><i data-ic="grid"></i></button>
+        <button class="fab" id="sDark" aria-label="Éclaircir le noir"><i data-ic="sun"></i></button>
+        <span class="sp"></span>
+        <button class="fab" id="zOut" aria-label="Dézoomer"><i data-ic="minus"></i></button>
+        <button class="fab" id="zIn" aria-label="Zoomer"><i data-ic="plus"></i></button>
+        <button class="fab" id="zFit" aria-label="Vue entière"><i data-ic="fit"></i></button>
+      </div>
+      <div class="banner" id="banner"><span id="bannerTxt">Chargez une photo de cible pour commencer</span><button id="bannerDone" hidden>Terminer</button></div>
       <nav class="steps" id="steps">
         <button data-step="photo" class="on"><i data-ic="camera"></i><span>Photo</span></button>
         <button data-step="cible"><i data-ic="target"></i><span>Cible</span></button>
@@ -457,6 +463,7 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
     </div>
     <div class="card">
       <div class="card-h"><i data-ic="target"></i><h3>Cible en cours</h3></div>
+      <div class="ttot" id="targetTotal" hidden></div>
       <div class="list" id="seriesList"></div>
       <button class="btn" id="btnCompare"><i data-ic="compare"></i>Comparer des séries</button>
     </div>
@@ -2025,6 +2032,9 @@ function renderHistory() {
     const avg = H.reduce((a, s) => a + s.avg, 0) / H.length;
     $('histInfo').textContent = `${H.length} série(s) · moyenne générale ${avg.toFixed(2)} · dernière ${H[H.length - 1].avg}`;
   }
+  const TS = S.target.series, tn = TS.reduce((a, x) => a + (x.n || 0), 0), tt = TS.reduce((a, x) => a + (x.total || 0), 0), td = TS.reduce((a, x) => a + (x.dec || 0), 0);
+  $('targetTotal').hidden = !TS.length;
+  $('targetTotal').innerHTML = `<div><div class="l">Total ${isArc() ? 'manche' : 'match'}</div><div class="v">${tt}${td ? ` <small>(${td.toFixed(1)})</small>` : ''}</div></div><div><div class="l">${isArc() ? 'Volées' : 'Séries'}</div><div class="v">${TS.length}</div></div><div><div class="l">${isArc() ? 'Flèches' : 'Coups'}</div><div class="v">${tn}</div></div><div><div class="l">Moyenne</div><div class="v">${tn ? (tt / tn).toFixed(2) : '—'}</div></div>`;
   $('seriesList').innerHTML = S.target.series.length ? S.target.series.map((s, i) => srow(s, `Série ${i + 1} · ${s.total} pts · moy ${s.avg}${s.mr_mm != null ? ' · R ' + fmm(s.mr_mm) : ''}`)).join('') : '<p class="hint">Aucune série validée sur cette cible.</p>';
   renderCalendar(); renderDash();
 }
