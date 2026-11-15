@@ -251,6 +251,10 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
 .banner:empty,.banner span:empty{display:none}
 .ttot{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:6px;padding:12px;border-radius:14px;background:var(--s2);margin-bottom:10px}
 .ttot .v{font-size:19px;font-weight:800}.ttot .v small{font-size:12px;color:var(--mu);font-weight:600}
+.btn.sum{border-color:color-mix(in srgb,#34d399 50%,var(--line2));color:#6ee7b7}
+.sumk{grid-template-columns:1.3fr 1fr 1fr 1fr;margin:10px 0}.sumch{display:grid;gap:10px}.sumch canvas,#trendChart{width:100%;border-radius:14px}
+.learn-body .good{color:#34d399}.learn-body .warnc{color:#fbbf24}.learn-body ul{padding-left:20px;display:grid;gap:6px}
+#trendSeg{margin:8px 0;flex-wrap:wrap}
 </style>
 </head>
 <body data-step="photo" data-view="analyse">
@@ -438,6 +442,7 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
         </div>
         <button class="btn ok" id="btnValidate"><i data-ic="check"></i>Valider la série</button>
         <button class="btn" id="btnShare"><i data-ic="share"></i>Partager mon résultat</button>
+        <button class="btn sum" id="btnSummary"><i data-ic="chart"></i>Terminer : synthèse de la séance</button>
       </div>
       <div class="card">
         <div class="card-h"><i data-ic="bulb"></i><h3>Diagnostic</h3></div>
@@ -457,7 +462,10 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
     <div class="card">
       <div class="card-h"><i data-ic="chart"></i><h3>Tableau de bord</h3></div>
       <div id="dashStats"></div>
+      <div class="chips" id="trendSeg" hidden><button data-m="avg" class="on">Moyenne</button><button data-m="mr">Groupement</button><button data-m="off">Décalage</button><button data-m="dec">Score décimal</button></div>
       <canvas class="chart" id="trendChart" width="640" height="280" hidden></canvas>
+      <p class="hint" id="trendHint" hidden></p>
+      <button class="btn" id="btnSummary2"><i data-ic="list"></i>Synthèse de la dernière séance</button>
       <p class="hint" id="heatTitle" hidden>Tous vos impacts dans cette discipline (croix bleue = point moyen)</p>
       <canvas class="chart" id="heatPlot" width="640" height="640" hidden style="max-width:360px;align-self:center"></canvas>
     </div>
@@ -536,6 +544,11 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
   <p class="hint">Plusieurs impacts groupés, ou un impact dans un trou existant. Indiquez combien de <b>nouveaux</b> impacts se trouvent dans chaque zone.</p>
   <div id="ambList" class="col"></div>
   <div class="row"><button class="btn" id="ambLater">Plus tard</button><button class="btn pri" id="ambOk">Valider</button></div>
+</div></div>
+
+<div class="modal" id="sumModal" hidden><div class="sheet">
+  <div id="sumBody" class="learn-body"></div>
+  <div class="row"><button class="btn" id="sumShare"><i data-ic="share"></i>Partager</button><button class="btn pri" id="sumClose">Fermer</button></div>
 </div></div>
 
 <div class="modal" id="cmpModal" hidden><div class="sheet">
@@ -2223,10 +2236,86 @@ function plotTarget(x, Wd, sets, disc, distv) {
     if (s.mpi && s.imps.length) { const n = s.imps.length, a = C + s.imps.reduce((t, i) => t + i.dx, 0) / n * k, b = C + s.imps.reduce((t, i) => t + i.dy, 0) / n * k; cross(x, a, b, Wd / 28, '#000', Wd / 70); cross(x, a, b, Wd / 28, s.mpiCol || '#58a6ff', Wd / 150); }
   });
 }
+const METRIC = {
+  avg: { t: 'Moyenne par coup', u: 'pts', up: true, f: h => h.avg, hint: 'Plus haut = mieux.' },
+  mr: { t: 'Groupement (rayon moyen)', u: 'mm', up: false, f: h => h.mr_mm, hint: 'Plus bas = coups plus serrés. C’est le meilleur indicateur de la régularité technique.' },
+  off: { t: 'Décalage du point moyen', u: 'mm', up: false, f: h => h.dx_mm == null ? null : Math.hypot(h.dx_mm, h.dy_mm), hint: 'Plus bas = groupement mieux centré. Un décalage constant se corrige par le réglage des organes de visée.' },
+  dec: { t: 'Score décimal par coup', u: 'pts', up: true, f: h => h.dec && h.n ? h.dec / h.n : null, hint: 'Score au dixième divisé par le nombre de coups.' }
+};
+let trendM = 'avg';
+function lineChart(c, vals, m, opt = {}) {
+  const x = c.getContext('2d'), W = c.width, Hh = c.height, P = 44, pts = vals.map((v, i) => [i, v]).filter(p => p[1] != null && isFinite(p[1]));
+  x.clearRect(0, 0, W, Hh); x.fillStyle = '#161b26'; x.fillRect(0, 0, W, Hh);
+  x.font = '600 20px -apple-system,system-ui,sans-serif'; x.fillStyle = '#a7b3c6'; x.fillText(m.t + (m.u === 'mm' ? ' (mm)' : ''), 16, 28);
+  if (!pts.length) { x.fillText('Pas de donnée', W / 2 - 60, Hh / 2); return; }
+  let lo = Math.min(...pts.map(p => p[1])), hi = Math.max(...pts.map(p => p[1])); if (hi - lo < 1e-6) { lo -= 1; hi += 1; } const pad = (hi - lo) * 0.15; lo -= pad; hi += pad; if (m.u === 'mm') lo = Math.max(0, lo); if (m.u === 'pts') { hi = Math.min(10.9, hi); lo = Math.max(0, lo); }
+  const n = vals.length, X = i => P + i * (W - P - 20) / Math.max(1, n - 1), Y = v => Hh - 34 - (v - lo) / (hi - lo) * (Hh - 80);
+  x.strokeStyle = '#2a3242'; x.lineWidth = 1; x.fillStyle = '#7f8aa0'; x.font = '18px -apple-system,system-ui,sans-serif';
+  for (let k = 0; k <= 3; k++) { const v = lo + (hi - lo) * k / 3; x.beginPath(); x.moveTo(P, Y(v)); x.lineTo(W - 12, Y(v)); x.stroke(); x.fillText(v.toFixed(m.u === 'mm' ? 0 : 1), 4, Y(v) + 6); }
+  (opt.labels || []).forEach((l, i) => { if (n <= 12 || i % Math.ceil(n / 12) === 0) x.fillText(l, X(i) - 6, Hh - 8); });
+  const col = opt.color || '#4f8cff';
+  if (pts.length >= 2) { // tendance (régression linéaire)
+    const mx = pts.reduce((a, p) => a + p[0], 0) / pts.length, my = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    const sl = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / (pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0) || 1);
+    const good = m.up ? sl >= 0 : sl <= 0; x.strokeStyle = good ? '#34d399' : '#f87171'; x.lineWidth = 2.5; x.setLineDash([10, 8]); x.beginPath();
+    x.moveTo(X(pts[0][0]), Y(my + sl * (pts[0][0] - mx))); x.lineTo(X(pts.at(-1)[0]), Y(my + sl * (pts.at(-1)[0] - mx))); x.stroke(); x.setLineDash([]);
+  }
+  x.strokeStyle = col; x.lineWidth = 3.5; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(p[0]), Y(p[1]))); x.stroke();
+  x.fillStyle = col; pts.forEach(p => { x.beginPath(); x.arc(X(p[0]), Y(p[1]), 6, 0, 7); x.fill(); });
+}
+// séance = séries validées le même jour (discipline courante) ; par défaut le dernier jour de tir
+function sessionSeries() {
+  const disc = $('discipline').value, H = S.history.filter(h => (h.discipline || disc) === disc && h.avg != null); if (!H.length) return [];
+  const day = d => new Date(d).toDateString(), last = day(H.at(-1).date);
+  return H.filter(h => day(h.date) === last);
+}
+const DIRW = ['droite', 'haut-droite', 'haut', 'haut-gauche', 'gauche', 'bas-gauche', 'bas', 'bas-droite'];
+function openSummary() {
+  const L = sessionSeries(); if (!L.length) { toast('Validez au moins une série pour obtenir la synthèse', 'err'); return; }
+  const arc = isArc(), U = arc ? ['volée', 'volées', 'flèches'] : ['série', 'séries', 'coups'];
+  const n = L.reduce((a, h) => a + h.n, 0), tot = L.reduce((a, h) => a + h.total, 0), dec = L.reduce((a, h) => a + (h.dec || 0), 0);
+  const avg = tot / n, best = L.reduce((a, h) => h.avg > a.avg ? h : a), worst = L.reduce((a, h) => h.avg < a.avg ? h : a);
+  const mrs = L.map(h => h.mr_mm).filter(v => v != null), mr = mrs.length ? mrs.reduce((a, b) => a + b, 0) / mrs.length : null;
+  const W = L.reduce((a, h) => a + h.n, 0) || 1, dx = L.reduce((a, h) => a + (h.dx_mm || 0) * h.n, 0) / W, dy = L.reduce((a, h) => a + (h.dy_mm || 0) * h.n, 0) / W, off = Math.hypot(dx, dy);
+  const sd = Math.sqrt(L.reduce((a, h) => a + (h.avg - avg) ** 2, 0) / L.length);
+  const tips = [], good = [], work = [];
+  // évolution pendant la séance
+  if (L.length >= 3) {
+    const k = Math.floor(L.length / 2), a1 = L.slice(0, k).reduce((a, h) => a + h.avg, 0) / k, a2 = L.slice(-k).reduce((a, h) => a + h.avg, 0) / k, d = a2 - a1;
+    if (d > 0.3) good.push(`Progression pendant la séance : +${d.toFixed(2)} pt par coup entre le début et la fin. Votre échauffement est peut-être trop court : commencez par quelques ${U[2]} à sec.`);
+    else if (d < -0.3) work.push(`Baisse en fin de séance (${d.toFixed(2)} pt par coup) : fatigue ou baisse de concentration. Faites des pauses plus longues, ou raccourcissez la séance pour garder la qualité.`);
+    else if (L.slice(-2).every(h => h.avg < avg - 0.2) && Math.max(...L.map(h => h.avg)) - L.at(-1).avg > 0.6) work.push(`Les 2 dernières ${U[1]} sont sous votre moyenne (pic à ${Math.max(...L.map(h => h.avg))}, fin à ${L.at(-1).avg}) : arrêtez-vous plus tôt ou faites une vraie pause quand la qualité baisse.`);
+    else good.push('Niveau stable du début à la fin de la séance.');
+  }
+  if (L.length >= 2) (sd < 0.35 ? good : work).push(sd < 0.35 ? `Séance régulière : écart entre ${U[1]} faible (±${sd.toFixed(2)}).` : `Résultats irréguliers d’une ${U[0]} à l’autre (±${sd.toFixed(2)}) : soignez la routine pour que chaque ${U[0]} se déroule de la même façon.`);
+  // centrage
+  const same = L.filter(h => h.dx_mm != null && (h.dx_mm * dx + h.dy_mm * dy) > 0).length / L.length;
+  if (mr != null && off > 0.5 * mr) {
+    let ang = Math.atan2(-dy, dx) * 180 / Math.PI; if (ang < 0) ang += 360; const dir = DIRW[Math.round(ang / 45) % 8];
+    if (same >= 0.7 && L.length >= 2) work.push(`Décalage constant vers ${dir} (${fmm(off)}) sur ${Math.round(same * 100)} % des ${U[1]} : réglez les organes de visée (déplacer le groupement de ${fmm(Math.abs(dx))} vers la ${dx > 0 ? 'gauche' : 'droite'} et ${fmm(Math.abs(dy))} vers le ${dy > 0 ? 'haut' : 'bas'}).`);
+    else work.push(`Point moyen décalé vers ${dir} (${fmm(off)}), mais pas à chaque ${U[0]} : c’est plutôt technique (lâcher, prise). Revoyez les conseils de diagnostic de chaque ${U[0]}.`);
+  } else if (mr != null) good.push(`Groupement bien centré (point moyen à ${fmm(off)} du centre).`);
+  // groupement
+  if (mrs.length >= 2) { const g = mrs.at(-1) - mrs[0]; if (g < -0.1 * mrs[0]) good.push(`Groupement resserré pendant la séance (${fmm(mrs[0])} → ${fmm(mrs.at(-1))}).`); else if (g > 0.15 * mrs[0]) work.push(`Groupement qui s’ouvre en fin de séance (${fmm(mrs[0])} → ${fmm(mrs.at(-1))}) : signe de fatigue de la tenue.`); }
+  const dirKey = mr != null && off > 0.5 * mr ? (Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? 'bas' : 'haut') : (dx > 0 ? 'droite' : 'gauche')) : 'center';
+  const dr = DRILLS.find(d => d.id === (sd >= 0.35 || (mr != null && L.some(h => h.mr_mm > 1.3 * mr)) ? 'blanc' : drillFor(dirKey)));
+  const lab = L.map((h, i) => String(i + 1)), ch = id => `<canvas class="chart" id="${id}" width="640" height="240"></canvas>`;
+  $('sumBody').innerHTML = `<div class="card-h">${ICON('chart')}<span class="l">Synthèse de séance · ${fdate(L[0].date)}</span></div>
+    <h2>${$('discipline').selectedOptions[0].text} · ${L[0].distance} m${L[0].arm ? ' · ' + esc(L[0].arm) : ''}</h2>
+    <div class="ttot sumk"><div><div class="l">Total</div><div class="v">${tot}${dec ? ` <small>(${dec.toFixed(1)})</small>` : ''}</div></div><div><div class="l">${U[1]}</div><div class="v">${L.length}</div></div><div><div class="l">${U[2]}</div><div class="v">${n}</div></div><div><div class="l">Moy./coup</div><div class="v">${avg.toFixed(2)}</div></div></div>
+    <p class="hint">Meilleure ${U[0]} : n°${L.indexOf(best) + 1} (${best.avg}) · moins bonne : n°${L.indexOf(worst) + 1} (${worst.avg})${mr != null ? ' · groupement moyen ' + fmm(mr) : ''}</p>
+    ${good.length ? `<h3 class="ex-h good">✅ Points forts</h3><ul>${good.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
+    ${work.length ? `<h3 class="ex-h warnc">🎯 À travailler</h3><ul>${work.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
+    ${dr ? `<h3 class="ex-h">Pour la prochaine séance</h3><button class="ex-rel" data-learn="drills:${dr.id}">${ICON(dr.ic)}<span><b>${dr.t}</b><small>${dr.dur}</small></span></button>` : ''}
+    ${L.length >= 2 ? `<h3 class="ex-h">Évolution ${U[0]} par ${U[0]}</h3><div class="sumch">${ch('sc1')}${ch('sc2')}${ch('sc3')}</div><p class="hint">Trait pointillé : tendance (vert = amélioration, rouge = dégradation).</p>` : `<p class="hint">Validez au moins 2 ${U[1]} pour voir les graphiques d’évolution.</p>`}`;
+  if (L.length >= 2) { lineChart($('sc1'), L.map(METRIC.avg.f), METRIC.avg, { labels: lab }); lineChart($('sc2'), L.map(METRIC.mr.f), METRIC.mr, { labels: lab, color: '#a78bfa' }); lineChart($('sc3'), L.map(METRIC.off.f), METRIC.off, { labels: lab, color: '#fbbf24' }); }
+  S.sumText = `Mouche — séance du ${fdate(L[0].date)}\n${L.length} ${U[1]}, ${n} ${U[2]} : ${tot} pts (moy. ${avg.toFixed(2)})\n` + good.map(t => '+ ' + t).concat(work.map(t => '- ' + t)).join('\n');
+  $('sumModal').hidden = false;
+}
 function renderDash() {
   const disc = $('discipline').value, H = S.history.filter(h => (h.discipline || disc) === disc && h.avg != null);
   const lbl = $('discipline').selectedOptions[0].text;
-  ['trendChart', 'heatPlot', 'heatTitle'].forEach(id => $(id).hidden = H.length < 2);
+  ['trendChart', 'heatPlot', 'heatTitle', 'trendSeg', 'trendHint'].forEach(id => $(id).hidden = H.length < 2); $('btnSummary2').hidden = !H.length;
   if (!H.length) { $('dashStats').innerHTML = `<p class="hint">Validez des séries en ${lbl} pour voir vos records et votre progression.</p>`; return; }
   const mean = a => a.reduce((t, h) => t + h.avg, 0) / a.length;
   const best = H.reduce((a, h) => h.avg > a.avg ? h : a), last = H.slice(-5), prev = H.slice(-10, -5);
@@ -2239,20 +2328,10 @@ function renderDash() {
     <div class="stat"><div class="l">Tendance (5 dern.)</div><div class="v ${tr == null ? '' : tr >= 0 ? 'good' : 'bad'}">${tr == null ? '—' : (tr >= 0 ? '▲ +' : '▼ ') + tr.toFixed(2)}</div></div>
     <div class="stat" style="grid-column:span 2"><div class="l">Groupement moyen (5 dernières)</div><div class="v">${fmm(esm)}</div></div></div>`;
   if (H.length < 2) return;
-  // courbe de progression
-  const c = $('trendChart'), x = c.getContext('2d'), W = c.width, Hh = c.height, P2 = 36, L = H.slice(-40);
-  x.clearRect(0, 0, W, Hh); x.fillStyle = '#21262d'; x.fillRect(0, 0, W, Hh);
-  const lo = Math.max(0, Math.floor(Math.min(...L.map(h => h.avg)) - 0.5)), hi = 10;
-  const X = i => P2 + i * (W - 2 * P2) / Math.max(1, L.length - 1), Y = v => Hh - P2 - (v - lo) / (hi - lo) * (Hh - 2 * P2);
-  x.font = '20px -apple-system,system-ui,sans-serif'; x.fillStyle = '#8b949e'; x.strokeStyle = '#30363d'; x.lineWidth = 1;
-  for (let v = Math.ceil(lo); v <= hi; v++) { x.beginPath(); x.moveTo(P2, Y(v)); x.lineTo(W - 10, Y(v)); x.stroke(); x.fillText(String(v), 6, Y(v) + 7); }
-  x.strokeStyle = '#58a6ff'; x.lineWidth = 3; x.beginPath(); L.forEach((h, i) => i ? x.lineTo(X(i), Y(h.avg)) : x.moveTo(X(i), Y(h.avg))); x.stroke();
-  x.fillStyle = '#58a6ff'; L.forEach((h, i) => { x.beginPath(); x.arc(X(i), Y(h.avg), 5, 0, 7); x.fill(); });
-  if (L.length >= 5) { // moyenne glissante
-    x.strokeStyle = '#3fb950'; x.lineWidth = 3; x.setLineDash([10, 8]); x.beginPath();
-    L.forEach((h, i) => { if (i < 4) return; const m = mean(L.slice(i - 4, i + 1)); i === 4 ? x.moveTo(X(i), Y(m)) : x.lineTo(X(i), Y(m)); }); x.stroke(); x.setLineDash([]);
-  }
-  x.fillStyle = '#8b949e'; x.fillText('Moyenne par série' + (L.length >= 5 ? '  ·  tendance sur 5 (vert)' : ''), P2, 24);
+  // courbe de progression selon l'aspect choisi
+  const L = H.slice(-40), M = METRIC[trendM];
+  $('trendSeg').hidden = false; $('trendHint').hidden = false; $('trendHint').textContent = M.hint + ' Trait pointillé : tendance.';
+  lineChart($('trendChart'), L.map(M.f), M, { labels: L.map(h => fdate(h.date).slice(0, 5)) });
   // carte de chaleur de tous les impacts
   const imps = H.flatMap(h => h.impacts || []);
   plotTarget($('heatPlot').getContext('2d'), 640, [{ imps, col: '#3fb950', r: 9, alpha: 0.45, mpi: true }], H[H.length - 1].model || disc, H[H.length - 1].distance);
@@ -2906,7 +2985,7 @@ function updateButtons() {
   $('sDark').classList.toggle('on', S.darkBoost); $('sGrid').classList.toggle('on', !!S.grid); dis('sGrid', !cal); $('btnDark').classList.toggle('lit', S.darkBoost); dis('sDark', !has); dis('btnDark', !has);
   dis('btnCompare', S.history.filter(h => h.impacts).length + (n ? 1 : 0) < 2);
   const na = S.amb.length || S.ambNote || 0; $('btnAmb').hidden = !na; $('btnAmb').textContent = `⚠️ Vérifier ${na} zone(s) groupée(s)`;
-  dis('btnValidate', !n || !cal || S.review);
+  dis('btnValidate', !n || !cal || S.review); dis('btnSummary', !S.history.length);
   dis('btnShare', !(S.review || (n && cal))); dis('btnReport', !n); dis('btnPng', !has); dis('btnClearHist', !S.history.length);
   if (S.review) ['btnRefine', 'btn3pts', 'btnAuto', 'btnCenter', 'btnRing', 'btnWarp', 'btnUnwarp', 'btnResetCal', 'nu', 'nd', 'nl', 'nr', 'rp', 'rm', 'btnDetect', 'btnManual', 'btnDelete', 'btnClear', 'btnNewTarget'].forEach(id => dis(id, true));
   const st = { photo: has, cible: cal, impacts: n > 0, res: S.history.length > 0 };
@@ -3132,6 +3211,10 @@ on('profExport', () => $('btnJson').click());
 on('profImport', () => $('btnImport').click());
 on('btnAmb', () => S.amb.length ? openAmb() : reviewAmb());
 on('ambOk', applyAmb);
+on('btnSummary', openSummary); on('btnSummary2', openSummary); on('sumClose', () => { $('sumModal').hidden = true; });
+on('sumShare', async () => { try { if (navigator.share) await navigator.share({ title: 'Synthèse de séance', text: S.sumText }); else { await navigator.clipboard.writeText(S.sumText); toast('Synthèse copiée'); } } catch (e) {} });
+$('sumBody').addEventListener('click', e => { const b = e.target.closest('[data-learn]'); if (b) { $('sumModal').hidden = true; openLearn(b.dataset.learn); } });
+document.querySelectorAll('#trendSeg button').forEach(b => b.addEventListener('click', () => { trendM = b.dataset.m; document.querySelectorAll('#trendSeg button').forEach(x => x.classList.toggle('on', x === b)); renderDash(); }));
 document.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) document.querySelector(`#tabbar [data-view=${g.dataset.goto}]`).click(); });
 on('ambLater', () => { $('ambModal').hidden = true; refresh(); banner(`⚠️ ${S.amb.length} zone(s) à vérifier (orange) — bouton ⚠️ dans ③`, 'warn'); });
 on('btnManual', () => setMode(S.mode === 'manual' ? 'idle' : 'manual', '👆 Glissez sur chaque impact manquant et relâchez'));
@@ -3242,7 +3325,7 @@ setupInstall();
 try { if (!localStorage.getItem('mouche_intro')) openIntro(); } catch (e) {}
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 banner('Chargez une photo de cible pour commencer', '');
-window.__tir = { S, V, P, U, PROF, undo, redo, review, endReview, openCompare, switchProfile, toggleDark, IDB, detectRaw, detect, autoTarget, findTarget, computeStats, setImage, validateSeries, applyAmb, finalize, loadFile, scoreAt };
+window.__tir = { S, V, P, U, PROF, undo, redo, review, endReview, openCompare, switchProfile, toggleDark, IDB, detectRaw, detect, autoTarget, findTarget, computeStats, setImage, validateSeries, applyAmb, finalize, loadFile, scoreAt, refresh, save, openSummary };
 </script>
 </body>
 </html>
