@@ -13,373 +13,555 @@
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
-:root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--s3:#30363d;--bd:#30363d;--tx:#e6edf3;--mu:#8b949e;--ac:#58a6ff;--ok:#3fb950;--wa:#d29922;--er:#f85149;--r:12px}
+:root{--bg:#06090f;--bg2:#0b111c;--card:rgba(17,24,38,.86);--card2:#161f30;--s2:#1b2638;--s3:#26334a;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);
+--tx:#eef3fb;--mu:#8b98ae;--dim:#5f6b80;--ac:#4f8cff;--ac2:#22d3ee;--ok:#34d399;--wa:#fbbf24;--er:#f87171;
+--grad:linear-gradient(135deg,#4f8cff 0%,#22d3ee 100%);--r:18px;--rs:13px;--tab:64px;--sh:0 10px 30px rgba(0,0,0,.45)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--bg);color:var(--tx);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
-body{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
-button,select,input{font:inherit;color:inherit}
-button{cursor:pointer}
+html,body{background:var(--bg);color:var(--tx);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(1200px 600px at 80% -10%,rgba(79,140,255,.13),transparent 60%),radial-gradient(900px 500px at -10% 10%,rgba(34,211,238,.07),transparent 60%),var(--bg);min-height:100vh;padding-bottom:calc(var(--tab) + env(safe-area-inset-bottom) + 14px)}
+button,select,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}
 [hidden]{display:none!important}
-header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(13,17,23,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--bd)}
-header b{font-size:17px}
-.brand{display:flex;align-items:center;gap:8px}.brand img{border-radius:7px}.brand b{font-size:18px;letter-spacing:.02em}
-.slide{display:flex;flex-direction:column;gap:8px;min-height:230px}
-.slide .big{font-size:44px;text-align:center}
-.slide h2{font-size:20px;text-align:center}
-.slide ul{padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
-.dots{display:flex;gap:6px;justify-content:center}.dots i{width:8px;height:8px;border-radius:50%;background:var(--s3)}.dots i.on{background:var(--ac)}
-canvas.chart{width:100%;border-radius:10px;background:var(--s2)}
-.pill{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--s2);color:var(--mu);white-space:nowrap}
-.app{display:flex;flex-direction:column;gap:10px;padding:10px;max-width:1500px;margin:0 auto}
-.stage-wrap{display:flex;flex-direction:column;gap:8px}
-.stage{position:relative;height:min(60vh,640px);min-height:300px;background:#000;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+svg.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+i[data-ic]{display:inline-flex}
+/* barre du haut */
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(6,9,15,.72);backdrop-filter:saturate(170%) blur(18px);-webkit-backdrop-filter:saturate(170%) blur(18px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px}.brand img{border-radius:9px;box-shadow:0 4px 14px rgba(79,140,255,.35)}
+.brand b{display:block;font-size:19px;font-weight:750;letter-spacing:.01em;line-height:1.1}.brand small{display:block;font-size:11.5px;color:var(--mu)}
+.brand.center{justify-content:center}
+.top-actions{display:flex;gap:8px;align-items:center}
+.chip{height:34px;padding:0 13px;border-radius:99px;background:var(--s2);border:1px solid var(--line2);font-size:13.5px;font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--s2);border:1px solid var(--line2);display:grid;place-items:center}
+/* vues */
+.app{max-width:1500px;margin:0 auto;padding:12px}
+.view{display:none;flex-direction:column;gap:12px;animation:fade .25s ease}
+body[data-view=analyse] .view[data-view=analyse],body[data-view=suivi] .view[data-view=suivi],body[data-view=apprendre] .view[data-view=apprendre],body[data-view=armes] .view[data-view=armes],body[data-view=plus] .view[data-view=plus]{display:flex}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.vt{font-size:28px;font-weight:800;letter-spacing:-.01em;margin:6px 2px 2px}
+/* barre d'onglets */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,1fr);height:calc(var(--tab) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(8,12,20,.86);backdrop-filter:saturate(170%) blur(20px);-webkit-backdrop-filter:saturate(170%) blur(20px);border-top:1px solid var(--line)}
+.tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--dim);font-size:11px;font-weight:600;position:relative}
+.tabbar button svg{width:23px;height:23px}
+.tabbar button.on{color:var(--tx)}.tabbar button.on svg{color:var(--ac2)}
+.tabbar button.on::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--grad)}
+/* séance */
+.session-bar{display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;padding:2px;text-align:left}
+.session-bar::-webkit-scrollbar{display:none}
+.session-bar .pill{flex:none;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:99px;background:var(--card2);border:1px solid var(--line);font-size:12.5px;font-weight:600;color:#c9d3e3}
+.session-bar .pill.acc{background:rgba(79,140,255,.14);border-color:rgba(79,140,255,.35);color:#cfe0ff}
+.session-bar .pill.spd{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35);color:#fde3a0}
+/* scène photo */
+.stage-wrap{display:flex;flex-direction:column;gap:10px}
+.stage{position:relative;height:min(52vh,660px);min-height:290px;background:#020407;border:1px solid var(--line2);border-radius:22px;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;box-shadow:var(--sh)}
 .stage canvas{position:absolute;left:0;top:0;pointer-events:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #imgCanvas{transform-origin:0 0}
-#loupe{display:none;width:150px;height:150px;border-radius:50%;border:3px solid var(--ac);box-shadow:0 6px 20px rgba(0,0,0,.6);z-index:6}
-.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mu);text-align:center;padding:20px}
-.empty .big{font-size:46px}
-.banner{position:absolute;left:8px;right:8px;top:8px;z-index:5;display:flex;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:rgba(22,27,34,.9);border:1px solid var(--bd);font-size:13.5px}
-.banner.ok{border-color:var(--ok)}.banner.warn{border-color:var(--wa)}.banner.err{border-color:var(--er)}.banner.act{border-color:var(--ac)}
+#loupe{display:none;width:160px;height:160px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 3px rgba(79,140,255,.6),0 12px 30px rgba(0,0,0,.6);z-index:6}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mu);text-align:center;padding:24px}
+.empty-ic{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:var(--grad);color:#fff;box-shadow:0 12px 30px rgba(79,140,255,.35)}.empty-ic svg{width:36px;height:36px}
+.empty-t{font-size:18px;font-weight:700;color:var(--tx)}
+.banner{position:absolute;left:10px;right:10px;top:10px;z-index:5;display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:14px;background:rgba(10,15,25,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line2);font-size:13.5px;font-weight:500}
+.banner.ok{border-color:rgba(52,211,153,.5)}.banner.warn{border-color:rgba(251,191,36,.6)}.banner.err{border-color:rgba(248,113,113,.6)}.banner.act{border-color:rgba(79,140,255,.6)}
 .banner span{flex:1}
-.banner button{padding:6px 12px;border-radius:8px;background:var(--ac);color:#04111f;font-weight:700;border:0}
-.zoom{position:absolute;right:8px;bottom:8px;z-index:5;display:flex;flex-direction:column;gap:6px}
-.hist{position:absolute;left:8px;bottom:8px;z-index:5;display:flex;flex-direction:column;gap:6px}
-.hist button{width:44px;height:44px;border-radius:10px;border:1px solid var(--bd);background:rgba(22,27,34,.92);font-size:19px}
-.hist button:disabled{opacity:.35}
-.hist button.on,.btn.lit{background:#5a4a12;border-color:var(--wa)}
-.cal-head{display:flex;align-items:center;justify-content:space-between}
-.cal-head button{width:40px;height:36px;border-radius:9px;border:1px solid var(--bd);background:var(--s2);font-size:18px}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.cal div{aspect-ratio:1;border-radius:8px;background:var(--s2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer}
-.cal .h{background:none;color:var(--mu);font-size:11px;aspect-ratio:auto;cursor:default}
-.cal .x{visibility:hidden}
-.cal .has{background:#1f3a5f;font-weight:700}
-.cal .has small{font-size:10px;color:var(--ok);line-height:1}
-.cal .sel{outline:2px solid var(--ac)}
-.cal .today{color:var(--wa)}
-.srow{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13.5px;padding:5px 8px;border-radius:8px;background:var(--s2)}
-.srow .act{display:flex;gap:4px;flex:none}
-.srow button{width:36px;height:32px;border-radius:8px;border:1px solid var(--bd);background:var(--s3);font-size:15px}
-table.cmp{width:100%;border-collapse:collapse;font-size:13.5px}
-table.cmp td,table.cmp th{padding:6px 4px;border-bottom:1px solid var(--bd);text-align:right}
-table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:var(--mu)}
-.zoom button{width:44px;height:44px;border-radius:10px;border:1px solid var(--bd);background:rgba(22,27,34,.92);font-size:20px}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:4px}
-.steps button{padding:9px 2px;border-radius:9px;border:0;background:none;color:var(--mu);font-weight:600;font-size:13.5px}
+.banner button{padding:7px 13px;border-radius:10px;background:var(--grad);color:#041021;font-weight:700}
+.fab-col{position:absolute;z-index:5;display:flex;flex-direction:column;gap:8px}
+.fab-col.left{left:10px;top:66px}.fab-col.left.bottom{top:auto;bottom:10px}.fab-col.right{right:10px}.fab-col.bottom{bottom:10px}
+.fab{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(12,18,30,.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line2);color:#e6edf8;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.fab:disabled{opacity:.3}.fab.on{background:var(--grad);color:#041021;border-color:transparent}
+.coord{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:5;padding:6px 12px;border-radius:99px;background:rgba(10,15,25,.85);border:1px solid var(--line2);font:600 12.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap}
+/* étapes */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px}
+.steps button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px;border-radius:12px;color:var(--mu);font-weight:650;font-size:12.5px}
+.steps button svg{width:19px;height:19px}
 .steps button.done{color:var(--ok)}
-.steps button.on{background:var(--ac);color:#04111f}
-.ctl,.panel{display:flex;flex-direction:column;gap:10px}
+.steps button.on{background:var(--grad);color:#041021;box-shadow:0 6px 18px rgba(79,140,255,.35)}
+.ctl,.panel{display:flex;flex-direction:column;gap:12px}
 .panel{display:none}
 body[data-step=photo] [data-panel=photo],body[data-step=cible] [data-panel=cible],body[data-step=impacts] [data-panel=impacts],body[data-step=res] [data-panel=res]{display:flex}
-.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:10px}
-.card h3{font-size:12.5px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-details.card summary{font-size:12.5px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
-.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:8px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--s2);font-weight:600;font-size:14.5px;width:100%;text-align:center}
-.btn.pri{background:var(--ac);border-color:var(--ac);color:#04111f}
-.btn.ok{background:var(--ok);border-color:var(--ok);color:#04110a}
-.btn.warn{background:var(--wa);border-color:var(--wa);color:#1a1200}
+/* cartes */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset}
+.card.hero{background:linear-gradient(160deg,rgba(79,140,255,.16),rgba(34,211,238,.05) 60%),var(--card)}
+.card-h{display:flex;align-items:center;gap:9px;color:var(--ac2)}.card-h h3{font-size:15.5px;color:var(--tx);font-weight:700}
+details.card summary{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;cursor:pointer;list-style:none;color:var(--tx)}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:"›";margin-left:auto;color:var(--mu);font-size:20px;transition:transform .2s}
+details[open].card summary::after{transform:rotate(90deg)}
+details.card summary svg{color:var(--ac2)}
+.p{font-size:14px;color:#c9d3e3}
+/* boutons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:9px 14px;border-radius:var(--rs);background:var(--s2);border:1px solid var(--line2);font-weight:650;font-size:14.5px;width:100%;text-align:center;transition:transform .08s,filter .15s}
+.btn:active{transform:scale(.98)}
+.btn.pri{background:var(--grad);border-color:transparent;color:#041021;box-shadow:0 8px 22px rgba(79,140,255,.32)}
+.btn.big{min-height:56px;font-size:16px}
+.btn.ok{background:linear-gradient(135deg,#34d399,#10b981);border-color:transparent;color:#03140d;box-shadow:0 8px 22px rgba(16,185,129,.28)}
+.btn.warn{background:linear-gradient(135deg,#fbbf24,#f59e0b);border-color:transparent;color:#1d1300}
+.btn.ghost{background:transparent}
 .btn.dan{color:var(--er)}
-.btn.on{outline:2px solid var(--ac);outline-offset:1px;background:#1f3a5f}
-.btn:disabled{opacity:.38;cursor:default}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--mu)}
-label.chk{display:flex;align-items:center;gap:8px;font-size:14px}
-label.chk input{width:20px;height:20px}
-select,input[type=number],input[type=text]{width:100%;min-height:42px;padding:8px 10px;border-radius:9px;border:1px solid var(--bd);background:var(--s2);font-size:16px}
+.btn.on{outline:2px solid var(--ac);outline-offset:1px;background:rgba(79,140,255,.18)}
+.btn.lit{background:rgba(251,191,36,.18);border-color:rgba(251,191,36,.5)}
+.btn:disabled{opacity:.35;cursor:default;box-shadow:none}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.col{display:flex;flex-direction:column;gap:9px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--s2);border:1px solid var(--line);border-radius:13px;padding:3px}
+.seg button{padding:9px 6px;border-radius:10px;font-weight:650;color:var(--mu);font-size:14px}
+.seg button.on{background:var(--s3);color:var(--tx);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--mu);font-weight:600}
+label.chk{display:flex;align-items:center;gap:10px;font-size:14.5px}
+label.chk input{width:22px;height:22px;accent-color:var(--ac)}
+select,input[type=number],input[type=text]{width:100%;min-height:44px;padding:9px 12px;border-radius:12px;border:1px solid var(--line2);background:var(--bg2);font-size:16px;color:var(--tx);-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--mu) 50%),linear-gradient(135deg,var(--mu) 50%,transparent 50%);background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
 input[type=range]{width:100%;accent-color:var(--ac)}
 .hint{font-size:12.5px;color:var(--mu)}
-.info{font-size:13.5px;background:var(--s2);border-radius:9px;padding:8px 10px}
-.adj{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
-.pad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,42px);gap:5px}
-.pad button,.rsz button{border-radius:9px;border:1px solid var(--bd);background:var(--s2);font-size:18px}
-.rsz{display:flex;flex-direction:column;gap:5px;align-items:center}
-.rsz button{width:56px;height:42px}
+.info{font-size:13.5px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:#c9d3e3}
+.adj{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap}
+.pad{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,44px);gap:6px}
+.pad button,.rsz button{border-radius:12px;border:1px solid var(--line2);background:var(--s2);font-size:18px}
+.rsz{display:flex;flex-direction:column;gap:6px;align-items:center}.rsz button{width:58px;height:44px}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--mu)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid;margin-right:4px;vertical-align:-1px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid;margin-right:5px;vertical-align:-1px}
+/* score */
+.score-card{background:linear-gradient(165deg,rgba(79,140,255,.18),rgba(17,24,38,.9) 45%),var(--card)}
+.score-top{display:flex;justify-content:space-between;align-items:flex-end}
+.score-top .v{font-size:56px;font-weight:800;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.02em}
+.score-dec{text-align:right}.score-dec .v{font-size:22px!important;color:var(--tx)!important;background:none!important}
+.l{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.stat{background:var(--s2);border-radius:10px;padding:8px 10px;min-width:0}
-.stat .l{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
-.stat .v{font-size:16px;font-weight:700;overflow-wrap:anywhere}
-.stat.big{grid-column:span 2;display:flex;justify-content:space-between;align-items:baseline}
-.stat.big .v{font-size:32px;color:var(--ac)}
+.stat{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:9px 11px;min-width:0}
+.stat .v{font-size:15.5px;font-weight:700;overflow-wrap:anywhere}
 .good{color:var(--ok)}.mid{color:var(--wa)}.bad{color:var(--er)}
-.diag h4{font-size:15px;margin-bottom:6px}
-.diag p,.diag li{font-size:14px;margin:3px 0}
-.diag ul{padding-left:18px}
-.drill{background:var(--s2);border-left:3px solid var(--ac);border-radius:6px;padding:8px 10px;font-size:13.5px;margin-top:8px}
-.list{display:flex;flex-direction:column;gap:3px;max-height:260px;overflow:auto}
-.list div{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 8px;border-radius:7px;background:var(--s2)}
-.spark{display:flex;align-items:flex-end;gap:3px;height:60px}
-.spark div{flex:1;background:var(--ac);border-radius:3px 3px 0 0;min-height:3px}
-.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--s1);border:1px solid var(--bd);border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:85vh;overflow:auto;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
-.amb{display:flex;gap:10px;align-items:center;background:var(--s2);border-radius:10px;padding:8px}
-.amb canvas{width:96px;height:96px;border-radius:8px;flex:none;background:#000}
+.diag h4{font-size:16px;margin-bottom:6px}.diag p,.diag li{font-size:14px;margin:4px 0;color:#d5ddea}.diag ul{padding-left:18px}
+.drill{background:var(--bg2);border-left:3px solid var(--ac2);border-radius:8px;padding:9px 11px;font-size:13.5px;margin-top:8px}
+.list{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow:auto}
+.list.big{max-height:none}
+.list>div{display:flex;justify-content:space-between;font-size:13.5px;padding:7px 10px;border-radius:10px;background:var(--bg2)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:56px}.spark div{flex:1;background:var(--grad);border-radius:3px 3px 0 0;min-height:3px;opacity:.85}
+canvas.chart{width:100%;border-radius:14px;background:var(--bg2)}
+/* calendrier */
+.cal-head{display:flex;align-items:center;justify-content:space-between}
+.cal-head b{text-transform:capitalize}
+.cal-head button{width:40px;height:36px;border-radius:11px;border:1px solid var(--line2);background:var(--s2);font-size:18px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal div{aspect-ratio:1;border-radius:10px;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer}
+.cal .h{background:none;color:var(--mu);font-size:11px;aspect-ratio:auto;cursor:default;font-weight:700}
+.cal .x{visibility:hidden}.cal .has{background:rgba(79,140,255,.22);font-weight:800}.cal .has small{font-size:10px;color:var(--ac2);line-height:1}
+.cal .sel{outline:2px solid var(--ac)}.cal .today{color:var(--wa)}
+.srow{display:flex!important;justify-content:space-between;align-items:center;gap:6px}
+.srow .act{display:flex;gap:5px;flex:none}
+.srow button{width:38px;height:34px;border-radius:10px;border:1px solid var(--line2);background:var(--s2);display:grid;place-items:center}
+.srow button svg{width:17px;height:17px}
+table.cmp{width:100%;border-collapse:collapse;font-size:13.5px}table.cmp td,table.cmp th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right}
+table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:var(--mu)}
+/* apprendre */
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;height:32px;padding:0 13px;border-radius:99px;background:var(--s2);border:1px solid var(--line);font-size:13px;font-weight:650;color:var(--mu)}
+.chips button.on{background:rgba(79,140,255,.18);border-color:rgba(79,140,255,.45);color:#d6e4ff}
+.grid-cards{display:grid;grid-template-columns:1fr;gap:10px}
+.lc{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+.lc .ico{width:44px;height:44px;border-radius:13px;flex:none;display:grid;place-items:center;background:rgba(79,140,255,.15);color:var(--ac2)}
+.lc .ico svg{width:22px;height:22px}
+.lc b{display:block;font-size:15.5px}.lc small{display:block;color:var(--mu);font-size:13px;margin-top:2px}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.tags span{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--s2);color:#b9c6da}
+.learn-body h2{font-size:22px;margin-bottom:4px}.learn-body h4{font-size:15px;margin:14px 0 6px;color:var(--ac2)}
+.learn-body p,.learn-body li{font-size:14.5px;color:#d5ddea;margin:4px 0}.learn-body ul,.learn-body ol{padding-left:20px}
+.learn-body .yt{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;min-height:48px;border-radius:13px;background:#ff0033;color:#fff;font-weight:700;text-decoration:none}
+/* menu Plus */
+.menu{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.menu-i{display:flex;gap:13px;align-items:center;text-align:left;padding:14px;border-bottom:1px solid var(--line)}
+.menu-i:last-child{border-bottom:0}
+.menu-i>i{width:38px;height:38px;border-radius:11px;display:grid!important;place-items:center;background:rgba(79,140,255,.15);color:var(--ac2)}
+.menu-i b{display:block;font-size:15px}.menu-i small{display:block;color:var(--mu);font-size:12.5px}
+.menu-i::after{content:"›";margin-left:auto;color:var(--mu);font-size:22px}
+/* feuilles */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(2,4,8,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+.sheet{background:var(--card2);border:1px solid var(--line2);border-radius:24px 24px 0 0;width:100%;max-width:580px;max-height:90vh;overflow:auto;padding:18px 16px;padding-bottom:calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:11px;box-shadow:0 -20px 50px rgba(0,0,0,.5)}
+.sheet::before{content:"";width:40px;height:5px;border-radius:9px;background:var(--s3);align-self:center;margin:-6px 0 4px}
+.sheet h2{font-size:20px;font-weight:800}
+.amb{display:flex;gap:10px;align-items:center;background:var(--bg2);border-radius:13px;padding:9px}
+.amb canvas{width:96px;height:96px;border-radius:10px;flex:none;background:#000}
 .stepper{display:flex;align-items:center;gap:10px;margin-top:6px}
-.stepper button{width:40px;height:40px;border-radius:9px;border:1px solid var(--bd);background:var(--s3);font-size:20px}
+.stepper button{width:42px;height:42px;border-radius:11px;border:1px solid var(--line2);background:var(--s3);font-size:20px}
 .stepper b{min-width:22px;text-align:center;font-size:18px}
-#toasts{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:70;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:92%;max-width:460px}
-.toast{background:var(--s3);border:1px solid var(--bd);padding:9px 14px;border-radius:10px;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.5);transition:opacity .3s}
-.toast.ok{border-color:var(--ok)}.toast.err{border-color:var(--er)}.toast.warn{border-color:var(--wa)}
-@media(max-width:430px){.long{display:none}}
+.slide{display:flex;flex-direction:column;gap:10px;min-height:240px}
+.slide .big{width:72px;height:72px;border-radius:22px;align-self:center;display:grid;place-items:center;background:var(--grad);color:#fff}.slide .big svg{width:34px;height:34px}
+.slide h2{text-align:center}.slide ul{padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.dots{display:flex;gap:6px;justify-content:center}.dots i{width:8px;height:8px;border-radius:50%;background:var(--s3)}.dots i.on{background:var(--ac);width:22px;border-radius:9px}
+.timer-disp{font:800 88px/1 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center;letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding:10px 0}
+.timer-disp.go{background:linear-gradient(135deg,#34d399,#a7f3d0);-webkit-background-clip:text;background-clip:text}
+.timer-disp.stop{background:linear-gradient(135deg,#f87171,#fca5a5);-webkit-background-clip:text;background-clip:text}
+.timer-state{text-align:center;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.1em;font-size:13px}
+#toasts{position:fixed;left:50%;bottom:calc(var(--tab) + env(safe-area-inset-bottom) + 14px);transform:translateX(-50%);z-index:70;display:flex;flex-direction:column;gap:6px;align-items:center;width:92%;max-width:460px}
+.toast{display:flex;align-items:center;gap:10px;background:rgba(22,31,48,.96);border:1px solid var(--line2);padding:10px 14px;border-radius:14px;font-size:14px;box-shadow:var(--sh);transition:opacity .3s}
+.toast button{padding:6px 12px;border-radius:9px;background:var(--grad);color:#041021;font-weight:700;flex:none}
+.toast.ok{border-color:rgba(52,211,153,.5)}.toast.err{border-color:rgba(248,113,113,.6)}.toast.warn{border-color:rgba(251,191,36,.6)}
+@media(min-width:760px){.grid-cards{grid-template-columns:1fr 1fr}}
 @media(min-width:1000px){
-  .app{display:grid;grid-template-columns:340px minmax(0,1fr) 360px;align-items:start}
-  .stage-wrap{grid-column:2;grid-row:1;position:sticky;top:62px}
-  .stage{height:calc(100vh - 150px)}
-  .ctl{grid-column:1;grid-row:1}
-  [data-panel=res]{display:flex!important;grid-column:3;grid-row:1}
-  .steps{grid-template-columns:repeat(3,1fr)}
-  .steps [data-step=res]{display:none}
+  .app{padding:18px 22px}
+  .view[data-view=analyse]{display:none}
+  body[data-view=analyse] .view[data-view=analyse]{display:grid;grid-template-columns:350px minmax(0,1fr) 370px;gap:16px;align-items:start}
+  .view[data-view=analyse] .session-bar{grid-column:1/-1}
+  .stage-wrap{grid-column:2;grid-row:2;position:sticky;top:76px}
+  .stage{height:calc(100vh - 230px)}
+  .ctl{grid-column:1;grid-row:2}
+  .view[data-view=analyse] [data-panel=res]{display:flex!important;grid-column:3;grid-row:2}
+  .steps{grid-template-columns:repeat(3,1fr)}.steps [data-step=res]{display:none}
+  .view:not([data-view=analyse]){max-width:980px;margin:0 auto;width:100%}
+  .tabbar{left:50%;transform:translateX(-50%);bottom:14px;width:520px;border-radius:22px;border:1px solid var(--line2);height:var(--tab);padding:0;box-shadow:var(--sh)}
 }
-@media print{header,.stage-wrap,.ctl,.no-print,#toasts{display:none!important}[data-panel=res]{display:flex!important}body{background:#fff;color:#000}.card,.stat{background:#fff;border-color:#ccc}}
+@media print{.topbar,.tabbar,.stage-wrap,.ctl,#toasts,.session-bar{display:none!important}.view{display:flex!important}.card,.stat{background:#fff;color:#000;border-color:#ccc}}
 </style>
 </head>
-<body data-step="photo">
-<header><div class="brand"><img src="icons/icon-192.png" alt="" width="28" height="28"><b>Mouche</b></div><div style="display:flex;gap:6px;align-items:center"><button class="pill" id="profBtn" style="border:1px solid var(--bd);color:var(--tx)">👤</button><span class="pill" id="statusPill">Prêt</span><button class="pill" id="btnAbout" aria-label="Aide et à propos" style="border:1px solid var(--bd);color:var(--tx)">?</button></div></header>
+<body data-step="photo" data-view="analyse">
+<header class="topbar">
+  <div class="brand"><img src="icons/icon-192.png" width="32" height="32" alt=""><div><b>Mouche</b><small id="statusPill">Prêt</small></div></div>
+  <div class="top-actions">
+    <button class="chip" id="profBtn">Tireur</button>
+    <button class="icon-btn" id="btnAbout" aria-label="Aide et à propos"><i data-ic="help"></i></button>
+  </div>
+</header>
 
-<div class="app">
-  <section class="stage-wrap">
-    <div class="stage" id="stage">
-      <canvas id="imgCanvas" width="10" height="10"></canvas>
-      <canvas id="ovCanvas"></canvas>
-      <canvas id="loupe"></canvas>
-      <div class="empty" id="stageEmpty"><div class="big">📷</div><div>Photographiez la cible <b>bien en face</b>, entière, avec une bonne lumière</div><div class="hint">Pincez pour zoomer · glissez pour déplacer</div></div>
-      <div class="banner" id="banner"><span id="bannerTxt">Chargez une photo de cible pour commencer</span><button id="bannerDone" hidden>Terminer</button></div>
-      <div class="hist"><button id="sUndo" aria-label="Annuler">↶</button><button id="sRedo" aria-label="Rétablir">↷</button><button id="sDark" aria-label="Éclaircir le noir">🔦</button></div>
-      <div class="zoom"><button id="zIn" aria-label="Zoomer">＋</button><button id="zOut" aria-label="Dézoomer">－</button><button id="zFit" aria-label="Vue entière">⤢</button></div>
+<main class="app">
+  <!-- ===================== ANALYSE ===================== -->
+  <section class="view" data-view="analyse">
+    <button class="session-bar" id="sessionBar" type="button"></button>
+    <div class="stage-wrap">
+      <div class="stage" id="stage">
+        <canvas id="imgCanvas" width="10" height="10"></canvas>
+        <canvas id="ovCanvas"></canvas>
+        <canvas id="loupe"></canvas>
+        <div class="empty" id="stageEmpty">
+          <div class="empty-ic"><i data-ic="camera"></i></div>
+          <div class="empty-t">Photographiez votre cible</div>
+          <div class="hint">Bien en face, entière, lumière homogène</div>
+        </div>
+        <div class="banner" id="banner"><span id="bannerTxt">Chargez une photo de cible pour commencer</span><button id="bannerDone" hidden>Terminer</button></div>
+        <div class="fab-col left">
+          <button class="fab" id="sUndo" aria-label="Annuler la dernière action"><i data-ic="undo"></i></button>
+          <button class="fab" id="sRedo" aria-label="Rétablir"><i data-ic="redo"></i></button>
+        </div>
+        <div class="fab-col left bottom">
+          <button class="fab" id="sGrid" aria-label="Grille de précision"><i data-ic="grid"></i></button>
+          <button class="fab" id="sDark" aria-label="Éclaircir le noir"><i data-ic="sun"></i></button>
+        </div>
+        <div class="fab-col right bottom zoom">
+          <button class="fab" id="zIn" aria-label="Zoomer"><i data-ic="plus"></i></button>
+          <button class="fab" id="zOut" aria-label="Dézoomer"><i data-ic="minus"></i></button>
+          <button class="fab" id="zFit" aria-label="Vue entière"><i data-ic="fit"></i></button>
+        </div>
+        <div class="coord" id="coordPill" hidden></div>
+      </div>
+      <nav class="steps" id="steps">
+        <button data-step="photo" class="on"><i data-ic="camera"></i><span>Photo</span></button>
+        <button data-step="cible"><i data-ic="target"></i><span>Calibrer</span></button>
+        <button data-step="impacts"><i data-ic="dots"></i><span>Impacts</span></button>
+        <button data-step="res"><i data-ic="award"></i><span>Résultat</span></button>
+      </nav>
     </div>
-    <nav class="steps" id="steps">
-      <button data-step="photo" class="on">① Photo</button>
-      <button data-step="cible">② Cible</button>
-      <button data-step="impacts">③ Impacts</button>
-      <button data-step="res">④ Résultats</button>
-    </nav>
-  </section>
 
-  <div class="ctl">
-    <!-- ① PHOTO -->
-    <section class="panel" data-panel="photo">
-      <div class="card" id="installCard" hidden>
-        <h3>📲 Installer Mouche</h3>
-        <p id="installTxt" style="font-size:14px"></p>
-        <button class="btn pri" id="btnInstall" hidden>Installer l'application</button>
-        <button class="btn" id="btnInstallLater">Plus tard</button>
+    <div class="ctl">
+      <!-- PHOTO -->
+      <section class="panel" data-panel="photo">
+        <div class="card" id="installCard" hidden>
+          <div class="card-h"><i data-ic="phone"></i><h3>Installer Mouche</h3></div>
+          <p id="installTxt" class="p"></p>
+          <button class="btn pri" id="btnInstall" hidden>Installer l'application</button>
+          <button class="btn ghost" id="btnInstallLater">Plus tard</button>
+        </div>
+        <div class="card hero">
+          <div class="info" id="targetInfo">Nouvelle cible</div>
+          <button class="btn pri big" id="btnCamera"><i data-ic="camera"></i>Prendre la cible en photo</button>
+          <div class="row">
+            <button class="btn" id="btnGallery"><i data-ic="image"></i>Galerie</button>
+            <button class="btn" id="btnSample"><i data-ic="spark"></i>Exemple</button>
+          </div>
+          <button class="btn ghost dan" id="btnNewTarget"><i data-ic="refresh"></i>Nouvelle cible</button>
+          <p class="hint">Série suivante : re-photographiez la <b>même cible</b>, les impacts déjà comptés sont reconnus.</p>
+        </div>
+        <div class="card">
+          <div class="card-h"><i data-ic="sliders"></i><h3>Séance</h3></div>
+          <div class="seg" id="modeSeg"><button data-mode="precision" class="on">Précision</button><button data-mode="vitesse">Vitesse</button></div>
+          <input type="hidden" id="shotMode" value="precision">
+          <div class="row" id="speedRow" hidden>
+            <label class="f">Temps de la série<select id="seriesTime">
+              <option value="8">8 s (vitesse)</option><option value="6">6 s (vitesse)</option><option value="4">4 s (vitesse)</option>
+              <option value="10">10 s (standard)</option><option value="20">20 s (standard)</option><option value="150">150 s (standard)</option><option value="3">3 s par coup (duel)</option>
+            </select></label>
+            <button class="btn" id="btnTimer2" style="align-self:end"><i data-ic="timer"></i>Minuteur</button>
+          </div>
+          <div class="row">
+            <label class="f">Discipline<select id="discipline">
+              <option value="pistolet">Pistolet</option><option value="carabine">Carabine</option>
+              <option value="arc_pointe">Arc à lames de pointe</option><option value="arc_epaule">Arc à lames d'épaule</option>
+              <option value="arc_compound">Arc compound</option><option value="arbalete">Arbalète</option><option value="autre">Autre</option>
+            </select></label>
+            <label class="f">Distance<select id="distance">
+              <option value="10">10 m</option><option value="18">18 m</option><option value="20">20 m</option><option value="25" selected>25 m</option>
+              <option value="30">30 m</option><option value="50">50 m</option><option value="70">70 m</option><option value="90">90 m</option><option value="100">100 m</option><option value="300">300 m</option><option value="custom">Autre…</option>
+            </select></label>
+          </div>
+          <input type="number" id="distanceCustom" placeholder="Distance en mètres" hidden>
+          <label class="f">Modèle de cible<select id="model"><option value="auto">Automatique (selon discipline et distance)</option><option value="ap10">ISSF pistolet 10 m (air)</option><option value="pp25">ISSF pistolet 25/50 m précision (C50)</option><option value="rf25">ISSF pistolet vitesse 25 m</option><option value="ar10">ISSF carabine 10 m (air)</option><option value="r50">ISSF carabine 50 m</option><option value="r300">ISSF carabine 300 m</option><option value="wa40">Arc — blason 40 cm</option><option value="wa60">Arc — blason 60 cm</option><option value="wa80">Arc — blason 80 cm</option><option value="wa122">Arc — blason 122 cm</option><option value="autre">Autre cible</option></select></label>
+          <label class="f">Arme utilisée<select id="armSel"><option value="">Aucune (conseils généraux)</option></select></label>
+        </div>
+        <details class="card">
+          <summary><i data-ic="contrast"></i>Filtres d'affichage</summary>
+          <label class="f">Mode<select id="viewMode">
+            <option value="normal">Originale</option><option value="enhanced">Contraste renforcé</option>
+            <option value="binary">Binaire (seuil)</option><option value="negative">Négatif</option><option value="negative-enhanced">Négatif renforcé</option>
+          </select></label>
+          <label class="f">Luminosité <span id="brightnessVal">100%</span><input type="range" id="brightness" min="40" max="200" value="100"></label>
+          <label class="f">Contraste <span id="contrastVal">100%</span><input type="range" id="contrast" min="40" max="350" value="100"></label>
+          <label class="f">Seuil binaire <span id="thresholdVal">90</span><input type="range" id="threshold" min="10" max="240" value="90"></label>
+          <button class="btn" id="btnDark"><i data-ic="sun"></i>Zoomer et éclaircir le noir</button>
+          <button class="btn ghost" id="btnResetFilter">Réinitialiser les filtres</button>
+        </details>
+      </section>
+
+      <!-- CALIBRER -->
+      <section class="panel" data-panel="cible">
+        <div class="card">
+          <div class="card-h"><i data-ic="target"></i><h3>Calibrage</h3></div>
+          <button class="btn pri" id="btnAuto"><i data-ic="spark"></i>Calibrer automatiquement</button>
+          <button class="btn" id="btn3pts"><i data-ic="circle"></i>3 points ou plus sur le bord</button>
+          <div class="row">
+            <button class="btn" id="btnCenter">① Centre</button>
+            <button class="btn" id="btnRing">② Limite</button>
+          </div>
+          <button class="btn" id="btnRefine"><i data-ic="crosshair"></i>Affiner sur les anneaux imprimés</button>
+          <p class="hint">Posez le doigt, glissez en regardant la loupe, relâchez. Deux doigts pour zoomer.</p>
+          <div class="adj">
+            <div class="pad">
+              <span></span><button id="nu" aria-label="Centre vers le haut">↑</button><span></span>
+              <button id="nl" aria-label="Centre vers la gauche">←</button><button id="nc" aria-label="Recentrer la vue">◎</button><button id="nr" aria-label="Centre vers la droite">→</button>
+              <span></span><button id="nd" aria-label="Centre vers le bas">↓</button><span></span>
+            </div>
+            <div class="rsz"><button id="rp" aria-label="Agrandir les anneaux">＋</button><span class="hint">anneaux</span><button id="rm" aria-label="Réduire les anneaux">－</button></div>
+          </div>
+        </div>
+        <details class="card">
+          <summary><i data-ic="sliders"></i>Réglages avancés</summary>
+          <div class="row">
+            <label class="f">Largeur d'anneau (mm)<input type="number" id="ringMm" step="0.1" min="0.5"></label>
+            <label class="f">Diamètre impact (mm)<input type="number" id="calMm" step="0.1" min="1"></label>
+          </div>
+          <label class="f">Limite de référence<select id="ringSelect">
+            <option value="0" selected>Bord du visuel (noir, ou jaune à l'arc)</option>
+            <option value="1">Bord extérieur de l'anneau 1</option><option value="2">Bord de l'anneau 2</option><option value="3">Bord de l'anneau 3</option>
+            <option value="4">Bord de l'anneau 4</option><option value="5">Bord de l'anneau 5</option><option value="6">Bord de l'anneau 6</option>
+            <option value="7">Bord de l'anneau 7</option><option value="8">Bord de l'anneau 8</option><option value="9">Bord de l'anneau 9</option><option value="10">Bord de l'anneau 10</option>
+          </select></label>
+          <div class="row">
+            <button class="btn" id="btnWarp">Redresser (4 points)</button>
+            <button class="btn" id="btnUnwarp">Annuler redress.</button>
+          </div>
+          <button class="btn ghost dan" id="btnResetCal">Réinitialiser le calibrage</button>
+        </details>
+      </section>
+
+      <!-- IMPACTS -->
+      <section class="panel" data-panel="impacts">
+        <div class="card">
+          <div class="card-h"><i data-ic="dots"></i><h3>Impacts</h3></div>
+          <div class="row">
+            <label class="f">Balles tirées<input type="number" id="expected" min="0" max="100" value="10"></label>
+            <label class="f">Sensibilité <span id="sensVal">25</span><input type="range" id="sensitivity" min="8" max="70" value="25"></label>
+          </div>
+          <button class="btn pri" id="btnDetect"><i data-ic="spark"></i>Détecter les impacts</button>
+          <button class="btn warn" id="btnAmb" hidden>Zones à vérifier</button>
+          <div class="row">
+            <button class="btn" id="btnManual"><i data-ic="plus"></i>Ajouter</button>
+            <button class="btn" id="btnDelete"><i data-ic="trash"></i>Retirer</button>
+          </div>
+          <div class="row3">
+            <button class="btn" id="btnUndo"><i data-ic="undo"></i>Annuler</button>
+            <button class="btn" id="btnRedo"><i data-ic="redo"></i>Rétablir</button>
+            <button class="btn ghost dan" id="btnClear">Effacer</button>
+          </div>
+          <div class="legend"><span><i style="border-color:#34d399"></i>Nouveau</span><span><i style="border-color:#f87171"></i>Séries précédentes</span><span><i style="border-color:#fbbf24"></i>À vérifier</span></div>
+          <p class="hint">« Retirer » supprime un seul impact puis se désactive, pour éviter les suppressions accidentelles.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- RÉSULTAT -->
+    <aside class="panel res" data-panel="res">
+      <div class="card score-card">
+        <div class="score-top"><div><div class="l">Score</div><div class="v" id="sTotal">—</div></div><div class="score-dec"><div class="l">Décimal</div><div class="v" id="sDec">—</div></div></div>
+        <div class="stats">
+          <div class="stat"><div class="l">Impacts</div><div class="v" id="sN">0</div></div>
+          <div class="stat"><div class="l">Moyenne</div><div class="v" id="sAvg">—</div></div>
+          <div class="stat"><div class="l">Point moyen</div><div class="v" id="sMpi">—</div></div>
+          <div class="stat"><div class="l">Groupement</div><div class="v" id="sGroup">—</div></div>
+          <div class="stat"><div class="l">Rayon moyen</div><div class="v" id="sMr">—</div></div>
+          <div class="stat"><div class="l">Régularité</div><div class="v" id="sReg">—</div></div>
+        </div>
+        <button class="btn ok" id="btnValidate"><i data-ic="check"></i>Valider la série</button>
+        <button class="btn" id="btnShare"><i data-ic="share"></i>Partager mon résultat</button>
       </div>
       <div class="card">
-        <h3>Cible en cours</h3>
-        <div class="info" id="targetInfo">Nouvelle cible</div>
-        <div class="row">
-          <button class="btn pri" id="btnCamera">📷 Appareil photo</button>
-          <button class="btn" id="btnGallery">🖼 Galerie</button>
-        </div>
-        <div class="row">
-          <button class="btn dan" id="btnNewTarget">🆕 Nouvelle cible</button>
-          <button class="btn" id="btnSample">🧪 Exemple</button>
-        </div>
-        <p class="hint">Pour la série suivante, re-photographiez la <b>même cible</b> : les impacts déjà enregistrés sont reconnus et ne sont pas recomptés.</p>
+        <div class="card-h"><i data-ic="bulb"></i><h3>Diagnostic</h3></div>
+        <div class="diag" id="diag"><p class="hint">Les conseils apparaissent après l'analyse.</p></div>
       </div>
       <details class="card">
-        <summary>Filtres d'affichage</summary>
-        <label class="f">Mode<select id="viewMode">
-          <option value="normal">Originale</option><option value="enhanced">Contraste renforcé</option>
-          <option value="binary">Binaire (seuil)</option><option value="negative">Négatif</option><option value="negative-enhanced">Négatif renforcé</option>
-        </select></label>
-        <label class="f">Luminosité <span id="brightnessVal">100%</span><input type="range" id="brightness" min="40" max="200" value="100"></label>
-        <label class="f">Contraste <span id="contrastVal">100%</span><input type="range" id="contrast" min="40" max="350" value="100"></label>
-        <label class="f">Seuil binaire <span id="thresholdVal">90</span><input type="range" id="threshold" min="10" max="240" value="90"></label>
-        <button class="btn" id="btnDark">🔦 Zoomer et éclaircir le noir (voir les trous)</button>
-        <button class="btn" id="btnResetFilter">↺ Réinitialiser les filtres</button>
+        <summary><i data-ic="list"></i>Détail des impacts</summary>
+        <div class="list" id="impList"></div>
       </details>
-    </section>
+    </aside>
+  </section>
 
-    <!-- ② CIBLE -->
-    <section class="panel" data-panel="cible">
-      <div class="card">
-        <h3>Discipline</h3>
-        <div class="row">
-          <label class="f">Discipline<select id="discipline">
-            <option value="pistolet">Pistolet (ISSF)</option><option value="carabine">Carabine (ISSF)</option>
-            <option value="arc_pointe">Arc à lames de pointe</option><option value="arc_epaule">Arc à lames d'épaule</option>
-            <option value="arc_compound">Arc compound</option><option value="arbalete">Arbalète</option><option value="autre">Autre</option>
-          </select></label>
-          <label class="f">Distance<select id="distance">
-            <option value="10">10 m</option><option value="18">18 m</option><option value="20">20 m</option><option value="25" selected>25 m</option>
-            <option value="30">30 m</option><option value="50">50 m</option><option value="70">70 m</option><option value="90">90 m</option><option value="custom">Autre…</option>
-          </select></label>
-        </div>
-        <input type="number" id="distanceCustom" placeholder="Distance en mètres" hidden>
-        <label class="f">Modèle de cible<select id="model"><option value="auto">Automatique (selon discipline et distance)</option><option value="ap10">ISSF pistolet 10 m (air)</option><option value="pp25">ISSF pistolet 25/50 m précision (C50)</option><option value="rf25">ISSF pistolet vitesse 25 m</option><option value="ar10">ISSF carabine 10 m (air)</option><option value="r50">ISSF carabine 50 m</option><option value="r300">ISSF carabine 300 m</option><option value="wa40">Arc — blason 40 cm</option><option value="wa60">Arc — blason 60 cm</option><option value="wa80">Arc — blason 80 cm</option><option value="wa122">Arc — blason 122 cm</option><option value="autre">Autre cible</option></select></label>
-        <div class="row">
-          <label class="f">Largeur d'anneau (mm)<input type="number" id="ringMm" step="0.1" min="0.5"></label>
-          <label class="f">Diamètre impact (mm)<input type="number" id="calMm" step="0.1" min="1"></label>
-        </div>
-        <label class="f">Limite de référence<select id="ringSelect">
-          <option value="0" selected>Bord du visuel (noir, ou jaune à l'arc)</option>
-          <option value="1">Bord extérieur de l'anneau 1</option><option value="2">Bord de l'anneau 2</option><option value="3">Bord de l'anneau 3 (noir carabine 50 m)</option>
-          <option value="4">Bord de l'anneau 4 (noir carabine 10 m)</option><option value="5">Bord de l'anneau 5</option><option value="6">Bord de l'anneau 6</option>
-          <option value="7">Bord de l'anneau 7 (noir pistolet)</option><option value="8">Bord de l'anneau 8</option><option value="9">Bord de l'anneau 9 (jaune arc)</option><option value="10">Bord de l'anneau 10</option>
-        </select></label>
-      </div>
-      <div class="card">
-        <h3>Calibrage</h3>
-        <button class="btn pri" id="btnAuto">✨ Proposer le centre et la limite</button>
-        <div class="row">
-          <button class="btn" id="btnCenter">① Placer le centre</button>
-          <button class="btn" id="btnRing">② Placer la limite</button>
-        </div>
-        <button class="btn" id="btn3pts">◯ 3 points ou plus sur le bord de la limite</button>
-        <button class="btn" id="btnRefine">🎯 Affiner sur les anneaux imprimés</button>
-        <p class="hint">Posez le doigt, faites glisser en regardant la loupe, relâchez pour valider. Le mode « 3 points » est le plus précis : touchez le bord de l'anneau choisi en plusieurs endroits.</p>
-        <div class="adj">
-          <div class="pad">
-            <span></span><button id="nu" aria-label="Centre vers le haut">↑</button><span></span>
-            <button id="nl" aria-label="Centre vers la gauche">←</button><button id="nc" aria-label="Recentrer la vue" title="Recentrer">◎</button><button id="nr" aria-label="Centre vers la droite">→</button>
-            <span></span><button id="nd" aria-label="Centre vers le bas">↓</button><span></span>
-          </div>
-          <div class="rsz"><button id="rp" aria-label="Agrandir les anneaux">＋</button><span class="hint">anneaux</span><button id="rm" aria-label="Réduire les anneaux">－</button></div>
-        </div>
-        <div class="row">
-          <button class="btn" id="btnWarp">📐 Redresser (4 pts)</button>
-          <button class="btn" id="btnUnwarp">↺ Annuler redress.</button>
-        </div>
-        <button class="btn dan" id="btnResetCal">Réinitialiser le calibrage</button>
-      </div>
-    </section>
-
-    <!-- ③ IMPACTS -->
-    <section class="panel" data-panel="impacts">
-      <div class="card">
-        <h3>Détection</h3>
-        <div class="row">
-          <label class="f">Impacts de la série<input type="number" id="expected" min="0" max="100" value="10"></label>
-          <label class="f">Sensibilité <span id="sensVal">25</span><input type="range" id="sensitivity" min="8" max="70" value="25"></label>
-        </div>
-        <p class="hint">Sensibilité : valeur basse = détecte plus (et plus de faux impacts).</p>
-        <button class="btn pri" id="btnDetect">🤖 Détecter les impacts</button>
-        <button class="btn warn" id="btnAmb" hidden>⚠️ Zones à vérifier</button>
-        <div class="row">
-          <button class="btn" id="btnManual">👆 Ajouter</button>
-          <button class="btn" id="btnDelete">🗑 Supprimer</button>
-        </div>
-        <div class="row3">
-          <button class="btn" id="btnUndo">↶ Annuler</button>
-          <button class="btn" id="btnRedo">↷ Rétablir</button>
-          <button class="btn dan" id="btnClear">Tout effacer</button>
-        </div>
-        <div class="legend"><span><i style="border-color:#3fb950"></i>Nouveau</span><span><i style="border-color:#f85149"></i>Séries précédentes</span><span><i style="border-color:#d29922"></i>À vérifier</span></div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ④ RÉSULTATS -->
-  <aside class="panel" data-panel="res">
+  <!-- ===================== SUIVI ===================== -->
+  <section class="view" data-view="suivi">
+    <h1 class="vt">Suivi</h1>
     <div class="card">
-      <h3>Résultats de la série</h3>
-      <div class="stats">
-        <div class="stat big"><div><div class="l">Score</div><div class="v" id="sTotal">—</div></div><div style="text-align:right"><div class="l">Décimal</div><div class="v" style="font-size:18px;color:var(--tx)" id="sDec">—</div></div></div>
-        <div class="stat"><div class="l">Impacts</div><div class="v" id="sN">0</div></div>
-        <div class="stat"><div class="l">Moyenne</div><div class="v" id="sAvg">—</div></div>
-        <div class="stat"><div class="l">Point moyen (MPI)</div><div class="v" id="sMpi">—</div></div>
-        <div class="stat"><div class="l">Groupement</div><div class="v" id="sGroup">—</div></div>
-        <div class="stat"><div class="l">Rayon moyen</div><div class="v" id="sMr">—</div></div>
-        <div class="stat"><div class="l">Régularité</div><div class="v" id="sReg">—</div></div>
-      </div>
-      <button class="btn ok" id="btnValidate">✅ Valider la série</button>
-      <button class="btn" id="btnShare">📤 Partager mon résultat</button>
-    </div>
-    <div class="card">
-      <h3>Diagnostic</h3>
-      <label class="chk"><input type="checkbox" id="leftHanded"> Tireur gaucher</label>
-      <div class="diag" id="diag"><p class="hint">Les conseils apparaissent après l'analyse.</p></div>
-    </div>
-    <details class="card">
-      <summary>Détail des impacts</summary>
-      <div class="list" id="impList"></div>
-    </details>
-    <div class="card">
-      <h3>Cible en cours</h3>
-      <div class="list" id="seriesList"></div>
-      <button class="btn" id="btnCompare">⇄ Comparer des séries</button>
-    </div>
-    <div class="card">
-      <h3>Tableau de bord</h3>
+      <div class="card-h"><i data-ic="chart"></i><h3>Tableau de bord</h3></div>
       <div id="dashStats"></div>
       <canvas class="chart" id="trendChart" width="640" height="280" hidden></canvas>
-      <p class="hint" id="heatTitle" hidden>Tous vos impacts dans cette discipline (point bleu = point moyen)</p>
-      <canvas class="chart" id="heatPlot" width="640" height="640" hidden style="max-width:340px;align-self:center"></canvas>
+      <p class="hint" id="heatTitle" hidden>Tous vos impacts dans cette discipline (croix bleue = point moyen)</p>
+      <canvas class="chart" id="heatPlot" width="640" height="640" hidden style="max-width:360px;align-self:center"></canvas>
     </div>
     <div class="card">
-      <h3>Suivi des tirs</h3>
+      <div class="card-h"><i data-ic="target"></i><h3>Cible en cours</h3></div>
+      <div class="list" id="seriesList"></div>
+      <button class="btn" id="btnCompare"><i data-ic="compare"></i>Comparer des séries</button>
+    </div>
+    <div class="card">
+      <div class="card-h"><i data-ic="calendar"></i><h3>Calendrier des tirs</h3></div>
       <div class="cal-head"><button id="calPrev" aria-label="Mois précédent">‹</button><b id="calTitle"></b><button id="calNext" aria-label="Mois suivant">›</button></div>
       <div class="cal" id="calGrid"></div>
       <div class="list" id="dayList"></div>
       <div class="spark" id="spark"></div>
       <div class="hint" id="histInfo">Aucune série enregistrée</div>
     </div>
-    <details class="card no-print">
-      <summary>Réglages, export et sauvegarde</summary>
-      <label class="f">Tireur<input type="text" id="shooter" placeholder="Optionnel"></label>
-      <div class="info" id="learnInfo"></div>
-      <button class="btn" id="btnLearnReset">🧠 Oublier l'apprentissage</button>
-      <label class="chk"><input type="checkbox" id="lineRule" checked> Une touche de ligne compte pour l'anneau supérieur</label>
-      <div class="row"><button class="btn" id="btnReport">📄 Rapport</button><button class="btn" id="btnPng">🖼 Image annotée</button></div>
-      <div class="row"><button class="btn" id="btnJson">💾 Sauvegarde</button><button class="btn" id="btnImport">📥 Importer</button></div>
-      <div class="row"><button class="btn" id="btnPrint">🖨 Imprimer / PDF</button><button class="btn dan" id="btnClearHist">Effacer l'historique</button></div>
-    </details>
-  </aside>
-</div>
+  </section>
 
-<div class="modal" id="ambModal" hidden>
-  <div class="sheet">
-    <h3 style="font-size:17px">⚠️ Zones à vérifier</h3>
-    <p class="hint">Ces zones contiennent probablement plusieurs impacts groupés ou un impact dans un trou existant. Indiquez combien de <b>nouveaux</b> impacts se trouvent dans chaque zone.</p>
-    <div id="ambList" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="row"><button class="btn" id="ambLater">Plus tard</button><button class="btn pri" id="ambOk">Valider</button></div>
-  </div>
-</div>
-<div class="modal" id="cmpModal" hidden>
-  <div class="sheet">
-    <h3 style="font-size:17px">⇄ Comparer deux séries</h3>
-    <div class="row">
-      <label class="f"><span style="color:#3fb950">● Série A</span><select id="cmpA"></select></label>
-      <label class="f"><span style="color:#58a6ff">● Série B</span><select id="cmpB"></select></label>
+  <!-- ===================== APPRENDRE ===================== -->
+  <section class="view" data-view="apprendre">
+    <h1 class="vt">Apprendre</h1>
+    <div class="seg" id="learnSeg"><button data-l="cours" class="on">Cours</button><button data-l="drills">Exercices</button></div>
+    <div class="chips" id="learnFilter"></div>
+    <div class="grid-cards" id="learnList"></div>
+  </section>
+
+  <!-- ===================== ARMES ===================== -->
+  <section class="view" data-view="armes">
+    <h1 class="vt">Mes armes</h1>
+    <p class="hint">Ajoutez vos armes et munitions : le diagnostic s'adapte (recul, type de détente, organes de visée) et les corrections sont données en clics.</p>
+    <div class="list big" id="armList"></div>
+    <button class="btn pri" id="btnArmAdd"><i data-ic="plus"></i>Ajouter une arme</button>
+  </section>
+
+  <!-- ===================== PLUS ===================== -->
+  <section class="view" data-view="plus">
+    <h1 class="vt">Plus</h1>
+    <div class="menu">
+      <button class="menu-i" id="btnTimer"><i data-ic="timer"></i><span><b>Minuteur de tir</b><small>Bips de départ et de fin pour le tir de vitesse</small></span></button>
+      <button class="menu-i" id="profBtn2"><i data-ic="users"></i><span><b>Tireurs</b><small>Un suivi séparé par personne</small></span></button>
+      <button class="menu-i" id="btnIntro2"><i data-ic="help"></i><span><b>Tutoriel</b><small>Revoir la prise en main</small></span></button>
+      <button class="menu-i" id="btnAbout2"><i data-ic="shield"></i><span><b>Confidentialité et à propos</b><small>Vos données restent sur votre téléphone</small></span></button>
     </div>
-    <canvas id="cmpPlot" width="640" height="640" style="width:100%;max-width:330px;align-self:center;border-radius:12px"></canvas>
-    <div id="cmpTable"></div>
-    <div class="row"><button class="btn" id="cmpRevA">👁 Revoir A</button><button class="btn" id="cmpRevB">👁 Revoir B</button></div>
-    <button class="btn pri" id="cmpClose">Fermer</button>
+    <div class="card">
+      <div class="card-h"><i data-ic="save"></i><h3>Sauvegarde et export</h3></div>
+      <div class="row"><button class="btn" id="btnJson">Sauvegarder</button><button class="btn" id="btnImport">Restaurer</button></div>
+      <div class="row"><button class="btn" id="btnReport">Rapport texte</button><button class="btn" id="btnPng">Image annotée</button></div>
+      <button class="btn" id="btnPrint">Imprimer / PDF</button>
+    </div>
+    <div class="card">
+      <div class="card-h"><i data-ic="sliders"></i><h3>Réglages</h3></div>
+      <label class="f">Nom affiché sur les rapports<input type="text" id="shooter" placeholder="Optionnel"></label>
+      <label class="chk"><input type="checkbox" id="leftHanded"> Tireur gaucher</label>
+      <label class="chk"><input type="checkbox" id="lineRule" checked> Une touche de ligne compte pour l'anneau supérieur</label>
+      <div class="info" id="learnInfo"></div>
+      <button class="btn ghost" id="btnLearnReset">Oublier l'apprentissage</button>
+      <button class="btn ghost dan" id="btnClearHist">Effacer tout l'historique</button>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <button data-view="analyse" class="on"><i data-ic="target"></i><span>Analyse</span></button>
+  <button data-view="suivi"><i data-ic="chart"></i><span>Suivi</span></button>
+  <button data-view="apprendre"><i data-ic="book"></i><span>Apprendre</span></button>
+  <button data-view="armes"><i data-ic="crosshair"></i><span>Armes</span></button>
+  <button data-view="plus"><i data-ic="menu"></i><span>Plus</span></button>
+</nav>
+
+<!-- ===================== FEUILLES ===================== -->
+<div class="modal" id="ambModal" hidden><div class="sheet">
+  <h2>Zones à vérifier</h2>
+  <p class="hint">Plusieurs impacts groupés, ou un impact dans un trou existant. Indiquez combien de <b>nouveaux</b> impacts se trouvent dans chaque zone.</p>
+  <div id="ambList" class="col"></div>
+  <div class="row"><button class="btn" id="ambLater">Plus tard</button><button class="btn pri" id="ambOk">Valider</button></div>
+</div></div>
+
+<div class="modal" id="cmpModal" hidden><div class="sheet">
+  <h2>Comparer deux séries</h2>
+  <div class="row">
+    <label class="f"><span style="color:#34d399">● Série A</span><select id="cmpA"></select></label>
+    <label class="f"><span style="color:#4f8cff">● Série B</span><select id="cmpB"></select></label>
   </div>
-</div>
-<div class="modal" id="profModal" hidden>
-  <div class="sheet">
-    <h3 style="font-size:17px">👤 Tireurs sur cet appareil</h3>
-    <p class="hint">Chaque tireur a son propre suivi (séries, calendrier, photos), enregistré uniquement sur cet appareil.</p>
-    <div class="list" id="profList" style="max-height:none"></div>
-    <div class="row"><input type="text" id="profName" placeholder="Nom du nouveau tireur"><button class="btn pri" id="profAdd">＋ Ajouter</button></div>
-    <div class="info" id="storeInfo"></div>
-    <div class="row"><button class="btn" id="profExport">💾 Sauvegarder</button><button class="btn" id="profImport">📥 Restaurer</button></div>
-    <button class="btn" id="profClose">Fermer</button>
+  <canvas id="cmpPlot" width="640" height="640" style="width:100%;max-width:330px;align-self:center;border-radius:16px"></canvas>
+  <div id="cmpTable"></div>
+  <div class="row"><button class="btn" id="cmpRevA">Revoir A</button><button class="btn" id="cmpRevB">Revoir B</button></div>
+  <button class="btn pri" id="cmpClose">Fermer</button>
+</div></div>
+
+<div class="modal" id="profModal" hidden><div class="sheet">
+  <h2>Tireurs sur cet appareil</h2>
+  <p class="hint">Chaque tireur a son propre suivi (séries, calendrier, photos, armes), enregistré uniquement sur cet appareil.</p>
+  <div class="list" id="profList" style="max-height:none"></div>
+  <div class="row"><input type="text" id="profName" placeholder="Nom du nouveau tireur"><button class="btn pri" id="profAdd">Ajouter</button></div>
+  <div class="info" id="storeInfo"></div>
+  <div class="row"><button class="btn" id="profExport">Sauvegarder</button><button class="btn" id="profImport">Restaurer</button></div>
+  <button class="btn" id="profClose">Fermer</button>
+</div></div>
+
+<div class="modal" id="introModal" hidden><div class="sheet">
+  <div class="slide" id="introSlide"></div>
+  <div class="dots" id="introDots"></div>
+  <div class="row"><button class="btn" id="introSkip">Passer</button><button class="btn pri" id="introNext">Suivant</button></div>
+</div></div>
+
+<div class="modal" id="aboutModal" hidden><div class="sheet">
+  <div class="brand center"><img src="icons/icon-192.png" alt="" width="48" height="48"><div><b style="font-size:24px">Mouche</b><small>Analyse de cibles de tir · version 8</small></div></div>
+  <div class="info"><b>Confidentialité.</b> Mouche fonctionne entièrement sur votre téléphone. Aucune photo ni aucun résultat n'est envoyé sur Internet. Pas de compte, pas de publicité, pas de traceur.</div>
+  <div class="info"><b>Vos données.</b> Elles restent sur cet appareil, par tireur. Installez Mouche sur l'écran d'accueil pour qu'elles soient conservées, et faites une sauvegarde de temps en temps.</div>
+  <div class="info"><b>Sécurité.</b> Les exercices de tir à sec se font arme vérifiée vide, munitions dans une autre pièce. Respectez toujours les règles de votre stand et de votre club.</div>
+  <p class="hint">Mouche est un outil d'entraînement. Les scores calculés sont indicatifs et ne remplacent pas un arbitrage officiel. Mouche n'est pas affilié à l'ISSF, à World Archery ni à une fédération.</p>
+  <div class="row"><button class="btn" id="btnIntro">Revoir le tutoriel</button><button class="btn pri" id="aboutClose">Fermer</button></div>
+</div></div>
+
+<div class="modal" id="learnModal" hidden><div class="sheet">
+  <div id="learnBody" class="learn-body"></div>
+  <button class="btn pri" id="learnClose">Fermer</button>
+</div></div>
+
+<div class="modal" id="armModal" hidden><div class="sheet">
+  <h2 id="armTitle">Ajouter une arme</h2>
+  <input type="text" id="armSearch" placeholder="Rechercher (ex. Pardini, Glock, Anschütz…)">
+  <div class="list" id="armDb" style="max-height:34vh"></div>
+  <div id="armForm" class="col" hidden>
+    <div class="info" id="armPicked"></div>
+    <label class="f">Nom (pour vous retrouver)<input type="text" id="armName"></label>
+    <label class="f">Munition<select id="armAmmo"></select></label>
+    <div class="row">
+      <label class="f">Valeur d'un clic<input type="number" id="armClick" step="0.01" min="0" placeholder="voir notice"></label>
+      <label class="f">Unité<select id="armClickUnit"><option value="moa">MOA</option><option value="mrad">MRAD</option><option value="mm10">mm à 10 m</option><option value="mm25">mm à 25 m</option><option value="mm50">mm à 50 m</option><option value="mm100">mm à 100 m</option></select></label>
+    </div>
+    <p class="hint">La valeur d'un clic figure dans la notice de vos organes de visée (ex. ¼ MOA pour beaucoup de lunettes). Laissez vide si vous ne la connaissez pas.</p>
+    <button class="btn pri" id="armSave">Enregistrer</button>
   </div>
-</div>
-<div class="modal" id="introModal" hidden>
-  <div class="sheet">
-    <div class="slide" id="introSlide"></div>
-    <div class="dots" id="introDots"></div>
-    <div class="row"><button class="btn" id="introSkip">Passer</button><button class="btn pri" id="introNext">Suivant</button></div>
+  <button class="btn" id="armClose">Fermer</button>
+</div></div>
+
+<div class="modal" id="timerModal" hidden><div class="sheet timer">
+  <h2>Minuteur de tir</h2>
+  <div class="timer-disp" id="timerDisp">8,0</div>
+  <div class="timer-state" id="timerState">Prêt</div>
+  <div class="row">
+    <label class="f">Durée<select id="timerTime"><option value="8">8 s</option><option value="6">6 s</option><option value="4">4 s</option><option value="10">10 s</option><option value="20">20 s</option><option value="150">150 s</option><option value="3">3 s</option></select></label>
+    <label class="f">Départ<select id="timerDelay"><option value="rand">Aléatoire 3 à 5 s</option><option value="3">Après 3 s</option><option value="7">Après 7 s (vitesse ISSF)</option><option value="0">Immédiat</option></select></label>
   </div>
-</div>
-<div class="modal" id="aboutModal" hidden>
-  <div class="sheet">
-    <div class="brand" style="justify-content:center"><img src="icons/icon-192.png" alt="" width="44" height="44"><b style="font-size:24px">Mouche</b></div>
-    <p style="text-align:center" class="hint">Analyse de cibles de tir · version 7</p>
-    <div class="info"><b>🔒 Confidentialité.</b> Mouche fonctionne entièrement sur votre téléphone. Aucune photo ni aucun résultat n'est envoyé sur Internet. Pas de compte, pas de publicité, pas de traceur.</div>
-    <div class="info"><b>💾 Vos données.</b> Elles restent sur cet appareil, par tireur. Installez Mouche sur l'écran d'accueil pour qu'elles soient conservées, et faites une sauvegarde de temps en temps (👤 → Sauvegarder).</div>
-    <div class="info"><b>📸 Bonnes photos.</b> Bien en face, cible entière, lumière homogène sans reflet, téléphone stable. Pas de zoom numérique : rapprochez-vous.</div>
-    <p class="hint">Mouche est un outil d'entraînement. Les scores calculés sont indicatifs et ne remplacent pas un arbitrage officiel. Mouche n'est pas affilié à l'ISSF ni à une fédération.</p>
-    <div class="row"><button class="btn" id="btnIntro">🎓 Revoir le tutoriel</button><button class="btn pri" id="aboutClose">Fermer</button></div>
-  </div>
-</div>
+  <button class="btn pri big" id="timerStart">Démarrer</button>
+  <button class="btn" id="timerClose">Fermer</button>
+</div></div>
+
 <div id="toasts"></div>
 <input type="file" id="fileInput" accept="image/*" hidden>
 <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
@@ -480,7 +662,7 @@ const S = {
   mode: 'idle', warpPts: [], aim: null,
   align: { th: 0, tx: 0, ty: 0 },
   target: { series: [] }, history: [], reserve: [],
-  darkBoost: false, circPts: [], learn: {}, detSet: null, review: null, stash: null, calMonth: null, calDay: null
+  darkBoost: false, grid: false, arms: [], circPts: [], learn: {}, detSet: null, review: null, stash: null, calMonth: null, calDay: null
 };
 const V = { k: 1, tx: 0, ty: 0, fitK: 1 };
 
@@ -739,6 +921,7 @@ function label(c, t, x, y, col, u) {
 function drawMarks(c, map, k, u) {
   const cal = S.cal, p = P();
   const rh = hasCal() ? holeR() : 4;
+  drawGrid(c, map, k, u);
   if (hasCenter()) {
     const [sx, sy] = map(cal.cx, cal.cy);
     if (cal.w && p.edge === 0) ring(c, sx, sy, blackR() * k, 'rgba(255,193,7,.95)', 2 * u);
@@ -776,6 +959,11 @@ function drawOverlay() {
   if (!S.src) return;
   ovCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
   drawMarks(ovCtx, (x, y) => [V.tx + x * V.k, V.ty + y * V.k], V.k, 1);
+  const cp = $('coordPill');
+  if (cp && loupe.style.display !== 'block') {
+    if (S.grid && hasCal()) { const pxmm = V.k / mmpp(), st = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200].find(v => v * pxmm >= 14) || 200; cp.textContent = `Grille : carré de ${String(st).replace('.', ',')} mm · grand carré ${String(st * 5).replace('.', ',')} mm`; cp.hidden = false; }
+    else cp.hidden = true;
+  }
 }
 // drawImage avec rectangle source borné (Safari n'affiche rien si la source déborde)
 function safeDraw(c, src, sx, sy, sw, sh, dx, dy, dw, dh) {
@@ -785,7 +973,8 @@ function safeDraw(c, src, sx, sy, sw, sh, dx, dy, dw, dh) {
   c.drawImage(src, x0, y0, x1 - x0, y1 - y0, dx + (x0 - sx) * fx, dy + (y0 - sy) * fy, (x1 - x0) * fx, (y1 - y0) * fy);
 }
 function showLoupe(sx, sy) {
-  const L = 150, [ix, iy] = toImg(sx, sy), m = clamp(V.k * 3, 2.5, 24);
+  const L = 160, [ix, iy] = toImg(sx, sy), m = clamp(V.k * 3, 2.5, 24);
+  if (hasCal()) { $('coordPill').textContent = coordText(ix, iy); $('coordPill').hidden = false; }
   if (loupe.width !== L * DPR) { loupe.width = loupe.height = L * DPR; }
   const { w, h } = stageSize();
   let lx = sx - L / 2, ly = sy - L - 55;
@@ -803,7 +992,7 @@ function showLoupe(sx, sy) {
   cross(c, L / 2, L / 2, 22, 'rgba(0,0,0,.8)', 4, 4);
   cross(c, L / 2, L / 2, 22, '#39c5ff', 1.6, 4);
 }
-function hideLoupe() { loupe.style.display = 'none'; }
+function hideLoupe() { loupe.style.display = 'none'; const cp = $('coordPill'); if (cp) cp.hidden = true; }
 
 // ============ TRAITEMENT D'IMAGE ============
 function grayOf(data, n) {
@@ -1603,7 +1792,7 @@ function openAmb() {
     const info = document.createElement('div');
     info.innerHTML = `<b>Zone ${i + 1}</b><div class="hint">${z.olds.length ? z.olds.length + ' impact(s) ancien(s) (rouge) · ' : ''}estimation automatique : ${z.est}</div>
       <div class="stepper"><button data-d="-1">−</button><b>${z.est}</b><button data-d="1">+</button><span class="hint">nouveau(x)</span></div>`;
-    info.querySelectorAll('button').forEach(b => b.onclick = () => { z.est = clamp(z.est + +b.dataset.d, 0, 20); info.querySelector('b + .hint, .stepper b').textContent = z.est; });
+    info.querySelectorAll('button').forEach(b => b.onclick = () => { z.est = clamp(z.est + +b.dataset.d, 0, 20); info.querySelector('.stepper b').textContent = z.est; });
     row.append(cv, info); list.appendChild(row);
   });
   $('ambModal').hidden = false;
@@ -1697,7 +1886,7 @@ function diag(st) {
   if (st.n < 3) { el.innerHTML = `<p class="hint">Au moins 3 impacts sont nécessaires pour un diagnostic fiable (${st.n} actuellement).</p>`; return; }
   const left = $('leftHanded').checked, w = S.cal.w;
   const offPx = hyp(st.m.x - S.cal.cx, st.m.y - S.cal.cy);
-  let html = '';
+  let html = '', dirKey = 'center';
   if (offPx <= Math.max(0.5 * st.mr, 0.5 * w)) {
     html = `<h4 class="good">✅ Centrage correct</h4><p>Point moyen à ${fmm(st.off)} du centre : décalage non significatif par rapport à la dispersion.</p>`;
   } else {
@@ -1705,17 +1894,21 @@ function diag(st) {
     const keys = ['droite', 'hautDroite', 'haut', 'hautGauche', 'gauche', 'basGauche', 'bas', 'basDroite'];
     let key = keys[Math.round(ang / 45) % 8];
     const shown = key;
-    if (left) key = key.replace('Droite', '#').replace('Gauche', 'Droite').replace('#', 'Gauche').replace(/^droite$/, '#').replace(/^gauche$/, 'droite').replace('#', 'gauche');
+    if (left) key = { droite: 'gauche', gauche: 'droite', hautDroite: 'hautGauche', hautGauche: 'hautDroite', basDroite: 'basGauche', basGauche: 'basDroite', haut: 'haut', bas: 'bas' }[key];
+    dirKey = key;
     const a = (ADVICE[$('discipline').value] || ADVICE.autre)[key] || ADVICE.autre[key];
     const lbl = { hautDroite: 'haut-droite', haut: 'haut', hautGauche: 'haut-gauche', gauche: 'gauche', basGauche: 'bas-gauche', bas: 'bas', basDroite: 'bas-droite', droite: 'droite' }[shown];
     html = `<h4>${a.title}</h4><p><b>Position :</b> point moyen décalé de ${fmm(st.off)} vers ${lbl} (${st.clock}h).</p>
       <p><b>Cause probable :</b> ${a.cause}</p><ul>${a.corrections.map(c => `<li>${c}</li>`).join('')}</ul>
-      <div class="drill"><b>🎯 Exercice :</b> ${a.drills}</div>
+      <div class="drill"><b>Exercice :</b> ${a.drills}</div>
       <p class="hint" style="margin-top:6px">Si le décalage est identique d'une série à l'autre et la technique constante, réglez plutôt les organes de visée : ramener le groupement de ${fmm(Math.abs(st.dx))} vers la ${st.dx > 0 ? 'gauche' : 'droite'} et ${fmm(Math.abs(st.dy))} vers le ${st.dy > 0 ? 'haut' : 'bas'}.</p>`;
   }
   if (st.mrR > 1.2) html += `<div class="drill"><b>Priorité : le groupement.</b> Rayon moyen ${fmm(st.mrmm)} (${st.mrR.toFixed(1)} anneau). Avant de corriger un décalage, travaillez la régularité : même position, même départ du coup, même respiration.</div>`;
-  else if (offPx <= Math.max(0.5 * st.mr, 0.5 * w)) html += `<div class="drill"><b>🎯 Prochain défi :</b> resserrer encore le groupement (rayon moyen actuel ${fmm(st.mrmm)}).</div>`;
+  else if (offPx <= Math.max(0.5 * st.mr, 0.5 * w)) html += `<div class="drill"><b>Prochain défi :</b> resserrer encore le groupement (rayon moyen actuel ${fmm(st.mrmm)}).</div>`;
   if (st.flyers) html += `<p class="hint">${st.flyers} coup(s) isolé(s) exclu(s) du calcul du point moyen.</p>`;
+  html += speedTips(st) + armTips(dirKey, st);
+  const dr = DRILLS.find(d => d.id === (st.mrR > 1.2 ? 'blanc' : drillFor(dirKey)));
+  if (dr) html += `<button class="btn" style="margin-top:10px" data-learn="drills:${dr.id}">${ICON(dr.ic)}Exercice conseillé : ${dr.t}</button>`;
   html += `<p class="hint" style="margin-top:6px">Conseils pour un tireur ${left ? 'gaucher' : 'droitier'}.</p>`;
   el.innerHTML = html;
 }
@@ -1724,20 +1917,21 @@ function diag(st) {
 function save() {
   try {
     localStorage.setItem(dataKey(), JSON.stringify({
-      history: S.history, target: S.target, learn: S.learn || {},
-      params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'model', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
+      history: S.history, target: S.target, learn: S.learn || {}, arms: S.arms || [],
+      params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'model', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity', 'shotMode', 'seriesTime', 'armSel'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
     }));
   } catch (e) { console.warn('stockage indisponible', e); }
 }
 function loadSaved() {
   try {
-    S.history = []; S.target = { id: uid(), series: [] }; S.learn = {};
+    S.history = []; S.target = { id: uid(), series: [] }; S.learn = {}; S.arms = []; renderArmSel();
     const raw = localStorage.getItem(dataKey());
     if (raw) {
       const d = JSON.parse(raw);
       S.history = Array.isArray(d.history) ? d.history : [];
       S.target = d.target && Array.isArray(d.target.series) ? d.target : { series: [] };
       S.learn = d.learn || {};
+      S.arms = Array.isArray(d.arms) ? d.arms : []; renderArmSel();
       const p = d.params || {};
       Object.entries(p).forEach(([k, v]) => { const e = $(k); if (!e) return; if (e.type === 'checkbox') e.checked = !!v; else if (v != null && v !== '') e.value = v; });
     } else {
@@ -1749,6 +1943,7 @@ function loadSaved() {
   $('distanceCustom').hidden = $('distance').value !== 'custom';
   if (!$('ringMm').value) applyPreset();
   $('sensVal').textContent = $('sensitivity').value;
+  syncMode();
   S.history.forEach(h => { if (!h.id) h.id = uid(); });
   if (!S.target.id) S.target.id = uid();
   S.target.series.forEach(t => { if (!t.id) { t.id = uid(); t.targetId = S.target.id; } });
@@ -1759,7 +1954,7 @@ function validateSeries() {
   if (!S.target.id) S.target.id = uid();
   const w = S.cal.w;
   const imps = S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: +o.x.toFixed(4), dy: +o.y.toFixed(4), score: i.score, dec: i.dec }; });
-  const rec = { id: uid(), targetId: S.target.id, num: S.target.series.length + 1, date: new Date().toISOString(), model: preset().id, x: st.xs, discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1), impacts: imps };
+  const rec = { id: uid(), targetId: S.target.id, num: S.target.series.length + 1, date: new Date().toISOString(), model: preset().id, x: st.xs, mode: $('shotMode').value, time: $('shotMode').value === 'vitesse' ? +$('seriesTime').value : null, arm: (activeArm() || {}).name || null, discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1), impacts: imps };
   storePhoto(rec.id);
   learnFrom(); S.detSet = null;
   S.target.series.push(rec);
@@ -1815,7 +2010,7 @@ function switchProfile(id) {
   toast('Tireur : ' + profName(), 'ok');
 }
 function renderProfiles() {
-  $('profBtn').textContent = '👤 ' + profName();
+  $('profBtn').textContent = profName();
   $('profList').innerHTML = PROF.list.map(p => {
     let n = 0; try { n = (JSON.parse(localStorage.getItem('tir_v4_' + p.id) || '{}').history || []).length; } catch (e) {}
     if (p.id === PROF.cur) n = S.history.length;
@@ -1872,7 +2067,7 @@ async function review(id) {
     impacts: ph.imps.map(([x, y, sc, dec]) => ({ x, y, score: sc, dec, flag: '' })) });
   sizeImgCanvas(); $('stageEmpty').hidden = true; renderView(); fitView();
   $('cmpModal').hidden = true; $('bannerDone').textContent = 'Retour';
-  refresh(); goStep('res'); showStage();
+  setView('analyse'); refresh(); goStep('res'); showStage();
   banner(`👁 Série ${rec.num || ''} du ${fdate(rec.date)} · ${rec.total} pts (lecture seule)`, 'act');
 }
 function endReview() {
@@ -2053,27 +2248,407 @@ function setupInstall() {
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installTxt').textContent = 'Installez Mouche comme une application : accès direct, hors ligne, données conservées.'; $('btnInstall').hidden = false; $('installCard').hidden = false; });
 }
 const SLIDES = [
-  ['🎯', 'Bienvenue sur Mouche', ['Analysez vos cibles de tir en une photo : score, groupement, conseils.', 'Suivez votre progression séance après séance.', 'Gratuit, sans compte : tout reste sur votre téléphone.']],
-  ['📸', 'Une bonne photo', ['Téléphone bien <b>en face</b> de la cible, cible <b>entière</b> dans l\'image.', 'Lumière homogène, sans reflet ni ombre forte.', 'Pas de zoom numérique : rapprochez-vous.']],
-  ['🎯', 'Calibrage automatique', ['Mouche trouve le centre et mesure les anneaux sur la photo.', 'Vérifiez avec la loupe ; si besoin, « ◯ 3 points sur le bord ».', '🔦 éclaircit le noir pour voir les trous.']],
-  ['🤖', 'Impacts et progression', ['Détection automatique ; les zones orange sont à confirmer.', 'Validez la série, puis photographiez la même cible pour la suivante.', 'Calendrier, comparaison, tableau de bord et carte à partager.']]
+  ['target', 'Bienvenue sur Mouche', ['Analysez vos cibles de tir en une photo : score, groupement, conseils.', 'Suivez votre progression séance après séance.', 'Gratuit, sans compte : tout reste sur votre téléphone.']],
+  ['camera', 'Une bonne photo', ['Téléphone bien <b>en face</b> de la cible, cible <b>entière</b> dans l\'image.', 'Lumière homogène, sans reflet ni ombre forte.', 'Pas de zoom numérique : rapprochez-vous.']],
+  ['crosshair', 'Calibrage automatique', ['Mouche trouve le centre et mesure les anneaux sur la photo.', 'Vérifiez avec la loupe et la grille de précision ; si besoin, « 3 points sur le bord ».', 'Le bouton soleil éclaircit le noir pour voir les trous.']],
+  ['chart', 'Impacts et progression', ['Détection automatique ; les zones orange sont à confirmer.', 'Validez la série, puis photographiez la même cible pour la suivante.', 'Calendrier, comparaison, tableau de bord et carte à partager.']]
 ];
 let slideI = 0;
 function showSlide() {
   const [ic, t, li] = SLIDES[slideI];
-  $('introSlide').innerHTML = `<div class="big">${ic}</div><h2>${t}</h2><ul>${li.map(l => `<li>${l}</li>`).join('')}</ul>`;
+  $('introSlide').innerHTML = `<div class="big">${ICON(ic)}</div><h2>${t}</h2><ul>${li.map(l => `<li>${l}</li>`).join('')}</ul>`;
   $('introDots').innerHTML = SLIDES.map((_, i) => `<i class="${i === slideI ? 'on' : ''}"></i>`).join('');
   $('introNext').textContent = slideI === SLIDES.length - 1 ? 'Commencer' : 'Suivant';
 }
 function openIntro() { slideI = 0; showSlide(); $('aboutModal').hidden = true; $('introModal').hidden = false; }
 function closeIntro() { $('introModal').hidden = true; try { localStorage.setItem('mouche_intro', '1'); } catch (e) {} }
 
+// ============ ICÔNES (traits vectoriels) ============
+const ICONS = {
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  dots: '<circle cx="7" cy="8" r="2"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="16" r="2"/><circle cx="17" cy="15" r="2"/>',
+  award: '<circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
+  redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>',
+  grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
+  fit: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7"/><path d="M12 17h.01"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
+  spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>',
+  refresh: '<path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/>',
+  sliders: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+  contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>',
+  circle: '<circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19" cy="15" r="1.6"/><circle cx="5" cy="15" r="1.6"/>',
+  crosshair: '<circle cx="12" cy="12" r="8"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  check: '<path d="m5 12 5 5 9-10"/>',
+  share: '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
+  bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  compare: '<path d="M7 4v16M17 4v16M3 8l4-4 4 4M13 16l4 4 4-4"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5a5 5 0 0 1 5.5 5"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  save: '<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  wind: '<path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/>',
+  hand: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7h-.5A6.5 6.5 0 0 1 4 15.5V12a1.5 1.5 0 0 1 3 0v1"/>',
+  feet: '<path d="M7 4c1.7 0 2.5 2 2.5 5S8.6 14 7 14 4.5 12 4.5 9 5.3 4 7 4zM16 8c1.7 0 2.5 2 2.5 5s-.9 5-2.5 5-2.5-2-2.5-5 .8-5 2.5-5z"/>',
+  bow: '<path d="M5 3c9 3 9 15 0 18M5 3v18M3 12h18M17 9l3 3-3 3"/>',
+  play: '<path d="M7 4v16l13-8z"/>',
+  bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  brain: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>',
+  wrench: '<path d="M14.7 6.3a4 4 0 0 0 5 5L22 14l-8 8-2.3-2.3a4 4 0 0 0-5-5L4 12l8-8z"/>'
+};
+const ICON = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+function paintIcons(root = document) { root.querySelectorAll('i[data-ic]').forEach(e => { if (!e.firstChild) e.innerHTML = ICON(e.dataset.ic); }); }
+
+// ============ NAVIGATION ============
+function setView(v) {
+  document.body.dataset.view = v;
+  document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  window.scrollTo({ top: 0 });
+  if (v === 'analyse' && S.src) setTimeout(() => { if (Math.abs(V.k - V.fitK) < 1e-6) fitView(); else drawOverlay(); }, 30);
+  if (v === 'apprendre') renderLearn();
+  if (v === 'armes') renderArms();
+}
+function renderSessionBar() {
+  const p = preset(), arm = activeArm(), vit = $('shotMode').value === 'vitesse';
+  const disc = $('discipline').selectedOptions[0].text;
+  const nm = p.nom.replace('ISSF ', '');
+  $('sessionBar').innerHTML = `<span class="pill acc">${ICON('target')}${disc} · ${dist()} m</span><span class="pill">${nm[0].toUpperCase() + nm.slice(1)}</span>`
+    + `<span class="pill ${vit ? 'spd' : ''}">${ICON(vit ? 'bolt' : 'crosshair')}${vit ? 'Vitesse · ' + $('seriesTime').value + ' s' : 'Précision'}</span>`
+    + `<span class="pill">${ICON('wrench')}${arm ? esc(arm.name) : 'Arme : non précisée'}</span>`;
+}
+
+// ============ GRILLE DE PRÉCISION (comme une carte : plus on zoome, plus elle est fine) ============
+function drawGrid(c, map, k, u) {
+  if (!S.grid || !hasCal()) return;
+  const mm = mmpp(), pxmm = k / mm;            // pixels écran par millimètre
+  const steps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200];
+  let st = steps.find(s => s * pxmm >= 14) || 200;   // pas fin lisible
+  const major = st * 5, [cx, cy] = map(S.cal.cx, S.cal.cy);
+  const R = (P().q + 10 - P().min) * S.cal.w * k + 2;
+  c.save(); c.beginPath(); c.arc(cx, cy, R, 0, Math.PI * 2); c.clip();
+  // damier très léger au pas principal
+  const n = Math.ceil(R / (major * pxmm));
+  c.fillStyle = 'rgba(120,170,255,0.06)';
+  for (let i = -n; i < n; i++) for (let j = -n; j < n; j++) if ((i + j) & 1) c.fillRect(cx + i * major * pxmm, cy + j * major * pxmm, major * pxmm, major * pxmm);
+  const lines = (step, col, lw) => {
+    const m = Math.ceil(R / (step * pxmm)); c.beginPath();
+    for (let i = -m; i <= m; i++) { const o = i * step * pxmm; c.moveTo(cx + o, cy - R); c.lineTo(cx + o, cy + R); c.moveTo(cx - R, cy + o); c.lineTo(cx + R, cy + o); }
+    c.strokeStyle = col; c.lineWidth = lw; c.stroke();
+  };
+  const fade = clamp((st * pxmm - 14) / 26, 0, 1);
+  lines(st, `rgba(140,190,255,${0.10 + 0.22 * fade})`, 0.8 * u);
+  lines(major, 'rgba(140,190,255,0.5)', 1.2 * u);
+  c.beginPath(); c.moveTo(cx - R, cy); c.lineTo(cx + R, cy); c.moveTo(cx, cy - R); c.lineTo(cx, cy + R);
+  c.strokeStyle = 'rgba(34,211,238,0.85)'; c.lineWidth = 1.6 * u; c.stroke();
+  // graduations en mm sur les axes
+  c.font = `600 ${Math.round(10.5 * u)}px ui-monospace,Menlo,monospace`; c.fillStyle = 'rgba(200,225,255,0.95)';
+  const lab = v => (Math.abs(v) < 1e-9 ? '0' : (v > 0 ? '+' : '−') + (Math.abs(v) >= 10 ? Math.round(Math.abs(v)) : +Math.abs(v).toFixed(1)));
+  const m2 = Math.ceil(R / (major * pxmm));
+  for (let i = -m2; i <= m2; i++) { if (!i) continue; const o = i * major * pxmm; c.fillText(lab(i * major), cx + o + 3 * u, cy - 4 * u); c.fillText(lab(-i * major), cx + 4 * u, cy + o - 3 * u); }
+  c.restore();
+}
+function coordText(x, y) {
+  if (!hasCal()) return '';
+  const mm = mmpp(), dx = (x - S.cal.cx) * mm, dy = (S.cal.cy - y) * mm, t = scoreAt(x, y);
+  const f = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(Math.abs(v) < 100 ? 1 : 0);
+  return `x ${f(dx)} mm · y ${f(dy)} mm · ${t.s === 0 ? 'hors' : t.dec.toFixed(1)}${t.x ? ' ✦' : ''}`;
+}
+
+// ============ TOAST AVEC ACTION ============
+function toastAction(msg, label, fn, ms = 4500) {
+  const el = document.createElement('div'); el.className = 'toast';
+  el.innerHTML = `<span>${msg}</span><button>${label}</button>`;
+  el.querySelector('button').onclick = () => { fn(); el.remove(); };
+  $('toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; }, ms - 300); setTimeout(() => el.remove(), ms);
+}
+
+// ============ ARMES ET MUNITIONS ============
+const AMMO = {
+  diab: { nom: 'Plomb diabolo 4,5 mm (tête plate match)', cal: 4.5, recul: 0, note: 'Testez 2 ou 3 marques de plombs (et de poids) : chaque arme a sa préférée. Écartez les plombs déformés.' },
+  lr_sv: { nom: '.22 LR match vitesse standard', cal: 5.6, recul: 1, note: 'Pour la précision, une munition subsonique « match » et un même lot pour la saison donnent les groupements les plus réguliers. Testez plusieurs lots si possible.' },
+  lr_hv: { nom: '.22 LR haute vitesse', cal: 5.6, recul: 1, note: 'Fiable dans les semi-automatiques mais moins régulière qu’une munition match : à réserver à l’entraînement.' },
+  lr_short: { nom: '.22 Short (vitesse olympique)', cal: 5.6, recul: 1, note: 'Très faible recul, utilisée par la plupart des pistolets de tir rapide olympique.' },
+  wc32: { nom: '.32 S&W Long wadcutter', cal: 8, recul: 2, note: 'Balle wadcutter : trous nets et faciles à lire. Recul modéré mais réel.' },
+  wc38: { nom: '.38 Special wadcutter', cal: 9.1, recul: 2, note: 'Munition de précision du revolver ; trous nets.' },
+  n9: { nom: '9×19 mm (Parabellum)', cal: 9, recul: 2, note: 'Recul franc : le défaut le plus fréquent est l’anticipation du départ (coups bas).' },
+  m357: { nom: '.357 Magnum', cal: 9.1, recul: 3, note: 'Recul et souffle importants : travaillez le tir à sec et la balle/douille factice.' },
+  a45: { nom: '.45 ACP', cal: 11.5, recul: 3, note: 'Recul lent mais important : prise ferme et constante.' },
+  r223: { nom: '.223 Rem / 5,56', cal: 5.7, recul: 1, note: 'Faible recul ; attention au vent au-delà de 100 m.' },
+  r308: { nom: '.308 Win / 7,62×51', cal: 7.8, recul: 3, note: 'Recul important : position et appui d’épaule constants.' },
+  r65: { nom: '6,5 Creedmoor', cal: 6.7, recul: 2, note: 'Bonne précision longue distance, recul modéré.' },
+  fleche: { nom: 'Flèches (arc)', cal: 7, recul: 0, note: 'Flèches identiques (spine, longueur, plumes) : une flèche qui s’écarte régulièrement est à vérifier.' }
+};
+// type de détente : match (réglable, très léger), percuteur (striker), sa (simple action), sada (simple/double), da_rev (revolver double action)
+const WEAPONS = [
+  { id: 'lp500', nom: 'Walther LP500', cat: 'Pistolet air 10 m', d: 'pistolet', trig: 'match', recul: 0, vis: 'mire', ammo: ['diab'] },
+  { id: 'evo10', nom: 'Steyr EVO 10', cat: 'Pistolet air 10 m', d: 'pistolet', trig: 'match', recul: 0, vis: 'mire', ammo: ['diab'] },
+  { id: 'cm162', nom: 'Morini CM 162EI', cat: 'Pistolet air 10 m', d: 'pistolet', trig: 'match', recul: 0, vis: 'mire', ammo: ['diab'] },
+  { id: 'p8x', nom: 'Feinwerkbau P8X', cat: 'Pistolet air 10 m', d: 'pistolet', trig: 'match', recul: 0, vis: 'mire', ammo: ['diab'] },
+  { id: 'k12', nom: 'Pardini K12', cat: 'Pistolet air 10 m', d: 'pistolet', trig: 'match', recul: 0, vis: 'mire', ammo: ['diab'] },
+  { id: 'sp', nom: 'Pardini SP', cat: 'Pistolet .22 LR 25 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv', 'lr_hv'] },
+  { id: 'gsp', nom: 'Walther GSP', cat: 'Pistolet .22 LR 25 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv', 'lr_hv', 'wc32'] },
+  { id: 'sp20', nom: 'Hämmerli SP20', cat: 'Pistolet .22 LR 25 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv', 'lr_hv'] },
+  { id: 'cm22', nom: 'Morini CM 22M', cat: 'Pistolet .22 LR 25 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv'] },
+  { id: 'mg2', nom: 'Matchguns MG2', cat: 'Pistolet .22 LR 25 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv'] },
+  { id: 'ssp', nom: 'Walther SSP', cat: 'Pistolet .22 LR 25 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv'] },
+  { id: 'aw93', nom: 'Feinwerkbau AW93', cat: 'Pistolet .22 LR 25 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv'] },
+  { id: 'sprf', nom: 'Pardini SP RF / Walther SSP-E', cat: 'Pistolet vitesse olympique', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_short', 'lr_sv'] },
+  { id: 'cm84', nom: 'Morini CM 84E (libre 50 m)', cat: 'Pistolet libre 50 m', d: 'pistolet', trig: 'match', recul: 1, vis: 'mire', ammo: ['lr_sv'] },
+  { id: 'hp32', nom: 'Pardini HP (.32)', cat: 'Pistolet percussion centrale 25 m', d: 'pistolet', trig: 'match', recul: 2, vis: 'mire', ammo: ['wc32'] },
+  { id: 'mk4', nom: 'Ruger Mark IV', cat: 'Pistolet .22 LR loisir', d: 'pistolet', trig: 'sa', recul: 1, vis: 'mire', ammo: ['lr_sv', 'lr_hv'] },
+  { id: 'buck', nom: 'Browning Buck Mark', cat: 'Pistolet .22 LR loisir', d: 'pistolet', trig: 'sa', recul: 1, vis: 'mire', ammo: ['lr_sv', 'lr_hv'] },
+  { id: 'g17', nom: 'Glock 17 / 19', cat: 'Pistolet 9 mm', d: 'pistolet', trig: 'percuteur', recul: 2, vis: 'mire', ammo: ['n9'] },
+  { id: 'p320', nom: 'SIG Sauer P320', cat: 'Pistolet 9 mm', d: 'pistolet', trig: 'percuteur', recul: 2, vis: 'mire', ammo: ['n9'] },
+  { id: 'mp9', nom: 'Smith & Wesson M&P9', cat: 'Pistolet 9 mm', d: 'pistolet', trig: 'percuteur', recul: 2, vis: 'mire', ammo: ['n9'] },
+  { id: 'cz75', nom: 'CZ 75 / Shadow 2', cat: 'Pistolet 9 mm', d: 'pistolet', trig: 'sada', recul: 2, vis: 'mire', ammo: ['n9'] },
+  { id: 'p226', nom: 'SIG Sauer P226', cat: 'Pistolet 9 mm', d: 'pistolet', trig: 'sada', recul: 2, vis: 'mire', ammo: ['n9'] },
+  { id: 'b92', nom: 'Beretta 92', cat: 'Pistolet 9 mm', d: 'pistolet', trig: 'sada', recul: 2, vis: 'mire', ammo: ['n9'] },
+  { id: 'hkp30', nom: 'Heckler & Koch P30 / VP9', cat: 'Pistolet 9 mm', d: 'pistolet', trig: 'percuteur', recul: 2, vis: 'mire', ammo: ['n9'] },
+  { id: 'c1911', nom: 'Colt 1911 (et dérivés)', cat: 'Pistolet .45 / 9 mm', d: 'pistolet', trig: 'sa', recul: 3, vis: 'mire', ammo: ['a45', 'n9'] },
+  { id: 'sw686', nom: 'Smith & Wesson 686', cat: 'Revolver .357 / .38', d: 'pistolet', trig: 'da_rev', recul: 2, vis: 'mire', ammo: ['wc38', 'm357'] },
+  { id: 'mr73', nom: 'Manurhin MR73', cat: 'Revolver .357 / .38', d: 'pistolet', trig: 'da_rev', recul: 2, vis: 'mire', ammo: ['wc38', 'm357'] },
+  { id: 'gp100', nom: 'Ruger GP100', cat: 'Revolver .357 / .38', d: 'pistolet', trig: 'da_rev', recul: 2, vis: 'mire', ammo: ['wc38', 'm357'] },
+  { id: 'fwb800', nom: 'Feinwerkbau 800', cat: 'Carabine air 10 m', d: 'carabine', trig: 'match', recul: 0, vis: 'dioptre', ammo: ['diab'] },
+  { id: 'lg400', nom: 'Walther LG400', cat: 'Carabine air 10 m', d: 'carabine', trig: 'match', recul: 0, vis: 'dioptre', ammo: ['diab'] },
+  { id: 'a9015', nom: 'Anschütz 9015', cat: 'Carabine air 10 m', d: 'carabine', trig: 'match', recul: 0, vis: 'dioptre', ammo: ['diab'] },
+  { id: 'a1907', nom: 'Anschütz 1907 / 2013', cat: 'Carabine .22 LR 50 m', d: 'carabine', trig: 'match', recul: 1, vis: 'dioptre', ammo: ['lr_sv'] },
+  { id: 'kk500', nom: 'Walther KK500', cat: 'Carabine .22 LR 50 m', d: 'carabine', trig: 'match', recul: 1, vis: 'dioptre', ammo: ['lr_sv'] },
+  { id: 'cz457', nom: 'CZ 457', cat: 'Carabine .22 LR loisir', d: 'carabine', trig: 'sa', recul: 1, vis: 'lunette', ammo: ['lr_sv', 'lr_hv'] },
+  { id: 'tikka', nom: 'Tikka T3x', cat: 'Carabine gros calibre', d: 'carabine', trig: 'sa', recul: 2, vis: 'lunette', ammo: ['r308', 'r65', 'r223'] },
+  { id: 'r700', nom: 'Remington 700', cat: 'Carabine gros calibre', d: 'carabine', trig: 'sa', recul: 2, vis: 'lunette', ammo: ['r308', 'r223', 'r65'] },
+  { id: 'trg', nom: 'Sako TRG', cat: 'Carabine gros calibre', d: 'carabine', trig: 'sa', recul: 3, vis: 'lunette', ammo: ['r308', 'r65'] },
+  { id: 'recurve', nom: 'Arc classique (recurve)', cat: 'Arc', d: 'arc', trig: 'arc', recul: 0, vis: 'viseur', ammo: ['fleche'] },
+  { id: 'compound', nom: 'Arc à poulies (compound)', cat: 'Arc', d: 'arc', trig: 'decocheur', recul: 0, vis: 'viseur', ammo: ['fleche'] },
+  { id: 'barebow', nom: 'Arc nu (barebow) / traditionnel', cat: 'Arc', d: 'arc', trig: 'arc', recul: 0, vis: 'instinctif', ammo: ['fleche'] },
+  { id: 'autre', nom: 'Autre arme', cat: 'Autre', d: 'autre', trig: 'sa', recul: 1, vis: 'mire', ammo: Object.keys(AMMO) }
+];
+const activeArm = () => (S.arms || []).find(a => a.id === $('armSel').value) || null;
+const armModel = a => WEAPONS.find(w => w.id === a.model) || WEAPONS[WEAPONS.length - 1];
+function renderArmSel() {
+  const cur = $('armSel').value;
+  $('armSel').innerHTML = '<option value="">Aucune (conseils généraux)</option>' + (S.arms || []).map(a => `<option value="${a.id}">${esc(a.name)} · ${AMMO[a.ammo] ? AMMO[a.ammo].nom.split(' (')[0] : ''}</option>`).join('');
+  if ((S.arms || []).some(a => a.id === cur)) $('armSel').value = cur;
+}
+function renderArms() {
+  const L = S.arms || [];
+  $('armList').innerHTML = L.length ? L.map(a => { const m = armModel(a), am = AMMO[a.ammo] || {};
+    return `<div class="srow"><span><b>${esc(a.name)}</b><br><small class="hint">${m.cat} · ${am.nom || ''}${a.click ? ' · clic ' + a.click + ' ' + unitLbl(a.unit) : ''}</small></span><span class="act"><button data-armuse="${a.id}" aria-label="Utiliser">${ICON('check')}</button><button data-armdel="${a.id}" aria-label="Supprimer">${ICON('trash')}</button></span></div>`; }).join('')
+    : '<p class="hint">Aucune arme enregistrée. Ajoutez la vôtre pour des conseils sur mesure.</p>';
+}
+const unitLbl = u => ({ moa: 'MOA', mrad: 'MRAD', mm10: 'mm à 10 m', mm25: 'mm à 25 m', mm50: 'mm à 50 m', mm100: 'mm à 100 m' }[u] || '');
+let armPick = null;
+function openArmModal() {
+  armPick = null; $('armForm').hidden = true; $('armSearch').value = ''; $('armSearch').hidden = false; renderArmDb(); $('armModal').hidden = false;
+}
+function renderArmDb() {
+  const q = $('armSearch').value.trim().toLowerCase();
+  const L = WEAPONS.filter(w => !q || (w.nom + ' ' + w.cat).toLowerCase().includes(q));
+  let last = '';
+  $('armDb').innerHTML = L.map(w => { const h = w.cat !== last ? `<p class="l" style="margin-top:6px">${w.cat}</p>` : ''; last = w.cat;
+    return h + `<div class="srow" data-armpick="${w.id}" style="cursor:pointer"><span>${w.nom}</span><span class="hint">›</span></div>`; }).join('');
+  $('armDb').hidden = false;
+}
+function pickArm(id) {
+  armPick = WEAPONS.find(w => w.id === id); if (!armPick) return;
+  $('armDb').hidden = true; $('armSearch').hidden = true; $('armForm').hidden = false;
+  $('armPicked').innerHTML = `<b>${armPick.nom}</b> · ${armPick.cat}<br><span class="hint">Détente : ${TRIG[armPick.trig] || '—'} · recul ${['nul', 'faible', 'moyen', 'fort'][armPick.recul]} · visée ${VIS[armPick.vis] || ''}</span>`;
+  $('armName').value = armPick.nom;
+  $('armAmmo').innerHTML = armPick.ammo.map(k => `<option value="${k}">${AMMO[k].nom}</option>`).join('');
+  $('armClickUnit').value = armPick.vis === 'lunette' ? 'moa' : armPick.d === 'carabine' ? 'mm50' : 'mm25';
+}
+const TRIG = { match: 'match réglable', percuteur: 'à percuteur (striker)', sa: 'simple action', sada: 'simple / double action', da_rev: 'revolver double action', arc: 'lâcher aux doigts', decocheur: 'décocheur' };
+const VIS = { mire: 'guidon et cran de mire', dioptre: 'dioptre et tunnel', lunette: 'lunette', viseur: 'viseur d’arc', instinctif: 'instinctive' };
+function saveArm() {
+  if (!armPick) return;
+  const a = { id: uid(), model: armPick.id, name: ($('armName').value || armPick.nom).slice(0, 40), ammo: $('armAmmo').value, click: parseFloat($('armClick').value) || null, unit: $('armClickUnit').value };
+  S.arms = (S.arms || []).concat(a); save(); renderArms(); renderArmSel(); $('armSel').value = a.id; save();
+  $('armModal').hidden = true; renderSessionBar(); refresh(); toast('Arme enregistrée et sélectionnée', 'ok');
+}
+// mm couverts par un clic à la distance de tir
+function clickMm(a, d) {
+  if (!a || !a.click || !d) return null;
+  switch (a.unit) { case 'moa': return a.click * 0.2909 * d; case 'mrad': return a.click * d; case 'mm10': return a.click * d / 10; case 'mm25': return a.click * d / 25; case 'mm50': return a.click * d / 50; case 'mm100': return a.click * d / 100; }
+  return null;
+}
+// conseils propres à l'arme et à la munition, selon la direction du décalage
+function armTips(key, st) {
+  const a = activeArm(); if (!a) return '';
+  const m = armModel(a), am = AMMO[a.ammo] || {}, t = [];
+  const low = /bas/.test(key), left = /gauche/i.test(key), right = /droite/i.test(key), lefty = $('leftHanded').checked;
+  const fingerSide = lefty ? right : left;
+  if (m.recul >= 2 && low) t.push(`Avec le recul du ${am.nom ? am.nom.split(' (')[0] : 'calibre'}, un groupement bas signe souvent une <b>anticipation du recul</b> : le poignet pousse avant le départ. Alternez balles réelles et douilles factices (ball & dummy).`);
+  if (m.trig === 'percuteur' && fingerSide) t.push('Détente à percuteur : le déplacement latéral vient souvent d’un doigt trop engagé (2ᵉ phalange) qui tire l’arme. Placez le centre de la 1ʳᵉ phalange et pressez droit vers l’arrière.');
+  if (m.trig === 'da_rev') t.push('Revolver : en précision, armez le chien et tirez en simple action. En double action, la pression longue doit rester régulière jusqu’au départ, sans à-coup.');
+  if (m.trig === 'sada') t.push('Simple/double action : le premier coup en double action part souvent ailleurs que les suivants ; comparez ce coup aux autres.');
+  if (m.recul === 0 && m.d !== 'arc') t.push('Arme à air : la balle reste longtemps dans le canon. La <b>tenue après le départ</b> (garder la visée 1 à 2 secondes) est décisive.');
+  if (m.d === 'carabine') t.push(m.vis === 'lunette' ? 'Lunette : vérifiez la position de la tête (même relief oculaire à chaque coup) et la parallaxe réglée à la distance.' : 'Dioptre : la joue toujours au même endroit sur le busc ; le guidon doit être centré dans l’œilleton.');
+  if (m.d === 'arc') t.push('Arc : un groupement décalé et régulier se corrige au viseur ; un groupement étalé se travaille sur l’ancrage et le lâcher.');
+  if (am.note) t.push(am.note);
+  let clk = '';
+  const v = clickMm(a, dist());
+  if (v && st && st.off > 0.5) {
+    const ch = Math.round(Math.abs(st.dx) / v), cv = Math.round(Math.abs(st.dy) / v);
+    if (ch || cv) clk = `<div class="drill"><b>Réglage des organes de visée (${esc(a.name)})</b> : ${ch ? `${ch} clic${ch > 1 ? 's' : ''} vers la ${st.dx > 0 ? 'gauche' : 'droite'}` : ''}${ch && cv ? ' et ' : ''}${cv ? `${cv} clic${cv > 1 ? 's' : ''} vers le ${st.dy > 0 ? 'haut' : 'bas'}` : ''} (1 clic ≈ ${v.toFixed(1)} mm à ${dist()} m). À faire seulement si le décalage se répète sur plusieurs séries.</div>`;
+  }
+  return (t.length ? `<h4 style="margin-top:10px">Avec votre ${esc(a.name)}</h4><ul>${t.map(x => `<li>${x}</li>`).join('')}</ul>` : '') + clk;
+}
+
+// ============ MODE VITESSE ============
+function speedTips(st) {
+  if ($('shotMode').value !== 'vitesse' || !st || st.n < 3) return '';
+  const L = S.impacts, sx = Math.sqrt(L.reduce((s, i) => s + (i.x - st.m.x) ** 2, 0) / L.length), sy = Math.sqrt(L.reduce((s, i) => s + (i.y - st.m.y) ** 2, 0) / L.length);
+  const T = +$('seriesTime').value, t = [];
+  if (sy > 1.4 * sx) t.push('<b>Dispersion verticale</b> : le pistolet ne revient pas au même endroit après le recul. Gardez une pression de prise <b>constante</b> (ni relâcher ni serrer entre les coups) et le poignet verrouillé.');
+  else if (sx > 1.4 * sy) t.push('<b>Dispersion horizontale</b> : rythme de détente irrégulier ou doigt qui pousse. Relâchez la détente juste jusqu’au point de réarmement (reset) puis pressez droit, sans à-coup.');
+  if (st.dy > 0.5 * st.mrmm && st.dy > 5) t.push('Groupe <b>bas</b> : anticipation du départ, fréquente quand on presse pour tenir le temps. Laissez le coup partir dans la zone de visée plutôt que de « donner » le coup.');
+  t.push('Ne cherchez pas l’image de visée parfaite : acceptez la zone de visée et gardez un rythme régulier, du premier au dernier coup.');
+  if (T <= 4) t.push('En 4 secondes, la régularité vient d’un rythme travaillé en 8 puis 6 s. Si les 4 s se dégradent, revenez au temps supérieur.');
+  else if (T >= 8) t.push('En 8 s, utilisez le temps disponible : il est inutile de finir la série en avance si la technique en souffre.');
+  return `<h4 style="margin-top:10px">Tir de vitesse · ${T} s</h4><ul>${t.map(x => `<li>${x}</li>`).join('')}</ul>`;
+}
+// minuteur : bips de départ et de fin (Web Audio)
+let AC = null, timerRun = null;
+function beep(f = 1000, d = 0.18, v = 0.35) {
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = f; o.type = 'square'; g.gain.value = v; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + d); } catch (e) {}
+}
+function openTimer() { $('timerTime').value = $('seriesTime').value; $('timerDisp').textContent = (+$('timerTime').value).toFixed(1).replace('.', ','); $('timerDisp').className = 'timer-disp'; $('timerState').textContent = 'Prêt'; $('timerModal').hidden = false; }
+function stopTimer(msg) { if (timerRun) { clearInterval(timerRun.iv); clearTimeout(timerRun.to); timerRun = null; } $('timerStart').textContent = 'Démarrer'; if (msg) $('timerState').textContent = msg; }
+function startTimer() {
+  if (timerRun) { stopTimer('Arrêté'); return; }
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); AC.resume && AC.resume(); } catch (e) {}
+  const T = +$('timerTime').value, dv = $('timerDelay').value, delay = dv === 'rand' ? 3000 + Math.random() * 2000 : +dv * 1000;
+  $('timerStart').textContent = 'Arrêter'; $('timerDisp').className = 'timer-disp'; $('timerDisp').textContent = T.toFixed(1).replace('.', ',');
+  $('timerState').textContent = 'Attention…'; beep(600, 0.08, 0.2);
+  timerRun = { to: setTimeout(() => {
+    beep(1200, 0.25); $('timerDisp').className = 'timer-disp go'; $('timerState').textContent = 'Feu !';
+    const t0 = performance.now();
+    timerRun.iv = setInterval(() => {
+      const left = Math.max(0, T - (performance.now() - t0) / 1000);
+      $('timerDisp').textContent = left.toFixed(1).replace('.', ',');
+      if (left <= 0) { beep(500, 0.6); $('timerDisp').className = 'timer-disp stop'; stopTimer('Stop — fin de la série'); }
+    }, 50);
+  }, delay) };
+}
+
+// ============ COURS ET EXERCICES ============
+const YT = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+const COURS = [
+  { id: 'secu', ic: 'shield', t: 'Les règles de sécurité', s: 'À connaître avant tout tir, et pour le tir à sec', tags: ['tous'], b: `
+<p>La sécurité prime sur tout le reste. Les règles universelles :</p>
+<ol><li><b>Toute arme est considérée comme chargée</b>, même si vous venez de la vérifier.</li>
+<li><b>Ne pointez jamais le canon</b> vers quelque chose que vous ne voulez pas détruire ; en stand, le canon reste toujours orienté vers les cibles.</li>
+<li><b>Le doigt reste hors du pontet</b>, le long de la carcasse, tant que vous n'êtes pas en visée et décidé à tirer.</li>
+<li><b>Soyez sûr de votre cible et de ce qu'il y a derrière.</b></li></ol>
+<h4>Au stand</h4><ul><li>Arme ouverte (culasse ou barillet ouvert, chargeur retiré) dès qu'on ne tire pas, drapeau de sécurité si le club l'exige.</li><li>Les ordres du directeur de tir s'appliquent immédiatement (« Cessez le feu »).</li><li>Protections auditives et lunettes.</li></ul>
+<h4>Tir à sec à la maison</h4><ul><li>Arme vérifiée vide deux fois, <b>aucune munition dans la pièce</b>.</li><li>Visez un point sûr (mur porteur, pas une fenêtre). Utilisez des douilles amortisseuses si le fabricant le recommande.</li></ul>` },
+  { id: 'oeil', ic: 'eye', t: 'Œil directeur et vision', s: 'Viser avec le bon œil, la netteté au bon endroit', tags: ['tous'], b: `
+<h4>Trouver son œil directeur</h4><ol><li>Formez un petit triangle avec vos mains, bras tendus.</li><li>Les deux yeux ouverts, cadrez un objet lointain dans le triangle.</li><li>Fermez un œil puis l'autre : l'œil qui garde l'objet dans le triangle est l'œil directeur.</li></ol>
+<p>On vise avec l'œil directeur. S'il est du côté opposé à la main forte, on peut tirer de l'autre main, ou tourner légèrement la tête pour amener la ligne de visée devant cet œil.</p>
+<h4>La netteté</h4><p>L'œil ne voit net qu'à une seule distance : au pistolet comme à la carabine à dioptre, <b>la netteté est sur le guidon</b>, la cible reste légèrement floue.</p>
+<p>Gardez les deux yeux ouverts quand c'est possible : un cache translucide devant l'œil non directeur évite de fermer un œil et de fatiguer le visage. Des lunettes de tir correctrices, réglées pour la distance du guidon, aident beaucoup après 40 ans.</p>` },
+  { id: 'pos1', ic: 'feet', t: 'La position au pistolet (une main)', s: 'Stabilité, appuis, orientation naturelle', tags: ['pistolet'], b: `
+<p>Objectif : une position <b>simple, stable, économique</b> et reproductible, qui place l'arme naturellement dans l'axe de la cible.</p>
+<h4>Les appuis</h4><ul><li>Pieds écartés environ à la largeur des épaules, poids réparti sur les deux jambes, légèrement vers l'avant du pied.</li><li>Corps de profil ou de trois-quarts par rapport à la cible ; genoux tendus sans être bloqués.</li><li>Bras tendu, épaule basse et relâchée, tête droite qui vient vers l'arme (pas l'inverse).</li></ul>
+<h4>Trouver sa position naturelle</h4><ol><li>Prenez votre visée normalement sur la cible.</li><li>Fermez les yeux quelques secondes en gardant la position, détendez-vous.</li><li>Rouvrez : si l'arme a dérivé à côté de la cible, ne corrigez pas avec le bras, <b>déplacez les pieds</b> (pivot autour du pied avant).</li></ol>
+<p>Règle simple : organes de visée mal alignés → corrigez la prise en main ; organes alignés mais à côté de la cible → corrigez la position des pieds.</p>` },
+  { id: 'pos2', ic: 'feet', t: 'Position à deux mains', s: 'Isocèle et Weaver pour les pistolets de service', tags: ['pistolet'], b: `
+<h4>Isocèle</h4><p>Face à la cible, pieds largeur d'épaules, genoux légèrement fléchis, buste un peu en avant, les deux bras tendus forment un triangle. Position naturelle et symétrique, très répandue en tir sportif dynamique.</p>
+<h4>Weaver</h4><p>Corps de trois-quarts, pied faible en avant, bras fort presque tendu qui pousse, bras faible fléchi qui tire vers l'arrière (tension opposée). Plus ancienne, appréciée pour maîtriser le recul de certaines armes.</p>
+<h4>Dans les deux cas</h4><ul><li>La main faible recouvre la zone libre de la crosse, pouces parallèles vers l'avant.</li><li>Le poids sur l'avant des pieds pour encaisser le recul.</li></ul>` },
+  { id: 'prise', ic: 'hand', t: 'La prise en main', s: 'La base d’un départ propre', tags: ['pistolet'], b: `
+<p>Une bonne prise est <b>ferme sans crispation</b>, comme une poignée de main franche, et surtout <b>identique à chaque coup</b>.</p>
+<ol><li>Placez la fourche (entre pouce et index) <b>le plus haut possible</b> dans le dos de la crosse, dans l'axe de l'avant-bras.</li><li>Posez la paume et les doigts au contact de la crosse ; la pression vient surtout du majeur et de l'annulaire, d'avant en arrière.</li><li>Le pouce est relâché, sans appuyer latéralement sur la carcasse.</li><li>L'index ne touche pas la carcasse : seul le doigt bouge au moment du lâcher.</li></ol>
+<p>Une crosse anatomique adaptée à votre main aligne d'elle-même les organes de visée et limite les tensions. Si en levant l'arme les yeux fermés le guidon n'est pas aligné quand vous les rouvrez, retouchez la prise.</p>` },
+  { id: 'visee', ic: 'crosshair', t: 'La visée : les différents organes', s: 'Mire ouverte, dioptre, point rouge, lunette', tags: ['tous'], b: `
+<h4>Guidon et cran de mire (mire ouverte)</h4><ul><li><b>Alignement</b> : le guidon est centré dans le cran, avec la même lumière de chaque côté, et son sommet au ras du haut de la hausse.</li><li>Une petite erreur d'alignement déplace bien plus le coup qu'un léger mouvement de l'arme : l'alignement passe avant tout.</li><li>Netteté sur le guidon, cible légèrement floue.</li></ul>
+<h4>Visée « 6 heures » ou visée centrale</h4><p>En <b>visée 6 h</b>, le haut du guidon se pose sous le visuel noir, avec une fine marge de blanc : le contraste aide à voir les mouvements. En <b>visée centrale</b>, le guidon vient au centre du visuel ; les organes de visée sont réglés en conséquence. Choisissez-en une et gardez-la.</p>
+<h4>Dioptre et tunnel (carabine)</h4><p>L'œil regarde à travers l'œilleton ; le guidon annulaire (tunnel) doit apparaître centré, et le visuel centré dans l'anneau : on vérifie la concentricité des cercles. Une joue toujours placée au même endroit sur le busc rend ce centrage automatique.</p>
+<h4>Point rouge</h4><p>Les deux yeux ouverts, mise au point sur la cible ; le point se pose sur la zone visée. Peu sensible à la position de l'œil, très rapide pour le tir de vitesse.</p>
+<h4>Lunette</h4><p>Même distance œil-oculaire à chaque tir (relief oculaire), parallaxe réglée à la distance, image sans ombre. Les tourelles se règlent en clics (souvent ¼ MOA ou 0,1 MRAD) : renseignez-les dans « Armes » pour avoir les corrections en clics.</p>` },
+  { id: 'lacher', ic: 'bolt', t: 'Le lâcher (la détente)', s: 'L’action qui fait la différence', tags: ['pistolet', 'carabine'], b: `
+<p>Le lâcher est l'action du doigt qui fait partir le coup <b>sans déplacer l'arme</b>.</p>
+<ul><li>Le contact se fait avec le centre de la 1ʳᵉ phalange (pulpe), au milieu de la queue de détente.</li><li>Le mouvement part de l'articulation de la base du doigt et va <b>droit vers l'arrière</b>, dans l'axe du canon.</li><li>Sur une détente à deux temps : prenez la bossette (point dur) en début de visée, puis augmentez la pression de façon progressive et continue.</li><li>Le départ doit <b>surprendre</b> : on ne « donne » pas le coup, on laisse la pression le libérer pendant que l'on maintient la visée.</li></ul>
+<p>Défauts typiques (droitier) : doigt trop engagé → coups à gauche ; trop peu engagé → à droite ; coup de doigt ou anticipation → coups bas.</p>` },
+  { id: 'resp', ic: 'wind', t: 'La respiration', s: 'Stabiliser la visée par la pause respiratoire', tags: ['tous'], b: `
+<p>La cage thoracique bouge avec la respiration : au pistolet, inspirer en visée fait monter l'arme et expirer la fait descendre.</p>
+<ol><li>Respirez calmement par le ventre en préparant le coup.</li><li>Levez l'arme au-dessus de la cible en inspirant, puis descendez dans la zone de visée en expirant à moitié.</li><li>Faites une <b>pause respiratoire naturelle</b>, sans forcer, pendant laquelle vous affinez la visée et lâchez le coup.</li><li>Si le coup n'est pas parti après quelques secondes (la vue et la stabilité se dégradent), reposez l'arme, respirez, recommencez.</li></ol>
+<p>À la carabine couchée, le battement cardiaque devient visible : laissez le coup partir pendant le calme entre deux battements.</p>` },
+  { id: 'coord', ic: 'spark', t: 'Coordination et tenue après le départ', s: 'Relier position, visée et lâcher', tags: ['tous'], b: `
+<p>La <b>coordination</b> est la liaison entre position, visée et lâcher : on mène le lâcher en parallèle du maintien de la ligne de mire dans la zone de visée.</p>
+<p>La <b>tenue</b> (ou prolongation) consiste à continuer toutes les actions <b>après le départ du coup</b> : garder la visée, la pression sur la détente et la position environ une seconde. Elle évite de bouger l'arme pendant que le projectile est encore dans le canon, ce qui compte énormément avec les armes à air.</p>
+<p>Exercice : après chaque coup, gardez la visée et <b>annoncez</b> où le coup est parti avant de regarder la cible. Si l'annonce correspond à l'impact, votre visée et votre tenue sont bonnes.</p>` },
+  { id: 'mental', ic: 'brain', t: 'Routine et mental', s: 'Rendre chaque coup identique au précédent', tags: ['tous'], b: `
+<ul><li><b>Une routine fixe</b> pour chaque coup : prise, respiration, levée, visée, lâcher, tenue, annonce. Toujours dans le même ordre, au même rythme.</li><li><b>Un objectif de processus</b> (« un lâcher progressif ») plutôt qu'un objectif de score.</li><li><b>Analysez puis oubliez</b> : un mauvais coup s'analyse en une phrase, puis on prépare le suivant.</li><li>Entre les coups, respiration lente et relâchement des épaules.</li><li>En compétition, gardez le rythme de l'entraînement ; ne changez rien de technique le jour J.</li></ul>` },
+  { id: 'vitesse', ic: 'timer', t: 'Le tir de vitesse (25 m)', s: 'Séries en 8, 6 et 4 secondes', tags: ['pistolet'], b: `
+<p>En pistolet vitesse olympique, on tire des séries de 5 coups sur 5 cibles en <b>8, 6 puis 4 secondes</b>. Au pistolet standard ou au pistolet 25 m, les séries sont plus longues (150, 20, 10 s ou 3 s par coup), mais les principes sont les mêmes.</p>
+<h4>Les clés</h4><ul><li><b>Le placement</b> : position calée sur la cible du milieu, pour que l'arme arrive naturellement dans l'axe en montant de la position d'attente (bras baissé à 45°).</li><li><b>Prise ferme et constante</b>, poignet verrouillé : le pistolet doit revenir au même endroit après chaque recul.</li><li><b>Détente</b> : relâcher juste jusqu'au point de réarmement (reset) puis repartir, sans quitter la détente.</li><li><b>Rythme régulier</b> plutôt que visée parfaite : on accepte la zone de visée.</li></ul>
+<h4>Progresser</h4><p>Installez la technique en 8 s, puis passez à 6 puis 4 s. Il est inutile de tirer une série de 8 s en 8 s si la technique est meilleure plus lentement. Utilisez le <b>minuteur</b> de Mouche (menu Plus) pour vous entraîner avec des bips de départ et de fin.</p>` },
+  { id: 'carabine', ic: 'crosshair', t: 'Positions à la carabine', s: 'Couché, genou, debout', tags: ['carabine'], b: `
+<ul><li><b>Couché</b> : le plus stable. Corps légèrement de biais, coude gauche sous l'arme (droitier), bretelle réglée pour porter l'arme sans effort musculaire.</li><li><b>Genou</b> : assis sur le talon (avec boudin), coude avant posé en avant du genou, jamais l'os du coude sur l'os du genou.</li><li><b>Debout</b> : le plus exigeant. Bassin en avant, bras gauche posé sur la hanche ; l'arme repose sur la structure osseuse plutôt que sur les muscles.</li></ul>
+<p>Dans toutes les positions : la joue au même endroit sur le busc, l'œil centré dans le dioptre, et la position orientée naturellement vers la cible (même test les yeux fermés qu'au pistolet).</p>` },
+  { id: 'arc', ic: 'bow', t: 'Les bases du tir à l’arc', s: 'Posture, ancrage, lâcher', tags: ['arc'], b: `
+<ul><li><b>Posture</b> : pieds de part et d'autre de la ligne de tir, largeur d'épaules, corps droit.</li><li><b>Prise de l'arc</b> : main ouverte et détendue, la poignée appuie dans le creux de la main ; on ne serre pas (sinon l'arc tourne : torque).</li><li><b>Ancrage</b> : la main de corde vient toujours au même repère (coin de bouche, sous le menton). C'est lui qui fixe la hauteur.</li><li><b>Lâcher</b> : les doigts se relâchent, la main recule naturellement dans l'axe ; on ne les ouvre pas activement (sinon « pluck », coups à gauche pour un droitier).</li><li><b>Suivi</b> : garder la visée et la position jusqu'à l'impact.</li></ul>` },
+  { id: 'reglage', ic: 'wrench', t: 'Régler ses organes de visée', s: 'Quand et comment corriger', tags: ['tous'], b: `
+<ol><li>Ne réglez que si le <b>groupement est regroupé et décalé de façon répétée</b> (plusieurs séries). Un groupe étalé se corrige par la technique, pas par les réglages.</li><li>On déplace la hausse (ou la tourelle) <b>dans le sens où l'on veut déplacer les impacts</b> : pour remonter les coups, on monte la hausse ; pour les décaler à droite, on la déplace vers la droite.</li><li>Faites un réglage, puis tirez au moins 5 coups avant de juger.</li></ol>
+<p>Mouche donne la correction en millimètres, et en clics si la valeur du clic de votre arme est renseignée dans « Armes ».</p>` },
+  { id: 'lecture', ic: 'target', t: 'Lire sa cible', s: 'Point moyen, groupement et coups isolés', tags: ['tous'], b: `
+<ul><li><b>Point moyen d'impact</b> : le centre du groupe. S'il est décalé alors que le groupe est serré, c'est un réglage ou une erreur de visée constante.</li><li><b>Groupement</b> : distance entre les deux coups les plus éloignés. Il mesure la régularité technique.</li><li><b>Rayon moyen</b> : distance moyenne des coups au point moyen, plus fiable que le groupement car il tient compte de tous les coups.</li><li><b>Coup isolé</b> : un coup loin du groupe signale souvent une faute ponctuelle (coup de doigt, perte de visée), pas un problème de réglage.</li></ul>
+<p>Le diagnostic de Mouche utilise ces mesures : il ne propose une correction de direction que si le décalage est significatif par rapport à la dispersion.</p>` }
+];
+const DRILLS = [
+  { id: 'sec', ic: 'play', t: 'Tir à sec quotidien', s: '10 minutes par jour, sans munition', lvl: 'Tous niveaux', dur: '10 min', tags: ['pistolet', 'carabine'], q: 'tir à sec pistolet exercice', b: `<p>Le tir à sec (arme vide) permet de travailler prise en main, position, respiration, visée, lâcher et tenue sans le bruit ni le recul.</p><ol><li>Arme vérifiée vide, aucune munition dans la pièce.</li><li>Visez une petite cible à distance réduite (ou un mur blanc).</li><li>Exécutez votre routine complète et observez le guidon au moment du clic : il ne doit pas bouger.</li><li>10 à 15 minutes par jour valent mieux qu'une longue séance par semaine.</li></ol>` },
+  { id: 'mur', ic: 'eye', t: 'Exercice du mur blanc', s: 'Le lâcher sans aucune référence de cible', lvl: 'Débutant', dur: '5 min', tags: ['pistolet'], q: 'wall drill dry fire pistol', b: `<p>Canon à quelques centimètres d'un mur blanc, sans cible : votre seule attention est le guidon.</p><ol><li>Arme vide. Alignez guidon et cran de mire devant le mur.</li><li>Pressez la détente lentement jusqu'au départ.</li><li>Le guidon ne doit pas bouger ni s'incliner au clic. S'il bouge, ralentissez et vérifiez la position du doigt.</li></ol>` },
+  { id: 'piece', ic: 'circle', t: 'La pièce sur le guidon', s: 'Contrôle de la détente, version exigeante', lvl: 'Intermédiaire', dur: '5 min', tags: ['pistolet'], q: 'coin balance drill dry fire', b: `<p>Posez une pièce de monnaie (ou une douille) à plat sur la glissière ou près du guidon, arme vide, puis pressez la détente : la pièce ne doit pas tomber. Commencez avec une grosse pièce, puis une petite.</p>` },
+  { id: 'balle', ic: 'dots', t: 'Balle et douille factice', s: 'Révèle l’anticipation du recul', lvl: 'Tous niveaux', dur: '1 série', tags: ['pistolet', 'carabine'], q: 'ball and dummy drill flinch', b: `<p>Un partenaire charge le chargeur en mélangeant cartouches réelles et douilles factices (snap caps), sans que vous sachiez l'ordre.</p><ol><li>Tirez normalement.</li><li>Quand la détente tombe sur une douille factice, observez : si le canon plonge ou part de côté, vous anticipez le recul.</li><li>Répétez jusqu'à ce que le « clic » ne fasse plus bouger l'arme.</li></ol><p>Indispensable si vos groupes sont bas (bas-gauche pour un droitier) avec une arme qui recule.</p>` },
+  { id: 'blanc', ic: 'target', t: 'Tir sur cible blanche', s: 'Juger la technique sans viser le score', lvl: 'Tous niveaux', dur: '2 × 5 coups', tags: ['tous'], q: 'tir sur cible blanche pistolet technique', b: `<p>Tirez sur le dos blanc d'une cible, en visant simplement le centre de la feuille. Sans visuel, vous ne pouvez pas « chercher » le 10 : seule la qualité de l'alignement et du lâcher compte. Le groupement obtenu montre votre vraie régularité technique.</p>` },
+  { id: 'tenue', ic: 'timer', t: 'Tenue statique', s: 'Renforcer la stabilité', lvl: 'Débutant', dur: '5 × 10 s', tags: ['pistolet'], q: 'pistolet tenue statique exercice stabilité', b: `<p>Arme vide (ou avec un poids équivalent), prenez votre position et maintenez la visée sur la cible 5 à 10 secondes sans tirer, puis reposez. Faites 5 répétitions, en augmentant la durée progressivement. Vous renforcez l'épaule et apprenez à reconnaître votre zone de visée.</p>` },
+  { id: 'annonce', ic: 'bulb', t: 'Annoncer son coup', s: 'Lier visée et résultat', lvl: 'Intermédiaire', dur: '1 série', tags: ['tous'], q: 'call your shot shooting drill', b: `<p>Après chaque coup, avant de regarder la cible, dites où le coup est parti d'après la dernière image de visée (par ex. « 9 à 2 h »). Comparez ensuite avec l'impact réel. Quand l'annonce est juste, vos défauts deviennent visibles en direct et vous corrigez plus vite.</p>` },
+  { id: 'dot', ic: 'dots', t: 'Dot Torture', s: '50 coups sur 10 pastilles de 5 cm', lvl: 'Avancé', dur: '50 coups', tags: ['pistolet'], q: 'dot torture drill', b: `<p>Classique du tir de défense : 50 coups sur une feuille de dix pastilles de 5 cm, à environ 3 m, sans chronomètre. Les dix pastilles combinent tir lent, enchaînements, main forte seule et main faible seule. Le moindre défaut de prise ou de lâcher se voit. Réussir les 50 coups sans erreur est un excellent indicateur de maîtrise.</p>` },
+  { id: 'bill', ic: 'bolt', t: 'Bill Drill', s: '6 coups rapides dans une zone', lvl: 'Avancé', dur: '6 coups', tags: ['pistolet'], q: 'bill drill pistol', b: `<p>6 coups le plus vite possible dans une zone de taille réaliste (par ex. une feuille A4 à 7 m), en gardant tous les impacts dedans. Il développe la gestion du recul et le suivi du guidon. Commencez lentement : la régularité d'abord, la vitesse ensuite.</p>` },
+  { id: 'vit864', ic: 'timer', t: 'Progression 8 / 6 / 4 secondes', s: 'Le parcours du tir de vitesse', lvl: 'Intermédiaire', dur: '6 séries', tags: ['pistolet'], q: 'rapid fire pistol 25m training', b: `<ol><li>Avec le <b>minuteur</b> de Mouche, tirez 2 séries de 5 coups en 8 s.</li><li>Si le groupement reste bon, passez à 2 séries en 6 s, puis 2 en 4 s.</li><li>Si une durée se dégrade, revenez à la précédente.</li></ol><p>Sélectionnez « Vitesse » et le temps de série dans la séance : le diagnostic s'adapte (dispersion verticale ou horizontale, anticipation).</p>` },
+  { id: 'resp', ic: 'wind', t: 'Cycles de respiration', s: 'Trouver sa pause respiratoire', lvl: 'Débutant', dur: '5 min', tags: ['tous'], q: 'breathing technique shooting', b: `<p>Arme vide : inspirez en levant l'arme au-dessus de la cible, expirez à moitié en descendant dans la zone de visée, puis faites une pause naturelle de quelques secondes. Si la visée n'est pas acquise, reposez et recommencez. Répétez 10 cycles en notant combien de temps votre visée reste stable.</p>` },
+  { id: 'arc5', ic: 'bow', t: 'Tir à 5 m sur paille vierge', s: 'L’ancrage et le lâcher, sans viser', lvl: 'Tous niveaux', dur: '3 × 6 flèches', tags: ['arc'], q: 'blank bale archery drill', b: `<p>À 5 m d'une butte sans blason, tirez les yeux ouverts puis fermés en vous concentrant sur une seule sensation : ancrage identique, puis lâcher relâché, puis suivi. Sans cible, l'attention va entièrement sur la technique.</p>` }
+];
+let learnTab = 'cours', learnTag = 'tous';
+function renderLearn() {
+  document.querySelectorAll('#learnSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === learnTab));
+  const tags = [['tous', 'Tout'], ['pistolet', 'Pistolet'], ['carabine', 'Carabine'], ['arc', 'Arc']];
+  $('learnFilter').innerHTML = tags.map(([k, l]) => `<button data-ltag="${k}" class="${k === learnTag ? 'on' : ''}">${l}</button>`).join('');
+  const L = (learnTab === 'cours' ? COURS : DRILLS).filter(c => learnTag === 'tous' || c.tags.includes(learnTag) || c.tags.includes('tous'));
+  $('learnList').innerHTML = L.map(c => `<button class="lc" data-learn="${learnTab}:${c.id}"><span class="ico">${ICON(c.ic)}</span><span><b>${c.t}</b><small>${c.s}</small>${c.lvl ? `<span class="tags"><span>${c.lvl}</span><span>${c.dur}</span></span>` : ''}</span></button>`).join('');
+}
+function openLearn(key) {
+  const [tab, id] = key.split(':'), c = (tab === 'cours' ? COURS : DRILLS).find(x => x.id === id); if (!c) return;
+  $('learnBody').innerHTML = `<div class="card-h">${ICON(c.ic)}<span class="l">${tab === 'cours' ? 'Cours' : 'Exercice'}${c.lvl ? ' · ' + c.lvl + ' · ' + c.dur : ''}</span></div><h2>${c.t}</h2><p class="hint">${c.s}</p>${c.b}`
+    + (c.q ? `<a class="yt" href="${YT(c.q)}" target="_blank" rel="noopener">${ICON('play')} Voir des vidéos sur YouTube</a>` : '');
+  $('learnModal').hidden = false;
+}
+// exercices conseillés selon le diagnostic
+function drillFor(key) {
+  if (/bas/.test(key)) return 'balle';
+  if (/gauche|droite/i.test(key)) return 'mur';
+  if (/haut/.test(key)) return 'annonce';
+  return 'blanc';
+}
+
 // ============ ÉTAT DE L'INTERFACE ============
 function setMode(m, msg) {
   S.mode = m; S.aim = null;
   if (m !== 'warp') S.warpPts = [];
   if (m !== 'circle') S.circPts = [];
-  ({ center: 'btnCenter', ring: 'btnRing', warp: 'btnWarp', manual: 'btnManual', del: 'btnDelete' });
   [['btn3pts', 'circle'], ['btnCenter', 'center'], ['btnRing', 'ring'], ['btnWarp', 'warp'], ['btnManual', 'manual'], ['btnDelete', 'del']].forEach(([id, mm]) => $(id).classList.toggle('on', m === mm));
   if (msg) banner(msg, 'act'); else $('bannerDone').hidden = m === 'idle';
   hideLoupe(); drawOverlay();
@@ -2090,6 +2665,7 @@ function goStep(s) {
   document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('on', b.dataset.step === s));
 }
 function refresh() {
+  renderSessionBar();
   rescore(); drawOverlay(); updateStats(); renderHistory(); updateTargetInfo(); updateButtons();
 }
 function updateButtons() {
@@ -2100,7 +2676,7 @@ function updateButtons() {
   dis('btnRefine', !cal); dis('btn3pts', !has);
   dis('btnDetect', !cal); dis('btnManual', !cal); dis('btnDelete', !any); dis('btnClear', !any);
   ['btnUndo', 'sUndo'].forEach(id => dis(id, !U.stack.length || S.review)); ['btnRedo', 'sRedo'].forEach(id => dis(id, !U.redo.length || S.review));
-  $('sDark').classList.toggle('on', S.darkBoost); $('btnDark').classList.toggle('lit', S.darkBoost); dis('sDark', !has); dis('btnDark', !has);
+  $('sDark').classList.toggle('on', S.darkBoost); $('sGrid').classList.toggle('on', !!S.grid); dis('sGrid', !cal); $('btnDark').classList.toggle('lit', S.darkBoost); dis('sDark', !has); dis('btnDark', !has);
   dis('btnCompare', S.history.filter(h => h.impacts).length + (n ? 1 : 0) < 2);
   $('btnAmb').hidden = !S.amb.length; $('btnAmb').textContent = `⚠️ Vérifier ${S.amb.length} zone(s) douteuse(s)`;
   dis('btnValidate', !n || !cal || S.review);
@@ -2147,10 +2723,11 @@ function deleteAt(sx, sy) {
   if (best < 0) return;
   snapshot();
   if (isAmb) S.amb.splice(best, 1); else S.impacts.splice(best, 1);
-  refresh();
+  setMode('idle'); refresh(); banner('Impact retiré', 'ok');
+  toastAction(isAmb ? 'Zone retirée' : 'Impact retiré', 'Annuler', undo);
 }
 stage.addEventListener('pointerdown', e => {
-  if (!S.src || e.target.closest('button, .banner, .zoom')) return; // les boutons posés sur la photo ne comptent pas comme un tap
+  if (!S.src || e.target.closest('button, .banner, .zoom, .coord, .fab-col')) return; // les boutons posés sur la photo ne comptent pas comme un tap
   e.preventDefault();
   try { stage.setPointerCapture(e.pointerId); } catch (_) {}
   const [sx, sy] = rel(e); ptrs.set(e.pointerId, [sx, sy]);
@@ -2255,6 +2832,27 @@ const rscale = f => { snapshot('ring'); S.cal.w *= f; if (S.cal.rb) S.cal.rb *= 
 on('rp', () => rscale(1.004)); on('rm', () => rscale(1 / 1.004));
 
 on('btnDetect', runDetect);
+document.querySelectorAll('#tabbar button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+on('sessionBar', () => { setView('analyse'); goStep('photo'); });
+function syncMode() { const m = $('shotMode').value; document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.mode === m)); $('speedRow').hidden = m !== 'vitesse'; }
+document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => { $('shotMode').value = b.dataset.mode; syncMode(); save(); refresh(); }));
+['seriesTime', 'armSel'].forEach(id => $(id).addEventListener('change', () => { save(); refresh(); }));
+on('sGrid', () => { S.grid = !S.grid; updateButtons(); drawOverlay(); banner(S.grid ? 'Grille de précision : zoomez, elle s\'affine jusqu\'au dixième de millimètre' : 'Grille masquée', ''); });
+on('btnTimer', openTimer); on('btnTimer2', openTimer); on('timerStart', startTimer); on('timerClose', () => { stopTimer(); $('timerModal').hidden = true; });
+on('profBtn2', () => $('profBtn').click()); on('btnIntro2', openIntro); on('btnAbout2', () => { $('aboutModal').hidden = false; });
+document.querySelectorAll('#learnSeg button').forEach(b => b.addEventListener('click', () => { learnTab = b.dataset.l; renderLearn(); }));
+on('learnClose', () => { $('learnModal').hidden = true; });
+on('btnArmAdd', openArmModal); on('armSave', saveArm); on('armClose', () => { $('armModal').hidden = true; });
+$('armSearch').addEventListener('input', renderArmDb);
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-learn],[data-ltag],[data-armpick],[data-armuse],[data-armdel]'); if (!t) return;
+  const d = t.dataset;
+  if (d.learn) openLearn(d.learn);
+  else if (d.ltag) { learnTag = d.ltag; renderLearn(); }
+  else if (d.armpick) pickArm(d.armpick);
+  else if (d.armuse) { $('armSel').value = d.armuse; save(); refresh(); toast('Arme sélectionnée pour la séance', 'ok'); }
+  else if (d.armdel) { if (!confirm('Supprimer cette arme ?')) return; S.arms = S.arms.filter(a => a.id !== d.armdel); renderArmSel(); save(); renderArms(); refresh(); }
+});
 on('btnShare', shareResult);
 on('btnAbout', () => { $('aboutModal').hidden = false; });
 on('aboutClose', () => { $('aboutModal').hidden = true; });
@@ -2407,6 +3005,7 @@ function makeSample() {
 
 // ============ INIT ============
 new ResizeObserver(() => { if (S.src) { if (Math.abs(V.k - V.fitK) < 1e-6) fitView(); else { clampView(); applyView(); } } else drawOverlay(); }).observe(stage);
+paintIcons();
 loadProfiles();
 loadSaved();
 refresh(); renderProfiles();
