@@ -536,6 +536,7 @@ body:not(.free) .onlyfree,body.free .nofree{display:none!important}
       <label class="chk"><input type="checkbox" id="simpleMode" checked> <span><b>Mode simple</b><br><small class="hint">Photo → résultat automatique, réglages techniques masqués</small></span></label>
       <label class="chk"><input type="checkbox" id="leftHanded"> Tireur gaucher</label>
       <label class="chk"><input type="checkbox" id="lineRule" checked> Une touche de ligne compte pour l'anneau supérieur</label>
+      <div class="info" id="storeInfo"></div>
       <div class="info" id="learnInfo"></div>
       <button class="btn ghost" id="btnLearnReset">Oublier l'apprentissage</button>
       <button class="btn ghost dan" id="btnClearHist">Effacer tout l'historique</button>
@@ -2071,9 +2072,22 @@ function save() {
       history: S.history, target: S.target, learn: S.learn || {}, prog: S.prog || { c: {}, d: {} }, arms: S.arms || [],
       params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'model', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity', 'shotMode', 'seriesTime', 'armSel', 'persoD10', 'persoRing', 'persoBlack', 'persoX', 'persoMin', 'freeFmt', 'freeW', 'freeH'].map(k => [k, $(k).value]).concat([['simpleMode', $('simpleMode').checked], ['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
     }));
-  } catch (e) { console.warn('stockage indisponible', e); }
+    storageCheck();
+  } catch (e) {
+    console.warn('stockage indisponible', e);
+    if (/quota/i.test(e.name + e.message)) toast('⚠️ Mémoire pleine : cette série n’est PAS enregistrée. Allez dans Plus › Sauvegarder, puis effacez l’ancien historique.', 'err', 9000);
+  }
+}
+// place utilisée par l'historique (limite du navigateur ≈ 5 Mo pour tous les tireurs de l'appareil)
+const LS_MAX = 5e6;
+function lsUsed() { let n = 0; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += k.length + (localStorage.getItem(k) || '').length; } } catch (e) {} return n; }
+function storageCheck() {
+  const u = lsUsed() / LS_MAX, el = $('storeInfo');
+  if (el) el.textContent = `Mémoire de l'historique : ${Math.round(u * 100)} % utilisés (${S.history.length} série(s) pour ce tireur)`;
+  if (u > 0.85 && !S.warnedFull) { S.warnedFull = 1; toast(`Mémoire de l’historique remplie à ${Math.round(u * 100)} % : pensez à sauvegarder (Plus › Sauvegarder).`, 'err', 7000); }
 }
 function loadSaved() {
+  setTimeout(storageCheck, 0);
   try {
     S.history = []; S.target = { id: uid(), series: [] }; S.learn = {}; S.prog = { c: {}, d: {} }; S.arms = []; renderArmSel();
     const raw = localStorage.getItem(dataKey());
