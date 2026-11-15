@@ -1333,7 +1333,7 @@ function detect(opt = {}) {
     for (let i = 0; i < N; i += 3) { const x = i % w, y = (i / w) | 0, d = hyp(x - ccx, y - ccy); if (d >= Rb - band) continue; lv[secB(x, y) * NRb + Math.floor(d / ringB)].push(g1[i]); }
     const lvl = lv.map(a => { if (!a.length) return 0; a.sort((u, v) => u - v); return a[a.length >> 1]; });
     const dark = new Float32Array(N);
-    for (let i = 0; i < N; i++) { const x = i % w, y = (i / w) | 0, d = hyp(x - ccx, y - ccy); if (d >= Rb - band) continue; dark[i] = Math.max(0, lvl[secB(x, y) * NRb + Math.floor(d / ringB)] - 2 - g1[i]); }
+    for (let i = 0; i < N; i++) { const x = i % w, y = (i / w) | 0, d = hyp(x - ccx, y - ccy); if (d >= Rb - band) continue; dark[i] = Math.max(0, Math.min(clo[i], lvl[secB(x, y) * NRb + Math.floor(d / ringB)]) - 2 - g1[i]); }
     Dk = boxBlur(dark, w, h, Math.max(3, Math.round(r) | 1));
     const hd = new Uint32Array(1024); let nd = 0;
     for (let i = 0; i < N; i += 2) { if (!inRoi[i] || hyp(i % w - ccx, ((i / w) | 0) - ccy) >= Rb - band) continue; hd[clamp(Dk[i] * 8 | 0, 0, 1023)]++; nd++; }
@@ -1438,7 +1438,7 @@ function detect(opt = {}) {
   const strong = kept.filter(c => c.conf > 2 * thr && c.circ >= 0.55 && c.n / (c.bw * c.bh) >= 0.6 && c.n >= 0.25 * A1n && c.n <= 12 * A1n).map(c => c.n).sort((a, b) => a - b);
   if (!opt.retry && strong.length >= 3) {
     const ratio = strong[strong.length >> 1] / A1n;
-    if (ratio > 2.2 || ratio < 0.4) { S.cal.hs = (S.cal.hs || learnGet().hs || 1) * clamp(Math.sqrt(ratio), 0.3, 4); return detect({ retry: true }); }
+    if (ratio > 3.2 || ratio < 0.33) { S.cal.hs = (S.cal.hs || learnGet().hs || 1) * clamp(Math.sqrt(ratio), 0.3, 4); return detect({ retry: true }); }
   }
   const sing = kept.filter(c => c.n > 0.5 * A1n && c.n < 2.6 * A1n && compact(c) && c.conf > 1.6 * thr).map(c => c.n).sort((a, b) => a - b);
   let A1 = A1n * 0.9;
