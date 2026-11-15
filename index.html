@@ -208,7 +208,9 @@ input[type=range]{width:100%;accent-color:var(--ac)}
           <button class="btn" id="btnCenter">① Placer le centre</button>
           <button class="btn" id="btnRing">② Placer la limite</button>
         </div>
-        <p class="hint">Posez le doigt, faites glisser en regardant la loupe, relâchez pour valider.</p>
+        <button class="btn" id="btn3pts">◯ 3 points ou plus sur le bord de la limite</button>
+        <button class="btn" id="btnRefine">🎯 Affiner sur les anneaux imprimés</button>
+        <p class="hint">Posez le doigt, faites glisser en regardant la loupe, relâchez pour valider. Le mode « 3 points » est le plus précis : touchez le bord de l'anneau choisi en plusieurs endroits.</p>
         <div class="adj">
           <div class="pad">
             <span></span><button id="nu" aria-label="Centre vers le haut">↑</button><span></span>
@@ -290,6 +292,8 @@ input[type=range]{width:100%;accent-color:var(--ac)}
     <details class="card no-print">
       <summary>Réglages, export et sauvegarde</summary>
       <label class="f">Tireur<input type="text" id="shooter" placeholder="Optionnel"></label>
+      <div class="info" id="learnInfo"></div>
+      <button class="btn" id="btnLearnReset">🧠 Oublier l'apprentissage</button>
       <label class="chk"><input type="checkbox" id="lineRule" checked> Une touche de ligne compte pour l'anneau supérieur</label>
       <div class="row"><button class="btn" id="btnReport">📄 Rapport</button><button class="btn" id="btnPng">🖼 Image annotée</button></div>
       <div class="row"><button class="btn" id="btnJson">💾 Sauvegarde</button><button class="btn" id="btnImport">📥 Importer</button></div>
@@ -430,7 +434,7 @@ const S = {
   mode: 'idle', warpPts: [], aim: null,
   align: { th: 0, tx: 0, ty: 0 },
   target: { series: [] }, history: [], reserve: [],
-  darkBoost: false, review: null, stash: null, calMonth: null, calDay: null
+  darkBoost: false, circPts: [], learn: {}, detSet: null, review: null, stash: null, calMonth: null, calDay: null
 };
 const V = { k: 1, tx: 0, ty: 0, fitK: 1 };
 
@@ -466,12 +470,15 @@ function preset(disc = $('discipline').value, d = dist()) {
 }
 function P() {
   const p = preset();
-  return { ring: parseFloat($('ringMm').value) || p.ring, cal: parseFloat($('calMm').value) || p.cal, q: p.q, edge: parseInt($('ringSelect').value) || p.edge };
+  return { ring: parseFloat($('ringMm').value) || p.ring, cal: parseFloat($('calMm').value) || p.cal, q: S.cal && S.cal.q != null ? S.cal.q : p.q, edge: parseInt($('ringSelect').value) || p.edge };
 }
 function applyPreset() { const p = preset(); $('ringMm').value = p.ring; $('calMm').value = p.cal; $('ringSelect').value = p.edge; }
 const hasCenter = () => S.cal.cx != null;
 const hasCal = () => hasCenter() && S.cal.w > 0;
-function holeR() { const p = P(); return Math.max(1.5, p.cal / p.ring * S.cal.w / 2); }
+// rayon d'un impact en px : réglage × facteur mesuré sur la photo (hs) ou appris sur les séries précédentes
+function holeR() { const p = P(); return Math.max(1.5, p.cal / p.ring * S.cal.w / 2 * (S.cal.hs || learnGet().hs || 1)); }
+// rayon du visuel noir (mesuré si possible)
+function blackR() { return S.cal.rb || (P().q + 10 - preset().edge) * S.cal.w; }
 function mmpp() { return P().ring / S.cal.w; }
 function edgeRings() { const p = P(); return p.q + 10 - p.edge; }
 
@@ -571,7 +578,7 @@ function boostDark() {
   const W = imgCanvas.width, H = imgCanvas.height;
   let x0 = 0, y0 = 0, x1 = W, y1 = H, Rb = null;
   if (hasCal() && !$('discipline').value.startsWith('arc')) {
-    Rb = (P().q + 10 - preset().edge) * S.cal.w + 3;
+    Rb = blackR() + 3;
     x0 = clamp(Math.floor(S.cal.cx - Rb), 0, W); y0 = clamp(Math.floor(S.cal.cy - Rb), 0, H);
     x1 = clamp(Math.ceil(S.cal.cx + Rb), 0, W); y1 = clamp(Math.ceil(S.cal.cy + Rb), 0, H);
   }
@@ -598,7 +605,7 @@ function toggleDark() {
   S.darkBoost = !S.darkBoost; renderView(); updateButtons();
   if (S.darkBoost) {
     if (hasCal() && !$('discipline').value.startsWith('arc')) {
-      const Rb = (P().q + 10 - preset().edge) * S.cal.w, { w, h } = stageSize();
+      const Rb = blackR(), { w, h } = stageSize();
       centerOn(S.cal.cx, S.cal.cy, Math.min(w, h) * 0.46 / Rb);
     }
     banner('🔦 Noir éclairci : les trous ressortent (clairs ou noir profond). Pincez pour zoomer encore.', 'ok');
@@ -672,6 +679,7 @@ function drawMarks(c, map, k, u) {
     if (S.mode === 'center' && cal.w) for (const n of [p.edge, 10]) ring(c, ax, ay, (p.q + 10 - n) * cal.w * k, '#39c5ff', 1.5 * u, [6 * u, 4 * u]);
     if (S.mode === 'ring' && hasCenter()) { const [sx, sy] = map(cal.cx, cal.cy); ring(c, sx, sy, hyp(ax - sx, ay - sy), '#39c5ff', 2 * u, [6 * u, 4 * u]); }
   }
+  (S.circPts || []).forEach(([a0, b0]) => { const [a, b] = map(a0, b0); cross(c, a, b, 9 * u, '#000', 4 * u); cross(c, a, b, 9 * u, '#39c5ff', 2 * u); });
   S.warpPts.forEach((pt, i) => { const [a, b] = map(pt[0], pt[1]); ring(c, a, b, 10 * u, '#f85149', 2 * u); label(c, String(i + 1), a + 12 * u, b - 10 * u, '#f85149', u); });
   oldPx().forEach(o => { const [a, b] = map(o.x, o.y); ring(c, a, b, Math.max(5 * u, rh * k), 'rgba(248,81,73,.95)', 1.5 * u); });
   S.amb.forEach((z, i) => { const [a, b] = map(z.cx, z.cy); const r = Math.max(12 * u, z.r * k + 4 * u); ring(c, a, b, r, '#d29922', 2.5 * u, [5 * u, 4 * u]); label(c, '?' + (i + 1), a + r + 2 * u, b, '#d29922', u); });
@@ -862,7 +870,11 @@ function findTarget(src) {
   if (archery) {
     for (let i = 0; i < N; i++) { const r = d[i * 4], gg = d[i * 4 + 1], b = d[i * 4 + 2]; mask[i] = (r > 130 && gg > 100 && b < gg * 0.72 && r - b > 55) ? 1 : 0; }
   } else {
-    const T = otsu(g); for (let i = 0; i < N; i++) mask[i] = g[i] < T ? 1 : 0;
+    // niveau du papier estimé par une fermeture très large (suit les ombres) puis rapport au papier
+    const big = Math.max(8, Math.round(Math.max(w, h) / 3));
+    const paper = mmf(mmf(g, w, h, big, true), w, h, big, false), nrm = new Float32Array(N);
+    for (let i = 0; i < N; i++) nrm[i] = clamp(255 * g[i] / Math.max(25, paper[i]), 0, 255);
+    const T = clamp(otsu(nrm), 70, 170); for (let i = 0; i < N; i++) mask[i] = nrm[i] < T ? 1 : 0;
   }
   const rc = 1;
   const closed = mmf(mmf(mask, w, h, rc, true), w, h, rc, false); // bouche les fines lignes claires
@@ -916,6 +928,95 @@ function findTarget(src) {
   const ratio = ell ? ell.b / ell.a : 1;
   return { cx: circ.cx, cy: circ.cy, R: circ.r, ratio, ell, n: circ.pts.length };
 }
+// ============ MESURE DES ANNEAUX SUR LA PHOTO ============
+function grayFull(src) {
+  if (S.gcache && S.gcache.src === src) return S.gcache;
+  const w = src.width, h = src.height, d = src.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+  return (S.gcache = { src, g: grayOf(d, w * h), w, h });
+}
+// profil radial : réponse « ligne » médiane sur NA rayons (robuste aux impacts, chiffres, reflets)
+function radialProfile(G, cx, cy, r0, r1, NA, step) {
+  const nb = Math.max(4, Math.floor((r1 - r0) / step)), del = Math.max(1, Math.round(1.5 / step));
+  const col = new Float32Array(NA), out = new Float32Array(nb), raw = new Float32Array(NA * nb);
+  const { g, w, h } = G;
+  for (let a = 0; a < NA; a++) {
+    const ca = Math.cos(2 * Math.PI * a / NA), sa = Math.sin(2 * Math.PI * a / NA);
+    for (let b = 0; b < nb; b++) {
+      const r = r0 + b * step, x = cx + ca * r, y = cy + sa * r;
+      if (x < 0 || y < 0 || x >= w - 1 || y >= h - 1) { raw[a * nb + b] = NaN; continue; }
+      const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * w + x0;
+      raw[a * nb + b] = g[i] * (1 - fx) * (1 - fy) + g[i + 1] * fx * (1 - fy) + g[i + w] * (1 - fx) * fy + g[i + w + 1] * fx * fy;
+    }
+  }
+  for (let b = 0; b < nb; b++) {
+    let n = 0;
+    for (let a = 0; a < NA; a++) {
+      const o = a * nb; if (b < del || b >= nb - del) continue;
+      const v = raw[o + b], l = raw[o + b - del], r = raw[o + b + del];
+      if (v !== v || l !== l || r !== r) continue;
+      col[n++] = Math.abs(v - 0.5 * (l + r));
+    }
+    if (n < NA * 0.3) { out[b] = 0; continue; }
+    const c = col.subarray(0, n).sort(); out[b] = c[n >> 1];
+  }
+  return out;
+}
+function analyzeRings(src, cx, cy, wEst, rEdge) {
+  const G = grayFull(src), Rlim = Math.min(hyp(G.w, G.h), (wEst * 11.5) * 1.7);
+  const r0 = Math.max(3, 0.4 * wEst);
+  const sharp = (x, y, NA, st) => { const p = radialProfile(G, x, y, r0, Rlim, NA, st); let s2 = 0; for (const v of p) s2 += v * v; return s2; };
+  // 1) centre : maximise la netteté du profil (tous les anneaux à la fois)
+  let bx = cx, by = cy, best = sharp(cx, cy, 72, 1);
+  for (const [span, stp] of [[0.3, 0.1], [0.1, 0.025]]) {
+    const cx0 = bx, cy0 = by;
+    for (let dy = -span; dy <= span + 1e-9; dy += stp) for (let dx = -span; dx <= span + 1e-9; dx += stp) {
+      const x = cx0 + dx * wEst, y = cy0 + dy * wEst, v = sharp(x, y, 72, 1);
+      if (v > best) { best = v; bx = x; by = y; }
+    }
+  }
+  // 2) écart entre anneaux : autocorrélation du profil fin
+  const st = 0.5, M = radialProfile(G, bx, by, r0, Rlim, 180, st), n = M.length;
+  let mean = 0; for (const v of M) mean += v; mean /= n;
+  const Z = M.map(v => Math.max(0, v - mean));
+  const ac = L => { let s2 = 0; for (let i = 0; i + L < n; i++) s2 += Z[i] * Z[i + L]; return s2 / (n - L); };
+  const lo = Math.max(4, Math.floor(wEst / 1.8 / st)), hi = Math.min(n - 10, Math.ceil(wEst * 1.8 / st));
+  if (hi <= lo) return null;
+  let bl = lo, bv = -1; const acs = [];
+  for (let L = lo; L <= hi; L++) { const v = ac(L); acs[L] = v; if (v > bv) { bv = v; bl = L; } }
+  const half = Math.round(bl / 2); if (half >= lo && acs[half] > 0.7 * bv) bl = half; // préférer la période fondamentale
+  let w = bl * st;
+  // 3) positions des lignes : maxima locaux du profil, ajustés sur r = φ + k·w
+  const sorted = Float32Array.from(M).sort(), med = sorted[n >> 1], p90 = sorted[Math.floor(n * 0.9)];
+  const peaks = [];
+  for (let i = 2; i < n - 2; i++) if (M[i] > med + 0.35 * (p90 - med) && M[i] >= M[i - 1] && M[i] >= M[i + 1] && M[i] >= M[i - 2] && M[i] >= M[i + 2]) peaks.push([r0 + i * st, M[i]]);
+  if (peaks.length < 4) return null;
+  let phi = 0;
+  for (let it = 0; it < 3; it++) {
+    let sc = 0, ss = 0; peaks.forEach(([r, m]) => { const t = 2 * Math.PI * r / w; sc += m * Math.cos(t); ss += m * Math.sin(t); });
+    phi = ((Math.atan2(ss, sc) / (2 * Math.PI)) * w + w) % w;
+    const pts = peaks.map(([r, m]) => [Math.round((r - phi) / w), r, m]).filter(([k, r]) => Math.abs(r - phi - k * w) < 0.18 * w);
+    if (pts.length < 4) return null;
+    let sw = 0, sk = 0, sr = 0, skk = 0, skr = 0;
+    pts.forEach(([k, r, m]) => { sw += m; sk += m * k; sr += m * r; skk += m * k * k; skr += m * k * r; });
+    const den = sw * skk - sk * sk; if (Math.abs(den) < 1e-9) return null;
+    w = (sw * skr - sk * sr) / den; phi = ((sr - w * sk) / sw % w + w) % w;
+  }
+  const good = peaks.filter(([r]) => { const d = ((r - phi) % w + w) % w; return Math.min(d, w - d) < 0.1 * w; });
+  if (good.length < 5 || Math.abs(w / wEst - 1) > 0.8) return null;
+  let q = phi / w; if (q < 0.06) q += 1;
+  let edge = null;
+  if (rEdge) { const e = q + 10 - rEdge / w, n2 = Math.round(e); if (Math.abs(e - n2) < 0.25 && n2 >= 1 && n2 <= 10) edge = n2; }
+  return { cx: bx, cy: by, w, q: +q.toFixed(3), edge, lines: good.length };
+}
+// applique la mesure des anneaux au calibrage courant
+function refineRings(rEdge, quiet) {
+  if (!hasCal()) return false;
+  const res = analyzeRings(S.src, S.cal.cx, S.cal.cy, S.cal.w, rEdge || S.cal.rb);
+  if (!res) { if (!quiet) toast('Anneaux pas assez nets pour affiner — ajustez à la main', 'warn', 3500); return false; }
+  S.cal = { cx: res.cx, cy: res.cy, w: res.w, q: res.q, rb: rEdge || S.cal.rb || null };
+  if (res.edge && res.edge !== P().edge && !$('discipline').value.startsWith('arc')) { $('ringSelect').value = res.edge; save(); }
+  return res;
+}
 function fillHoles(lab, c, w, h) {
   const x0 = Math.max(0, c.x0 - 1), y0 = Math.max(0, c.y0 - 1), x1 = Math.min(w - 1, c.x1 + 1), y1 = Math.min(h - 1, c.y1 + 1);
   const W = x1 - x0 + 1, H = y1 - y0 + 1, m = new Uint8Array(W * H), seen = new Uint8Array(W * H), st = [];
@@ -943,18 +1044,20 @@ function autoTarget(silent, noSnap) {
     let res = findTarget(S.src);
     if (!res) throw new Error('visuel introuvable');
     const er = edgeRings();
-    if (res.ell && res.ratio < 0.95) {
+    if (res.ell && res.ratio < 0.975) {
       const e = res.ell, c = Math.cos(e.th), s = Math.sin(e.th);
       const srcPts = [[e.x0 + e.a * c, e.y0 + e.a * s], [e.x0 - e.b * s, e.y0 + e.b * c], [e.x0 - e.a * c, e.y0 - e.a * s], [e.x0 + e.b * s, e.y0 - e.b * c]];
       const deg = e.th * 180 / Math.PI;
       doWarp(srcPts, [deg, deg + 90, deg + 180, deg + 270], er);
       const r2 = findTarget(S.src);
-      if (r2 && Math.abs(r2.R / (S.cal.w * er) - 1) < 0.15) S.cal = { cx: r2.cx, cy: r2.cy, w: r2.R / er };
-      banner(`✅ Perspective corrigée, centre et limite (anneau ${P().edge}) proposés — ajustez si besoin`, 'ok');
+      if (r2 && Math.abs(r2.R / (S.cal.w * er) - 1) < 0.15) S.cal = { cx: r2.cx, cy: r2.cy, w: r2.R / er, rb: r2.R };
+      else S.cal.rb = S.cal.w * er;
     } else {
-      S.cal = { cx: res.cx, cy: res.cy, w: res.R / er };
-      banner(`✅ Centre et limite (anneau ${P().edge}) proposés — vérifiez avec la loupe`, 'ok');
+      S.cal = { cx: res.cx, cy: res.cy, w: res.R / er, rb: res.R };
     }
+    const m = refineRings(S.cal.rb, true);
+    banner(m ? `✅ Calibré sur ${m.lines} anneaux mesurés sur la photo (bord du visuel = anneau ${P().edge}) — vérifiez avec la loupe`
+             : `✅ Centre et limite (anneau ${P().edge}) proposés — vérifiez avec la loupe`, 'ok');
     refresh();
     return true;
   } catch (e) {
@@ -1100,7 +1203,7 @@ function restore(st) {
 function undo() { if (S.review || !U.stack.length) return; U.redo.push(capture()); restore(U.stack.pop()); U.key = ''; banner('↶ Manipulation annulée', ''); }
 function redo() { if (S.review || !U.redo.length) return; U.stack.push(capture()); restore(U.redo.pop()); U.key = ''; banner('↷ Manipulation rétablie', ''); }
 
-function detect() {
+function detect(opt = {}) {
   if (!hasCal()) { toast('Calibrez la cible d\'abord', 'err'); return; }
   const p = P(), cal = S.cal, rh = holeR(), W = imgCanvas.width, H = imgCanvas.height;
   const Rmax = (p.q + 10) * cal.w + 3 * rh;
@@ -1124,13 +1227,14 @@ function detect() {
   const g1 = mmf(mmf(mmf(mmf(g, w, h, rl, false), w, h, rl, true), w, h, rl, true), w, h, rl, false);
   // 2) fenêtre plus grande qu'un trou mais plus petite que l'écart entre deux anneaux
   const spacing = cal.w / sx;
-  const K = Math.max(Math.ceil(r * 1.2), Math.min(Math.round(r * 2.3), Math.floor((0.9 * spacing - 1) / 2)), 2);
+  // aussi grande que l'écart entre anneaux le permet : capte aussi des trous plus gros que prévu
+  const K = Math.max(Math.ceil(r * 1.2), Math.min(Math.round(r * 4), Math.floor((0.9 * spacing - 1) / 2)), 2);
   const clo = mmf(mmf(g1, w, h, K, true), w, h, K, false);          // fermeture : bouche les trous sombres
   const opn = mmf(mmf(g1, w, h, K, false), w, h, K, true);          // ouverture : efface les trous clairs
   const colorTarget = $('discipline').value.startsWith('arc');
   const bgm = colorTarget ? mmf(mmf(clo, w, h, K, false), w, h, K, true) : null;
   // zones du visuel noir connues par le calibrage : trous clairs dans le noir, sombres dans le blanc
-  const Rb = (p.q + 10 - preset().edge) * cal.w / sx, band = 1.3 * r + 1;
+  const Rb = blackR() / sx, band = 1.3 * r + 1;
   // dans la bande du bord : fond = médiane par secteur angulaire et par rayon (le bord s'annule, le trou ressort)
   const NS = 48, rIn = Math.max(0, Rb - band - 2), NB = Math.ceil(2 * band + 4) + 1, prof = new Float32Array(NS * NB);
   if (!colorTarget) {
@@ -1231,6 +1335,12 @@ function detect() {
   const A1n = Math.PI * r * r;
   const compact = c => { const asp = Math.max(c.bw, c.bh) / Math.min(c.bw, c.bh), fill = c.n / (c.bw * c.bh); return asp <= 1.5 && fill >= 0.6 && c.ins >= 0.55 * r && c.circ >= 0.5; };
   kept.forEach(c => { let m = 0; for (const q of c.pix) m += feat[q]; c.conf = m / c.n; });
+  // taille réelle des trous : médiane des taches nettes, rondes et contrastées
+  const strong = kept.filter(c => c.conf > 2 * thr && c.circ >= 0.55 && c.n / (c.bw * c.bh) >= 0.6 && c.n >= 0.25 * A1n && c.n <= 12 * A1n).map(c => c.n).sort((a, b) => a - b);
+  if (!opt.retry && strong.length >= 3) {
+    const ratio = strong[strong.length >> 1] / A1n;
+    if (ratio > 2.2 || ratio < 0.4) { S.cal.hs = (S.cal.hs || learnGet().hs || 1) * clamp(Math.sqrt(ratio), 0.3, 4); return detect({ retry: true }); }
+  }
   const sing = kept.filter(c => c.n > 0.5 * A1n && c.n < 2.6 * A1n && compact(c) && c.conf > 1.6 * thr).map(c => c.n).sort((a, b) => a - b);
   let A1 = A1n * 0.9;
   if (sing.length >= 3) A1 = clamp(sing[sing.length >> 1], 0.75 * A1n, 2.4 * A1n);
@@ -1260,16 +1370,19 @@ function detect() {
     for (const q of op) { const x = q % w, y = (q / w) | 0; sx2 += x; sy2 += y; if (x < x0b) x0b = x; if (x > x1b) x1b = x; if (y < y0b) y0b = y; if (y > y1b) y1b = y; }
     const c = { pix: op, n: op.length, cx: sx2 / op.length, cy: sy2 / op.length, x0: x0b, x1: x1b, y0: y0b, y1: y1b, bw: x1b - x0b + 1, bh: y1b - y0b + 1 };
     const n = c.n / A1, asp = Math.max(c.bw, c.bh) / Math.min(c.bw, c.bh), fill = c.n / (c.bw * c.bh);
-    let conf = 0; for (const q of c.pix) conf += feat[q]; conf /= c.n;
+    let conf = 0, far = 0; for (const q of c.pix) { conf += feat[q]; far = Math.max(far, hyp(q % w - c.cx, ((q / w) | 0) - c.cy)); } conf /= c.n;
+    const round = c.n / (Math.PI * (far + 0.5) ** 2);
     const [ix, iy] = toI(c.cx, c.cy);
-    if (n < 1.55) { if (asp <= 2.2 && fill >= 0.4) singles.push({ x: ix, y: iy, n, conf, c }); }
+    // une tache bien ronde = un seul impact (même un peu grosse)
+    if (n < 1.55 || (n < 2.3 && round >= 0.62 && asp <= 1.35)) { if (asp <= 2.2 && fill >= 0.4) singles.push({ x: ix, y: iy, n, conf, c }); }
     else if (n <= 25 && fill >= 0.22) groups.push({ x: ix, y: iy, n, est: Math.max(2, Math.round(n)), conf, c });
   }
   // contraste : on écarte les taches nettement plus pâles que les vrais impacts (bruit, restes de lignes)
   const exp0 = parseInt($('expected').value) || 0;
   const confs = singles.concat(groups).map(d => d.conf).sort((a, b) => b - a);
   const ref = confs.length ? confs[Math.min(confs.length - 1, Math.max(2, Math.floor((exp0 || 6) / 2)))] : 0;
-  const cmin = Math.max(1.25 * thr, 0.4 * ref);
+  const cmin = Math.max(1.25 * thr, (learnGet().ratio || 0.4) * ref);
+  S.detRef = ref;
   for (const L of [singles, groups]) for (let k = L.length - 1; k >= 0; k--) if (L[k].conf < cmin) L.splice(k, 1);
   // candidats écartés (position de chiffre) gardés en réserve si des impacts manquent
   S.reserve = digits.filter(c => c.n >= 0.5 * A1 && c.n < 1.8 * A1 && c.circ >= 0.45).map(c => { const [x, y] = toI(c.cx, c.cy); return { x, y, circ: c.circ }; });
@@ -1313,6 +1426,7 @@ function detect() {
 
   snapshot();
   S.impacts = news.map(d => ({ x: d.x, y: d.y, conf: d.conf, flag: '' }));
+  S.detSet = { ref: S.detRef || 1, list: news.map(d => ({ x: d.x, y: d.y, conf: d.conf })) };
   S.amb = amb;
   rescore();
   return { singles: singles.length, groups: groups.length, news: news.length, amb: amb.length, thr, A1: Math.round(A1), A1n: Math.round(A1n), K, r: +r.toFixed(1), s: +s.toFixed(2), w, h };
@@ -1389,6 +1503,26 @@ function applyAmb() {
   S.amb = [];
   $('ambModal').hidden = true;
   rescore(); finalize();
+}
+
+// ============ APPRENTISSAGE (à partir des corrections du tireur) ============
+const learnKey = () => $('discipline').value + '|' + dist();
+function learnGet() { return (S.learn && S.learn[learnKey()]) || {}; }
+function learnFrom() {
+  const det = S.detSet; if (!det || !det.list.length || !hasCal()) return;
+  const L = Object.assign({ n: 0 }, learnGet()), tol = 1.3 * holeR();
+  const fp = det.list.filter(d => !S.impacts.some(f => hyp(f.x - d.x, f.y - d.y) < tol));
+  const kept = det.list.filter(d => !fp.includes(d));
+  const miss = S.impacts.filter(f => f.flag === 'manual').length;
+  // seuil de contraste : juste au-dessus des faux impacts que le tireur a supprimés
+  if (fp.length && kept.length) {
+    const okMin = Math.min(...kept.map(d => d.conf)) / det.ref, weak = fp.map(d => d.conf / det.ref).filter(v => v < okMin);
+    if (weak.length) { const mw = Math.max(...weak), t = mw + 0.3 * (okMin - mw); L.ratio = clamp(L.ratio ? 0.5 * L.ratio + 0.5 * t : t, 0.15, 0.85); }
+  } else if (miss && !fp.length) L.ratio = clamp((L.ratio || 0.4) * 0.85, 0.15, 0.85);
+  // taille des trous confirmés
+  if (S.cal.hs) L.hs = L.hs ? 0.6 * L.hs + 0.4 * S.cal.hs : S.cal.hs;
+  L.n++;
+  S.learn = S.learn || {}; S.learn[learnKey()] = L;
 }
 
 // ============ STATISTIQUES ============
@@ -1471,19 +1605,20 @@ function diag(st) {
 function save() {
   try {
     localStorage.setItem(dataKey(), JSON.stringify({
-      history: S.history, target: S.target,
+      history: S.history, target: S.target, learn: S.learn || {},
       params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
     }));
   } catch (e) { console.warn('stockage indisponible', e); }
 }
 function loadSaved() {
   try {
-    S.history = []; S.target = { id: uid(), series: [] };
+    S.history = []; S.target = { id: uid(), series: [] }; S.learn = {};
     const raw = localStorage.getItem(dataKey());
     if (raw) {
       const d = JSON.parse(raw);
       S.history = Array.isArray(d.history) ? d.history : [];
       S.target = d.target && Array.isArray(d.target.series) ? d.target : { series: [] };
+      S.learn = d.learn || {};
       const p = d.params || {};
       Object.entries(p).forEach(([k, v]) => { const e = $(k); if (!e) return; if (e.type === 'checkbox') e.checked = !!v; else if (v != null && v !== '') e.value = v; });
     } else {
@@ -1507,6 +1642,7 @@ function validateSeries() {
   const imps = S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: +o.x.toFixed(4), dy: +o.y.toFixed(4), score: i.score, dec: i.dec }; });
   const rec = { id: uid(), targetId: S.target.id, num: S.target.series.length + 1, date: new Date().toISOString(), discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1), impacts: imps };
   storePhoto(rec.id);
+  learnFrom(); S.detSet = null;
   S.target.series.push(rec);
   S.history.push(rec);
   S.impacts = []; S.amb = [];
@@ -1528,6 +1664,10 @@ function renderHistory() {
   renderCalendar();
 }
 function updateTargetInfo() {
+  const L = learnGet();
+  $('learnInfo').textContent = L.n
+    ? `🧠 Ajusté sur ${L.n} série(s) validée(s) dans cette discipline : seuil de contraste ${Math.round((L.ratio || 0.4) * 100)} %, taille des trous ×${(L.hs || 1).toFixed(2)}.`
+    : '🧠 Le script apprend de vos corrections (impacts supprimés ou ajoutés) à chaque série validée.';
   const n = S.target.series.length, k = S.target.series.reduce((a, s) => a + s.impacts.length, 0);
   $('targetInfo').innerHTML = n ? `<b>${n} série(s)</b> déjà enregistrée(s) sur cette cible · ${k} impact(s) mémorisé(s).<br>La prochaine photo sera la <b>série ${n + 1}</b>.` : 'Nouvelle cible — aucune série enregistrée.';
   $('statusPill').textContent = `Série ${n + 1}` + (S.impacts.length ? ` · ${S.impacts.length} impact(s)` : '');
@@ -1708,8 +1848,9 @@ function renderCalendar() {
 function setMode(m, msg) {
   S.mode = m; S.aim = null;
   if (m !== 'warp') S.warpPts = [];
+  if (m !== 'circle') S.circPts = [];
   ({ center: 'btnCenter', ring: 'btnRing', warp: 'btnWarp', manual: 'btnManual', del: 'btnDelete' });
-  [['btnCenter', 'center'], ['btnRing', 'ring'], ['btnWarp', 'warp'], ['btnManual', 'manual'], ['btnDelete', 'del']].forEach(([id, mm]) => $(id).classList.toggle('on', m === mm));
+  [['btn3pts', 'circle'], ['btnCenter', 'center'], ['btnRing', 'ring'], ['btnWarp', 'warp'], ['btnManual', 'manual'], ['btnDelete', 'del']].forEach(([id, mm]) => $(id).classList.toggle('on', m === mm));
   if (msg) banner(msg, 'act'); else $('bannerDone').hidden = m === 'idle';
   hideLoupe(); drawOverlay();
   if (m !== 'idle') showStage();
@@ -1732,20 +1873,21 @@ function updateButtons() {
   const dis = (id, v) => { $(id).disabled = !!v; };
   dis('btnAuto', !has); dis('btnCenter', !has); dis('btnRing', !ctr); dis('btnWarp', !has); dis('btnUnwarp', !S.warpUndo); dis('btnResetCal', !ctr);
   ['nu', 'nd', 'nl', 'nr', 'nc'].forEach(id => dis(id, !ctr)); dis('rp', !cal); dis('rm', !cal);
+  dis('btnRefine', !cal); dis('btn3pts', !has);
   dis('btnDetect', !cal); dis('btnManual', !cal); dis('btnDelete', !any); dis('btnClear', !any);
   ['btnUndo', 'sUndo'].forEach(id => dis(id, !U.stack.length || S.review)); ['btnRedo', 'sRedo'].forEach(id => dis(id, !U.redo.length || S.review));
   $('sDark').classList.toggle('on', S.darkBoost); $('btnDark').classList.toggle('lit', S.darkBoost); dis('sDark', !has); dis('btnDark', !has);
   dis('btnCompare', S.history.filter(h => h.impacts).length + (n ? 1 : 0) < 2);
   $('btnAmb').hidden = !S.amb.length; $('btnAmb').textContent = `⚠️ Vérifier ${S.amb.length} zone(s) douteuse(s)`;
   dis('btnValidate', !n || !cal || S.review); dis('btnReport', !n); dis('btnPng', !has); dis('btnClearHist', !S.history.length);
-  if (S.review) ['btnAuto', 'btnCenter', 'btnRing', 'btnWarp', 'btnUnwarp', 'btnResetCal', 'nu', 'nd', 'nl', 'nr', 'rp', 'rm', 'btnDetect', 'btnManual', 'btnDelete', 'btnClear', 'btnNewTarget'].forEach(id => dis(id, true));
+  if (S.review) ['btnRefine', 'btn3pts', 'btnAuto', 'btnCenter', 'btnRing', 'btnWarp', 'btnUnwarp', 'btnResetCal', 'nu', 'nd', 'nl', 'nr', 'rp', 'rm', 'btnDetect', 'btnManual', 'btnDelete', 'btnClear', 'btnNewTarget'].forEach(id => dis(id, true));
   const st = { photo: has, cible: cal, impacts: n > 0, res: S.history.length > 0 };
   document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('done', !!st[b.dataset.step]));
 }
 
 // ============ INTERACTIONS TACTILES ============
 const ptrs = new Map(); let gest = null;
-const AIM = ['center', 'ring', 'manual', 'warp'];
+const AIM = ['center', 'ring', 'manual', 'warp', 'circle'];
 function rel(e) { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
 function aimAt(sx, sy) { const [x, y] = toImg(sx, sy); S.aim = { x, y }; drawOverlay(); showLoupe(sx, sy); }
 function commit(x, y) {
@@ -1756,10 +1898,22 @@ function commit(x, y) {
   } else if (S.mode === 'ring') {
     const d = hyp(x - S.cal.cx, y - S.cal.cy);
     if (d < 3) { toast('Trop près du centre', 'err'); return; }
-    snapshot(); S.cal.w = d / edgeRings(); setMode('idle'); banner('✅ Cible calibrée — passez à ③ Impacts', 'ok');
+    snapshot(); S.cal.w = d / edgeRings(); S.cal.rb = null; setMode('idle'); banner('✅ Cible calibrée — passez à ③ Impacts', 'ok');
   } else if (S.mode === 'manual') {
     snapshot(); S.impacts.push({ x, y, conf: 999, flag: 'manual' });
   } else if (S.mode === 'warp') { manualWarpPoint(x, y); return; }
+  else if (S.mode === 'circle') {
+    S.circPts.push([x, y]);
+    if (S.circPts.length >= 3) {
+      let c; try { c = S.circPts.length >= 5 ? robustCircle(S.circPts) : fitCircle(S.circPts); } catch (e) { c = null; }
+      if (c && c.r > 3) {
+        if (S.circPts.length === 3) snapshot();
+        const edgeIsBlack = P().edge === preset().edge && !$('discipline').value.startsWith('arc');
+        S.cal = { cx: c.cx, cy: c.cy, w: c.r / edgeRings(), q: S.cal.q, rb: edgeIsBlack ? c.r : null };
+        banner(`◯ ${S.circPts.length} points — cercle ajusté. Ajoutez des points ailleurs sur le bord, puis Terminer`, 'act');
+      }
+    } else banner(`◯ Point ${S.circPts.length} posé — touchez le bord de l'anneau ${P().edge} ailleurs (au moins 3 points)`, 'act');
+  }
   refresh();
 }
 function deleteAt(sx, sy) {
@@ -1873,9 +2027,18 @@ on('btnResetCal', () => { snapshot(); S.cal = { cx: null, cy: null, w: null }; S
 const nudge = (dx, dy) => { snapshot('nudge'); const st = Math.max(0.25, 1 / V.k); S.cal.cx += dx * st; S.cal.cy += dy * st; refresh(); };
 on('nu', () => nudge(0, -1)); on('nd', () => nudge(0, 1)); on('nl', () => nudge(-1, 0)); on('nr', () => nudge(1, 0));
 on('nc', () => centerOn(S.cal.cx, S.cal.cy, Math.max(V.k, V.fitK * 4)));
-on('rp', () => { snapshot('ring'); S.cal.w *= 1.004; refresh(); }); on('rm', () => { snapshot('ring'); S.cal.w /= 1.004; refresh(); });
+const rscale = f => { snapshot('ring'); S.cal.w *= f; if (S.cal.rb) S.cal.rb *= f; refresh(); };
+on('rp', () => rscale(1.004)); on('rm', () => rscale(1 / 1.004));
 
 on('btnDetect', runDetect);
+on('btn3pts', () => setMode(S.mode === 'circle' ? 'idle' : 'circle', `◯ Touchez le bord de l'anneau ${P().edge} en 3 endroits ou plus (loupe active)`));
+on('btnRefine', () => {
+  if (!hasCal()) return;
+  banner('⏳ Mesure des anneaux…', 'act');
+  setTimeout(() => { snapshot(); const m = refineRings(null, false); refresh(); if (m) banner(`🎯 Affiné sur ${m.lines} anneaux mesurés (écart ${m.w.toFixed(1)} px)`, 'ok'); }, 30);
+});
+on('btnLearnReset', () => { if (S.learn) delete S.learn[learnKey()]; save(); refresh(); toast('Apprentissage effacé pour cette discipline', 'ok'); });
+$('sensitivity').addEventListener('change', () => { if (S.detSet && hasCal() && !S.review) runDetect(); });
 on('sDark', toggleDark); on('btnDark', toggleDark);
 on('btnCompare', () => openCompare());
 on('cmpClose', () => { $('cmpModal').hidden = true; });
