@@ -36,13 +36,19 @@ i[data-ic]{display:inline-flex}
 .view{display:none;flex-direction:column;gap:12px;animation:fade .25s ease}
 body[data-view=analyse] .view[data-view=analyse],body[data-view=suivi] .view[data-view=suivi],body[data-view=apprendre] .view[data-view=apprendre],body[data-view=armes] .view[data-view=armes],body[data-view=plus] .view[data-view=plus]{display:flex}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.vt{font-size:28px;font-weight:800;letter-spacing:-.01em;margin:6px 2px 2px}
+.view[data-view=analyse]{--acv:#4f8cff}.view[data-view=suivi]{--acv:#34d399}.view[data-view=apprendre]{--acv:#fbbf24}.view[data-view=armes]{--acv:#fb7185}.view[data-view=plus]{--acv:#a78bfa}
+.view .card-h,.view details.card summary svg,.view .lc .ico,.view .menu-i>i{color:var(--acv)}
+.view .lc .ico,.view .menu-i>i{background:color-mix(in srgb,var(--acv) 16%,transparent)}
+.vt{color:var(--acv);font-size:28px;font-weight:800;letter-spacing:-.01em;margin:6px 2px 2px}
 /* barre d'onglets */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,1fr);height:calc(var(--tab) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(8,12,20,.86);backdrop-filter:saturate(170%) blur(20px);-webkit-backdrop-filter:saturate(170%) blur(20px);border-top:1px solid var(--line)}
-.tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--dim);font-size:11px;font-weight:600;position:relative}
+.tabbar button{z-index:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--dim);font-size:11px;font-weight:600;position:relative}
 .tabbar button svg{width:23px;height:23px}
-.tabbar button.on{color:var(--tx)}.tabbar button.on svg{color:var(--ac2)}
-.tabbar button.on::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--grad)}
+.tabbar button.on{color:var(--tx)}.tabbar button[data-view=analyse]{--c:#4f8cff}.tabbar button[data-view=suivi]{--c:#34d399}.tabbar button[data-view=apprendre]{--c:#fbbf24}.tabbar button[data-view=armes]{--c:#fb7185}.tabbar button[data-view=plus]{--c:#a78bfa}
+.tabbar button svg{color:color-mix(in srgb,var(--c) 55%,#5f6b80)}
+.tabbar button.on{color:var(--c)}.tabbar button.on svg{color:var(--c)}
+.tabbar button.on::after{content:"";position:absolute;inset:7px 14%;border-radius:14px;background:color-mix(in srgb,var(--c) 15%,transparent);z-index:-1}
+.tabbar button.on::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--c)}
 /* séance */
 .session-bar{display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;padding:2px;text-align:left}
 .session-bar::-webkit-scrollbar{display:none}
@@ -152,7 +158,7 @@ table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:var(--mu
 /* apprendre */
 .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.chips::-webkit-scrollbar{display:none}
 .chips button{flex:none;height:32px;padding:0 13px;border-radius:99px;background:var(--s2);border:1px solid var(--line);font-size:13px;font-weight:650;color:var(--mu)}
-.chips button.on{background:rgba(79,140,255,.18);border-color:rgba(79,140,255,.45);color:#d6e4ff}
+.chips button.on{background:color-mix(in srgb,var(--acv) 18%,transparent);border-color:color-mix(in srgb,var(--acv) 50%,transparent);color:#fff}
 .grid-cards{display:grid;grid-template-columns:1fr;gap:10px}
 .lc{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
 .lc .ico{width:44px;height:44px;border-radius:13px;flex:none;display:grid;place-items:center;background:rgba(79,140,255,.15);color:var(--ac2)}
@@ -161,6 +167,7 @@ table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:var(--mu
 .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.tags span{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--s2);color:#b9c6da}
 .learn-body h2{font-size:22px;margin-bottom:4px}.learn-body h4{font-size:15px;margin:14px 0 6px;color:var(--ac2)}
 .learn-body p,.learn-body li{font-size:14.5px;color:#d5ddea;margin:4px 0}.learn-body ul,.learn-body ol{padding-left:20px}
+.learn-body .yt.alt{background:var(--s2);color:var(--tx);font-weight:600;margin-top:8px}
 .learn-body .yt{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;min-height:48px;border-radius:13px;background:#ff0033;color:#fff;font-weight:700;text-decoration:none}
 /* menu Plus */
 .menu{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
@@ -961,7 +968,7 @@ function drawOverlay() {
   drawMarks(ovCtx, (x, y) => [V.tx + x * V.k, V.ty + y * V.k], V.k, 1);
   const cp = $('coordPill');
   if (cp && loupe.style.display !== 'block') {
-    if (S.grid && hasCal()) { const pxmm = V.k / mmpp(), st = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200].find(v => v * pxmm >= 14) || 200; cp.textContent = `Grille : carré de ${String(st).replace('.', ',')} mm · grand carré ${String(st * 5).replace('.', ',')} mm`; cp.hidden = false; }
+    if (S.grid && hasCal()) { const pxmm = V.k / mmpp(), st = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200].find(v => v * pxmm >= 14) || 200; cp.textContent = `Grille ${String(st).replace('.', ',')} mm`; cp.hidden = false; }
     else cp.hidden = true;
   }
 }
@@ -1764,7 +1771,7 @@ function finalize(recovered = 0) {
     const extra = S.impacts.filter(i => i.flag !== 'manual' && i.flag !== 'split').sort((a, b) => (a.conf || 0) - (b.conf || 0)).slice(0, n - exp);
     extra.forEach(i => i.flag = 'doubt');
     msg = `⚠️ ${n} trouvés pour ${exp} attendus : ${extra.length} douteux en orange — supprimez-les s'ils sont faux`; type = 'warn';
-  } else if (exp > 0 && n < exp && (S.reserve || []).length) {
+  } else if (false) {
     const rh = holeR(), taken = S.impacts.concat(oldPx());
     const add = S.reserve.filter(c => taken.every(t => hyp(t.x - c.x, t.y - c.y) > 1.5 * rh)).sort((a, b) => b.circ - a.circ).slice(0, exp - n);
     add.forEach(c => S.impacts.push({ x: c.x, y: c.y, conf: 0, flag: 'doubt' }));
@@ -2433,8 +2440,69 @@ const WEAPONS = [
   { id: 'recurve', nom: 'Arc classique (recurve)', cat: 'Arc', d: 'arc', trig: 'arc', recul: 0, vis: 'viseur', ammo: ['fleche'] },
   { id: 'compound', nom: 'Arc à poulies (compound)', cat: 'Arc', d: 'arc', trig: 'decocheur', recul: 0, vis: 'viseur', ammo: ['fleche'] },
   { id: 'barebow', nom: 'Arc nu (barebow) / traditionnel', cat: 'Arc', d: 'arc', trig: 'arc', recul: 0, vis: 'instinctif', ammo: ['fleche'] },
-  { id: 'autre', nom: 'Autre arme', cat: 'Autre', d: 'autre', trig: 'sa', recul: 1, vis: 'mire', ammo: Object.keys(AMMO) }
+  { id: 'autre', nom: 'Autre arme (non listée)', cat: 'Autre', d: 'autre', trig: 'sa', recul: 1, vis: 'mire', ammo: [] }
 ];
+
+// ---- bibliothèque élargie ----
+Object.assign(AMMO, {
+  lr_sub: { nom: '.22 LR subsonique', cal: 5.6, recul: 1, note: 'Très régulière à 25 et 50 m, peu bruyante ; vérifiez qu’elle fait fonctionner votre semi-automatique.' },
+  wmr: { nom: '.22 WMR (Magnum)', cal: 5.7, recul: 1, note: 'Plus rapide que le .22 LR : tir plus tendu, sensible au lot.' },
+  n380: { nom: '.380 ACP (9 mm court)', cal: 9, recul: 1, note: 'Recul modéré mais vif dans les petites armes : prise haute et ferme.' },
+  n40: { nom: '.40 S&W', cal: 10.2, recul: 3, note: 'Recul sec : anticipation fréquente, travaillez la balle/douille factice.' },
+  n10: { nom: '10 mm Auto', cal: 10.2, recul: 3, note: 'Recul important : prise et position solides.' },
+  s38: { nom: '.38 Special (balle ronde/semi-wadcutter)', cal: 9.1, recul: 2, note: 'Recul doux dans un revolver lourd.' },
+  m44: { nom: '.44 Magnum', cal: 10.9, recul: 3, note: 'Recul très fort : l’anticipation est le défaut n°1 ; alternez avec du .44 Special.' },
+  s44: { nom: '.44 Special', cal: 10.9, recul: 2, note: 'Recul modéré, idéal pour travailler la technique au revolver .44.' },
+  pn36: { nom: 'Poudre noire — balle ronde .36', cal: 9.3, recul: 1, note: 'Chargement identique à chaque coup (dosage, calage, graisse) : c’est lui qui fait le groupement.' },
+  pn44: { nom: 'Poudre noire — balle ronde .44', cal: 11.4, recul: 2, note: 'Pesez ou dosez la poudre précisément et nettoyez régulièrement : l’encrassement déplace les impacts.' },
+  pn_fus: { nom: 'Poudre noire — fusil/carabine (balle ronde ou Minié)', cal: 14, recul: 2, note: 'Écouvillonnez entre les coups si besoin pour garder un chargement constant.' },
+  r762x39: { nom: '7,62×39', cal: 7.9, recul: 2, note: 'Précision moyenne des munitions courantes : testez plusieurs marques.' },
+  r762x54: { nom: '7,62×54R', cal: 7.9, recul: 3, note: 'Recul fort ; munitions de surplus irrégulières.' },
+  r8x57: { nom: '8×57 IS (8 mm Mauser)', cal: 8.2, recul: 3, note: 'Recul franc ; épaule bien calée.' },
+  r75x55: { nom: '7,5×55 Swiss (GP11)', cal: 7.8, recul: 2, note: 'Munition réputée très régulière.' },
+  r75mas: { nom: '7,5×54 MAS', cal: 7.8, recul: 2, note: 'Munition militaire française, recul modéré.' },
+  r3006: { nom: '.30-06 Springfield', cal: 7.8, recul: 3, note: 'Recul important : position et appui d’épaule constants.' },
+  r303: { nom: '.303 British', cal: 7.9, recul: 2, note: 'Recul modéré ; munitions de surplus variables.' },
+  r65x55: { nom: '6,5×55 Suédois', cal: 6.7, recul: 2, note: 'Recul doux et très bonne précision.' },
+  r300wm: { nom: '.300 Win Mag', cal: 7.8, recul: 3, note: 'Recul fort : frein de bouche et position solides recommandés.' },
+  r338: { nom: '.338 Lapua Magnum', cal: 8.6, recul: 3, note: 'Très longue distance : vent et lecture de mirage prépondérants.' },
+  r17hmr: { nom: '.17 HMR', cal: 4.5, recul: 0, note: 'Tir très tendu, sensible au vent malgré tout.' },
+  r22250: { nom: '.22-250 / .243 Win', cal: 6, recul: 1, note: 'Faible recul, tir tendu.' },
+  slug: { nom: 'Balle de fusil (slug) 12', cal: 18.5, recul: 3, note: 'Recul très fort ; vérifiez le choke et la convergence.' },
+  carreau: { nom: 'Carreaux (arbalète)', cal: 9, recul: 0, note: 'Carreaux de même poids et même empennage ; tension et lubrification régulières.' }
+});
+const W = (cat, d, trig, recul, vis, ammo, names) => names.forEach(n => WEAPONS.splice(WEAPONS.length - 1, 0, { id: 'x' + WEAPONS.length + '_' + n.replace(/\W+/g, '').slice(0, 10), nom: n, cat, d, trig, recul, vis, ammo }));
+W('Pistolet air 10 m', 'pistolet', 'match', 0, 'mire', ['diab'], ['Walther LP400', 'Walther LP300', 'Steyr LP10', 'Steyr LP50 (5 coups)', 'Feinwerkbau P11', 'Feinwerkbau P44', 'Morini CM 200EI', 'Pardini K10', 'Pardini K2', 'Hämmerli AP20', 'Baikal IZH-46M', 'Air Arms Alfa', 'Tesro PA10']);
+W('Pistolet à plombs loisir', 'pistolet', 'sa', 0, 'mire', ['diab'], ['Crosman 2240', 'Diana Chaser', 'Gamo P-430', 'Umarex Beretta 92 (CO2)', 'Weihrauch HW45', 'Webley Tempest']);
+W('Pistolet .22 LR 25 m', 'pistolet', 'match', 1, 'mire', ['lr_sv', 'lr_sub', 'lr_hv'], ['Pardini SP New', 'Pardini SP Rimfire Junior', 'Walther GSP Expert', 'Hämmerli X-Esse', 'Hämmerli 208', 'Hämmerli 215', 'Benelli MP95E', 'Benelli MP90S', 'Unique DES 69', 'Unique DES 2000', 'Smith & Wesson Model 41', 'High Standard Supermatic', 'Feinwerkbau AW93 Junior', 'Toz-35M', 'Matchguns MG4']);
+W('Pistolet vitesse olympique', 'pistolet', 'match', 1, 'mire', ['lr_short', 'lr_sv'], ['Walther SSP-E', 'Walther OSP', 'Pardini GPR1', 'Pardini SP RF', 'Morini CM 102E', 'Hämmerli 280 RF', 'Matchguns MG5']);
+W('Pistolet libre 50 m', 'pistolet', 'match', 1, 'mire', ['lr_sv', 'lr_sub'], ['Pardini K22 Free', 'Hämmerli 162', 'Hämmerli 152', 'Hämmerli 150', 'Toz-35', 'Feinwerkbau Model 2', 'Walther FP']);
+W('Pistolet percussion centrale 25 m', 'pistolet', 'match', 2, 'mire', ['wc32', 'wc38'], ['Pardini HP New', 'Walther GSP 32', 'Unique DES 32U', 'Hämmerli 280 (.32)', 'Smith & Wesson Model 52 (.38 WC)', 'Benelli MP95E (.32)', 'SIG P210 Target']);
+W('Pistolet .22 LR loisir', 'pistolet', 'sa', 1, 'mire', ['lr_sv', 'lr_hv', 'lr_sub'], ['Ruger Mark III', 'Ruger 22/45', 'Smith & Wesson Victory', 'Smith & Wesson M&P 22', 'Walther P22', 'Walther PPQ .22', 'Taurus TX22', 'SIG Sauer P322', 'Beretta 87 Target', 'Browning Buck Mark Contour', 'GSG Firefly', 'Glock 44', 'CZ Kadet', 'Kimber Rimfire Target', 'High Standard Victor']);
+W('Pistolet 9 mm à percuteur', 'pistolet', 'percuteur', 2, 'mire', ['n9'], ['Glock 17 Gen5', 'Glock 19 Gen5', 'Glock 26', 'Glock 34', 'Glock 45', 'Glock 48', 'Glock 43X', 'SIG Sauer P365', 'SIG Sauer P365 XL', 'SIG Sauer P320 X-Five', 'SIG Sauer P320 AXG', 'Walther PDP', 'Walther PDP Pro', 'Walther PPQ', 'Walther Q5 Match', 'Walther P99', 'Heckler & Koch VP9', 'Heckler & Koch SFP9', 'Smith & Wesson M&P 2.0', 'Smith & Wesson M&P Shield', 'Springfield XD', 'Springfield XD-M', 'Springfield Hellcat', 'CZ P-10 C', 'CZ P-10 F', 'Canik TP9 SFx', 'Canik METE SFx', 'FN 509', 'Taurus G3', 'Ruger Security-9', 'Arsenal Strike One', 'Beretta APX', 'Steyr L9-A2', 'Grand Power Q100']);
+W('Pistolet 9 mm simple/double action', 'pistolet', 'sada', 2, 'mire', ['n9'], ['Beretta 92FS', 'Beretta M9A3', 'Beretta 92X Performance', 'Beretta PX4 Storm', 'CZ 75 B', 'CZ 75 SP-01', 'CZ Shadow 2 Orange', 'CZ P-07', 'CZ P-09', 'SIG Sauer P226 Legion', 'SIG Sauer P229', 'SIG Sauer SP2022', 'Heckler & Koch USP', 'Heckler & Koch P30L', 'Tanfoglio Stock II', 'Tanfoglio Stock III', 'Tanfoglio Limited Custom', 'Tanfoglio Gold Custom', 'Sphinx SDP', 'IWI Jericho 941', 'Walther P38 / P1', 'Smith & Wesson 5906', 'Manurhin MR (PP/PPK)', 'MAB PA15']);
+W('Pistolet simple action (1911, 2011…)', 'pistolet', 'sa', 2, 'mire', ['n9', 'a45', 'n40'], ['Colt Government 1911', 'Springfield Range Officer', 'Springfield Prodigy (2011)', 'Kimber Custom II', 'Staccato P / XC (2011)', 'STI Edge', 'SIG Sauer 1911', 'Dan Wesson Valor', 'Browning Hi-Power', 'SIG Sauer P210 Legend', 'CZ TS 2', 'CZ Shadow 2 SA', 'Tanfoglio Stock Master']);
+W('Pistolet gros calibre (.40 / .45 / 10 mm)', 'pistolet', 'percuteur', 3, 'mire', ['a45', 'n40', 'n10'], ['Glock 21', 'Glock 22', 'Glock 20', 'Heckler & Koch HK45', 'Smith & Wesson M&P45', 'SIG Sauer P220', 'CZ 97 B', 'FN FNX-45']);
+W('Pistolet compact .380', 'pistolet', 'sada', 1, 'mire', ['n380'], ['Walther PPK', 'Beretta 84 Cheetah', 'SIG Sauer P238', 'Glock 42', 'Smith & Wesson Bodyguard 380']);
+W('Revolver double action', 'pistolet', 'da_rev', 2, 'mire', ['wc38', 's38', 'm357'], ['Smith & Wesson 586', 'Smith & Wesson 627', 'Smith & Wesson Model 10', 'Smith & Wesson Model 64', 'Smith & Wesson 60', 'Smith & Wesson 66', 'Ruger SP101', 'Ruger Security-Six', 'Colt Python', 'Colt King Cobra', 'Korth NXS', 'Manurhin MR73 Sport', 'Manurhin MR88', 'Taurus 856', 'Taurus 605', 'Chiappa Rhino', 'Kimber K6s', 'Weihrauch HW357', 'Astra 960']);
+W('Revolver .22 LR', 'pistolet', 'da_rev', 1, 'mire', ['lr_sv', 'lr_hv'], ['Smith & Wesson 617', 'Smith & Wesson 17', 'Ruger LCR 22', 'Ruger Single-Six', 'Taurus 942', 'Weihrauch HW68']);
+W('Revolver .44', 'pistolet', 'da_rev', 3, 'mire', ['m44', 's44'], ['Smith & Wesson 629', 'Smith & Wesson 29', 'Ruger Redhawk', 'Ruger Super Redhawk', 'Ruger Super Blackhawk']);
+W('Revolver poudre noire', 'pistolet', 'sa', 1, 'mire', ['pn44', 'pn36'], ['Pietta Remington 1858', 'Uberti Remington 1858', 'Pietta Colt 1851 Navy', 'Pietta Colt 1860 Army', 'Uberti Colt Walker', 'Ruger Old Army', 'Pietta Starr', 'Pietta Le Mat']);
+W('Pistolet poudre noire', 'pistolet', 'sa', 1, 'mire', ['pn36', 'pn44'], ['Pedersoli Kentucky (pistolet)', 'Pedersoli Le Page', 'Pedersoli Mang in Graz', 'Pedersoli Howdah']);
+W('Carabine air 10 m', 'carabine', 'match', 0, 'dioptre', ['diab'], ['Walther LG300', 'Walther LG400 Monotec', 'Anschütz 9003', 'Anschütz 8001', 'Feinwerkbau 700', 'Feinwerkbau 900', 'Hämmerli AR20', 'Air Arms MPR Neo', 'Steyr LG110', 'Steyr Challenge', 'Pardini GPR1 Air', 'Diana 75 T01', 'Tesro RS100']);
+W('Carabine à plombs loisir / field target', 'carabine', 'sa', 0, 'lunette', ['diab'], ['Weihrauch HW97K', 'Weihrauch HW100', 'Weihrauch HW30', 'Air Arms S400', 'Air Arms TX200', 'Daystate Huntsman', 'FX Impact', 'Gamo Coyote', 'BSA R10', 'Diana 350 Magnum', 'Hatsan Flash', 'Kral Puncher']);
+W('Carabine .22 LR 50 m (match)', 'carabine', 'match', 1, 'dioptre', ['lr_sv', 'lr_sub'], ['Anschütz 1903', 'Anschütz 1913', 'Anschütz 1912', 'Anschütz 1712', 'Anschütz 54.18', 'Anschütz 64 MP', 'Walther KK300', 'Walther KK500 Expert', 'Feinwerkbau 2800', 'Feinwerkbau 2700', 'Bleiker Challenger', 'Grünig & Elmiger Racer', 'Vostok TOZ-8', 'Izhmash Biathlon 7-3']);
+W('Carabine .22 LR loisir', 'carabine', 'sa', 1, 'lunette', ['lr_sv', 'lr_hv', 'lr_sub'], ['Ruger 10/22', 'Ruger American Rimfire', 'Ruger Precision Rimfire', 'CZ 455', 'CZ 452', 'CZ 512', 'CZ 600 Range .22', 'Tikka T1x', 'Sako Finnfire II', 'Savage Mark II', 'Savage B22', 'Marlin 795', 'Bergara B14R', 'Browning SA-22', 'Henry Lever Action .22', 'Brno Model 2', 'Lithgow LA101', 'Anschütz 1416', 'Anschütz 1517 (.17 HMR)']);
+W('Carabine gros calibre (précision)', 'carabine', 'sa', 2, 'lunette', ['r308', 'r65', 'r223', 'r300wm', 'r22250'], ['Tikka T3x TAC A1', 'Tikka T3x Varmint', 'Sako 85', 'Sako S20', 'Sako TRG 22', 'Sako TRG 42', 'Bergara B14 HMR', 'Bergara Premier', 'Ruger Precision Rifle', 'Ruger American', 'Savage 110 Elite Precision', 'Savage 10 FCP', 'Howa 1500', 'Mauser M18', 'Mauser M12', 'Blaser R8', 'Sauer 100', 'Sauer 404', 'Steyr SSG 08', 'Steyr Pro Hunter', 'CZ 557', 'CZ 600', 'Remington 700 SPS', 'Accuracy International AT-X', 'Accuracy International AXMC', 'Sig Cross', 'Victrix Pugio', 'Desert Tech SRS', 'Unique Alpine TPG', 'Lapua (custom F-Class)']);
+W('Carabine semi-automatique (AR-15, 308…)', 'carabine', 'sa', 2, 'point rouge', ['r223', 'r308'], ['AR-15 (5,56)', 'Heckler & Koch MR223', 'Heckler & Koch MR308', 'FN SCAR 16S', 'FN SCAR 17S', 'SIG Sauer MCX', 'Schmeisser AR15', 'Oberland Arms OA-15', 'Steyr AUG', 'Ruger Mini-14', 'CZ Bren 2 MS', 'Tavor X95']);
+W('Carabine de chasse (battue / approche)', 'carabine', 'sa', 2, 'lunette', ['r3006', 'r308', 'r65', 'r300wm', 'r8x57'], ['Browning BAR MK3', 'Browning X-Bolt', 'Benelli Argo E', 'Merkel Helix', 'Verney-Carron Impact', 'Haenel Jaeger 10', 'Winchester XPR', 'Remington 7400']);
+W('Arme réglementaire / de collection', 'carabine', 'sa', 3, 'mire', ['r8x57', 'r762x54', 'r75x55', 'r75mas', 'r3006', 'r303', 'r65x55', 'r762x39'], ['Mauser K98k (8×57)', 'Mosin-Nagant 91/30 (7,62×54R)', 'Schmidt-Rubin K31 (7,5×55)', 'MAS 36 (7,5×54)', 'MAS 49/56 (7,5×54)', 'Lee-Enfield No.4 (.303)', 'M1 Garand (.30-06)', 'Springfield 1903 (.30-06)', 'Carl Gustaf m/96 (6,5×55)', 'SKS (7,62×39)', 'FR F1 / F2 (7,5 / 7,62)', 'Lebel 1886 (8 mm Lebel)', 'Berthier 1907/15']);
+W('Fusil / carabine poudre noire', 'carabine', 'sa', 2, 'mire', ['pn_fus'], ['Pedersoli Kentucky', 'Pedersoli Brown Bess', 'Pedersoli Charleville 1777', 'Pedersoli Enfield 1853', 'Pedersoli Sharps 1874', 'Pedersoli Hawken', 'Pedersoli Tryon', 'Pedersoli Mortimer', 'Pedersoli Remington Rolling Block', 'Euroarms Zouave 1863']);
+W('Fusil (tir à balle)', 'carabine', 'sa', 3, 'mire', ['slug'], ['Fusil calibre 12 à balle (slug)', 'Benelli M4', 'Browning B525']);
+W('Arc classique (recurve)', 'arc', 'arc', 0, 'viseur', ['fleche'], ['Hoyt Formula Xi', 'Hoyt Xceed', 'Hoyt Satori', 'Win&Win Wiawis ATF-DX', 'Win&Win Inno CXT', 'Fivics Titan', 'MK Korea MK Z', 'Gillo GT', 'Uukha VX1000', 'Spigarelli Club', 'Kinetic Viper', 'Arc d’initiation (bois ou alu)']);
+W('Arc à poulies (compound)', 'arc', 'decocheur', 0, 'viseur', ['fleche'], ['Hoyt Stratos', 'Hoyt Concept X', 'Mathews TRX 38', 'Mathews Title', 'PSE Dominator', 'Bowtech Reckoning', 'Elite Archery Ritual', 'Prime Nexus', 'Bear Legit']);
+W('Arc nu / traditionnel / chasse', 'arc', 'arc', 0, 'instinctif', ['fleche'], ['Arc barebow (Gillo, Spigarelli…)', 'Longbow anglais', 'Arc droit (flatbow)', 'Arc chasse recurve', 'Bear Grizzly', 'Samick Sage', 'Arc mongol / turc (horsebow)', 'Arc japonais (yumi)']);
+W('Arbalète', 'arc', 'sa', 0, 'lunette', ['carreau'], ['Arbalète match 10 m (Feinwerkbau, Ziegler)', 'Arbalète field 30 m', 'Excalibur Micro', 'TenPoint Turbo', 'Barnett Whitetail', 'Ravin R10']);
 const activeArm = () => (S.arms || []).find(a => a.id === $('armSel').value) || null;
 const armModel = a => WEAPONS.find(w => w.id === a.model) || WEAPONS[WEAPONS.length - 1];
 function renderArmSel() {
@@ -2466,11 +2534,11 @@ function pickArm(id) {
   $('armDb').hidden = true; $('armSearch').hidden = true; $('armForm').hidden = false;
   $('armPicked').innerHTML = `<b>${armPick.nom}</b> · ${armPick.cat}<br><span class="hint">Détente : ${TRIG[armPick.trig] || '—'} · recul ${['nul', 'faible', 'moyen', 'fort'][armPick.recul]} · visée ${VIS[armPick.vis] || ''}</span>`;
   $('armName').value = armPick.nom;
-  $('armAmmo').innerHTML = armPick.ammo.map(k => `<option value="${k}">${AMMO[k].nom}</option>`).join('');
+  $('armAmmo').innerHTML = (armPick.ammo.length ? armPick.ammo : Object.keys(AMMO)).map(k => `<option value="${k}">${AMMO[k].nom}</option>`).join('');
   $('armClickUnit').value = armPick.vis === 'lunette' ? 'moa' : armPick.d === 'carabine' ? 'mm50' : 'mm25';
 }
 const TRIG = { match: 'match réglable', percuteur: 'à percuteur (striker)', sa: 'simple action', sada: 'simple / double action', da_rev: 'revolver double action', arc: 'lâcher aux doigts', decocheur: 'décocheur' };
-const VIS = { mire: 'guidon et cran de mire', dioptre: 'dioptre et tunnel', lunette: 'lunette', viseur: 'viseur d’arc', instinctif: 'instinctive' };
+const VIS = { 'point rouge': 'point rouge', mire: 'guidon et cran de mire', dioptre: 'dioptre et tunnel', lunette: 'lunette', viseur: 'viseur d’arc', instinctif: 'instinctive' };
 function saveArm() {
   if (!armPick) return;
   const a = { id: uid(), model: armPick.id, name: ($('armName').value || armPick.nom).slice(0, 40), ammo: $('armAmmo').value, click: parseFloat($('armClick').value) || null, unit: $('armClickUnit').value };
@@ -2544,6 +2612,7 @@ function startTimer() {
 }
 
 // ============ COURS ET EXERCICES ============
+const VIDEO = {'sec':'vGWBRfhMPp4','mur':'UMx8K-rIfKs','piece':'7MzjN-E2V1o','balle':'jpyOPWJTXnA','blanc':'omGbDHdvmbE','tenue':'S1rqPT7Phlw','annonce':'3auoavDdanA','dot':'guxSc0o6lAU','bill':'Rysxc52Uab8','vit864':'LrnZsOOp3P0','resp':'KjBxM4bKmv8','arc5':'iHVnAKgkXtM','c_visee':'8C8y5yVnyu0','c_coord':'-9O43AIoMi4','c_vitesse':'3k9oedJeNac','c_pos1':'fawgagB2Hgc','c_lacher':'jSAIgi9TIKs','c_resp':'KjBxM4bKmv8','c_arc':'iHVnAKgkXtM'};
 const YT = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 const COURS = [
   { id: 'secu', ic: 'shield', t: 'Les règles de sécurité', s: 'À connaître avant tout tir, et pour le tir à sec', tags: ['tous'], b: `
@@ -2559,7 +2628,7 @@ const COURS = [
 <p>On vise avec l'œil directeur. S'il est du côté opposé à la main forte, on peut tirer de l'autre main, ou tourner légèrement la tête pour amener la ligne de visée devant cet œil.</p>
 <h4>La netteté</h4><p>L'œil ne voit net qu'à une seule distance : au pistolet comme à la carabine à dioptre, <b>la netteté est sur le guidon</b>, la cible reste légèrement floue.</p>
 <p>Gardez les deux yeux ouverts quand c'est possible : un cache translucide devant l'œil non directeur évite de fermer un œil et de fatiguer le visage. Des lunettes de tir correctrices, réglées pour la distance du guidon, aident beaucoup après 40 ans.</p>` },
-  { id: 'pos1', ic: 'feet', t: 'La position au pistolet (une main)', s: 'Stabilité, appuis, orientation naturelle', tags: ['pistolet'], b: `
+  { id: 'pos1', ic: 'feet', t: 'La position au pistolet (une main)', s: 'Stabilité, appuis, orientation naturelle', q: '10m air pistol stance', tags: ['pistolet'], b: `
 <p>Objectif : une position <b>simple, stable, économique</b> et reproductible, qui place l'arme naturellement dans l'axe de la cible.</p>
 <h4>Les appuis</h4><ul><li>Pieds écartés environ à la largeur des épaules, poids réparti sur les deux jambes, légèrement vers l'avant du pied.</li><li>Corps de profil ou de trois-quarts par rapport à la cible ; genoux tendus sans être bloqués.</li><li>Bras tendu, épaule basse et relâchée, tête droite qui vient vers l'arme (pas l'inverse).</li></ul>
 <h4>Trouver sa position naturelle</h4><ol><li>Prenez votre visée normalement sur la cible.</li><li>Fermez les yeux quelques secondes en gardant la position, détendez-vous.</li><li>Rouvrez : si l'arme a dérivé à côté de la cible, ne corrigez pas avec le bras, <b>déplacez les pieds</b> (pivot autour du pied avant).</li></ol>
@@ -2572,34 +2641,34 @@ const COURS = [
 <p>Une bonne prise est <b>ferme sans crispation</b>, comme une poignée de main franche, et surtout <b>identique à chaque coup</b>.</p>
 <ol><li>Placez la fourche (entre pouce et index) <b>le plus haut possible</b> dans le dos de la crosse, dans l'axe de l'avant-bras.</li><li>Posez la paume et les doigts au contact de la crosse ; la pression vient surtout du majeur et de l'annulaire, d'avant en arrière.</li><li>Le pouce est relâché, sans appuyer latéralement sur la carcasse.</li><li>L'index ne touche pas la carcasse : seul le doigt bouge au moment du lâcher.</li></ol>
 <p>Une crosse anatomique adaptée à votre main aligne d'elle-même les organes de visée et limite les tensions. Si en levant l'arme les yeux fermés le guidon n'est pas aligné quand vous les rouvrez, retouchez la prise.</p>` },
-  { id: 'visee', ic: 'crosshair', t: 'La visée : les différents organes', s: 'Mire ouverte, dioptre, point rouge, lunette', tags: ['tous'], b: `
+  { id: 'visee', ic: 'crosshair', t: 'La visée : les différents organes', s: 'Mire ouverte, dioptre, point rouge, lunette', q: 'sight alignment sight picture pistol', tags: ['tous'], b: `
 <h4>Guidon et cran de mire (mire ouverte)</h4><ul><li><b>Alignement</b> : le guidon est centré dans le cran, avec la même lumière de chaque côté, et son sommet au ras du haut de la hausse.</li><li>Une petite erreur d'alignement déplace bien plus le coup qu'un léger mouvement de l'arme : l'alignement passe avant tout.</li><li>Netteté sur le guidon, cible légèrement floue.</li></ul>
 <h4>Visée « 6 heures » ou visée centrale</h4><p>En <b>visée 6 h</b>, le haut du guidon se pose sous le visuel noir, avec une fine marge de blanc : le contraste aide à voir les mouvements. En <b>visée centrale</b>, le guidon vient au centre du visuel ; les organes de visée sont réglés en conséquence. Choisissez-en une et gardez-la.</p>
 <h4>Dioptre et tunnel (carabine)</h4><p>L'œil regarde à travers l'œilleton ; le guidon annulaire (tunnel) doit apparaître centré, et le visuel centré dans l'anneau : on vérifie la concentricité des cercles. Une joue toujours placée au même endroit sur le busc rend ce centrage automatique.</p>
 <h4>Point rouge</h4><p>Les deux yeux ouverts, mise au point sur la cible ; le point se pose sur la zone visée. Peu sensible à la position de l'œil, très rapide pour le tir de vitesse.</p>
 <h4>Lunette</h4><p>Même distance œil-oculaire à chaque tir (relief oculaire), parallaxe réglée à la distance, image sans ombre. Les tourelles se règlent en clics (souvent ¼ MOA ou 0,1 MRAD) : renseignez-les dans « Armes » pour avoir les corrections en clics.</p>` },
-  { id: 'lacher', ic: 'bolt', t: 'Le lâcher (la détente)', s: 'L’action qui fait la différence', tags: ['pistolet', 'carabine'], b: `
+  { id: 'lacher', ic: 'bolt', t: 'Le lâcher (la détente)', s: 'L’action qui fait la différence', q: 'trigger control pistol', tags: ['pistolet', 'carabine'], b: `
 <p>Le lâcher est l'action du doigt qui fait partir le coup <b>sans déplacer l'arme</b>.</p>
 <ul><li>Le contact se fait avec le centre de la 1ʳᵉ phalange (pulpe), au milieu de la queue de détente.</li><li>Le mouvement part de l'articulation de la base du doigt et va <b>droit vers l'arrière</b>, dans l'axe du canon.</li><li>Sur une détente à deux temps : prenez la bossette (point dur) en début de visée, puis augmentez la pression de façon progressive et continue.</li><li>Le départ doit <b>surprendre</b> : on ne « donne » pas le coup, on laisse la pression le libérer pendant que l'on maintient la visée.</li></ul>
 <p>Défauts typiques (droitier) : doigt trop engagé → coups à gauche ; trop peu engagé → à droite ; coup de doigt ou anticipation → coups bas.</p>` },
-  { id: 'resp', ic: 'wind', t: 'La respiration', s: 'Stabiliser la visée par la pause respiratoire', tags: ['tous'], b: `
+  { id: 'resp', ic: 'wind', t: 'La respiration', s: 'Stabiliser la visée par la pause respiratoire', q: 'breath control pistol shooting', tags: ['tous'], b: `
 <p>La cage thoracique bouge avec la respiration : au pistolet, inspirer en visée fait monter l'arme et expirer la fait descendre.</p>
 <ol><li>Respirez calmement par le ventre en préparant le coup.</li><li>Levez l'arme au-dessus de la cible en inspirant, puis descendez dans la zone de visée en expirant à moitié.</li><li>Faites une <b>pause respiratoire naturelle</b>, sans forcer, pendant laquelle vous affinez la visée et lâchez le coup.</li><li>Si le coup n'est pas parti après quelques secondes (la vue et la stabilité se dégradent), reposez l'arme, respirez, recommencez.</li></ol>
 <p>À la carabine couchée, le battement cardiaque devient visible : laissez le coup partir pendant le calme entre deux battements.</p>` },
-  { id: 'coord', ic: 'spark', t: 'Coordination et tenue après le départ', s: 'Relier position, visée et lâcher', tags: ['tous'], b: `
+  { id: 'coord', ic: 'spark', t: 'Coordination et tenue après le départ', s: 'Relier position, visée et lâcher', q: 'follow through pistol shooting', tags: ['tous'], b: `
 <p>La <b>coordination</b> est la liaison entre position, visée et lâcher : on mène le lâcher en parallèle du maintien de la ligne de mire dans la zone de visée.</p>
 <p>La <b>tenue</b> (ou prolongation) consiste à continuer toutes les actions <b>après le départ du coup</b> : garder la visée, la pression sur la détente et la position environ une seconde. Elle évite de bouger l'arme pendant que le projectile est encore dans le canon, ce qui compte énormément avec les armes à air.</p>
 <p>Exercice : après chaque coup, gardez la visée et <b>annoncez</b> où le coup est parti avant de regarder la cible. Si l'annonce correspond à l'impact, votre visée et votre tenue sont bonnes.</p>` },
   { id: 'mental', ic: 'brain', t: 'Routine et mental', s: 'Rendre chaque coup identique au précédent', tags: ['tous'], b: `
 <ul><li><b>Une routine fixe</b> pour chaque coup : prise, respiration, levée, visée, lâcher, tenue, annonce. Toujours dans le même ordre, au même rythme.</li><li><b>Un objectif de processus</b> (« un lâcher progressif ») plutôt qu'un objectif de score.</li><li><b>Analysez puis oubliez</b> : un mauvais coup s'analyse en une phrase, puis on prépare le suivant.</li><li>Entre les coups, respiration lente et relâchement des épaules.</li><li>En compétition, gardez le rythme de l'entraînement ; ne changez rien de technique le jour J.</li></ul>` },
-  { id: 'vitesse', ic: 'timer', t: 'Le tir de vitesse (25 m)', s: 'Séries en 8, 6 et 4 secondes', tags: ['pistolet'], b: `
+  { id: 'vitesse', ic: 'timer', t: 'Le tir de vitesse (25 m)', s: 'Séries en 8, 6 et 4 secondes', q: '25m rapid fire pistol', tags: ['pistolet'], b: `
 <p>En pistolet vitesse olympique, on tire des séries de 5 coups sur 5 cibles en <b>8, 6 puis 4 secondes</b>. Au pistolet standard ou au pistolet 25 m, les séries sont plus longues (150, 20, 10 s ou 3 s par coup), mais les principes sont les mêmes.</p>
 <h4>Les clés</h4><ul><li><b>Le placement</b> : position calée sur la cible du milieu, pour que l'arme arrive naturellement dans l'axe en montant de la position d'attente (bras baissé à 45°).</li><li><b>Prise ferme et constante</b>, poignet verrouillé : le pistolet doit revenir au même endroit après chaque recul.</li><li><b>Détente</b> : relâcher juste jusqu'au point de réarmement (reset) puis repartir, sans quitter la détente.</li><li><b>Rythme régulier</b> plutôt que visée parfaite : on accepte la zone de visée.</li></ul>
 <h4>Progresser</h4><p>Installez la technique en 8 s, puis passez à 6 puis 4 s. Il est inutile de tirer une série de 8 s en 8 s si la technique est meilleure plus lentement. Utilisez le <b>minuteur</b> de Mouche (menu Plus) pour vous entraîner avec des bips de départ et de fin.</p>` },
   { id: 'carabine', ic: 'crosshair', t: 'Positions à la carabine', s: 'Couché, genou, debout', tags: ['carabine'], b: `
 <ul><li><b>Couché</b> : le plus stable. Corps légèrement de biais, coude gauche sous l'arme (droitier), bretelle réglée pour porter l'arme sans effort musculaire.</li><li><b>Genou</b> : assis sur le talon (avec boudin), coude avant posé en avant du genou, jamais l'os du coude sur l'os du genou.</li><li><b>Debout</b> : le plus exigeant. Bassin en avant, bras gauche posé sur la hanche ; l'arme repose sur la structure osseuse plutôt que sur les muscles.</li></ul>
 <p>Dans toutes les positions : la joue au même endroit sur le busc, l'œil centré dans le dioptre, et la position orientée naturellement vers la cible (même test les yeux fermés qu'au pistolet).</p>` },
-  { id: 'arc', ic: 'bow', t: 'Les bases du tir à l’arc', s: 'Posture, ancrage, lâcher', tags: ['arc'], b: `
+  { id: 'arc', ic: 'bow', t: 'Les bases du tir à l’arc', s: 'Posture, ancrage, lâcher', q: 'archery form basics', tags: ['arc'], b: `
 <ul><li><b>Posture</b> : pieds de part et d'autre de la ligne de tir, largeur d'épaules, corps droit.</li><li><b>Prise de l'arc</b> : main ouverte et détendue, la poignée appuie dans le creux de la main ; on ne serre pas (sinon l'arc tourne : torque).</li><li><b>Ancrage</b> : la main de corde vient toujours au même repère (coin de bouche, sous le menton). C'est lui qui fixe la hauteur.</li><li><b>Lâcher</b> : les doigts se relâchent, la main recule naturellement dans l'axe ; on ne les ouvre pas activement (sinon « pluck », coups à gauche pour un droitier).</li><li><b>Suivi</b> : garder la visée et la position jusqu'à l'impact.</li></ul>` },
   { id: 'reglage', ic: 'wrench', t: 'Régler ses organes de visée', s: 'Quand et comment corriger', tags: ['tous'], b: `
 <ol><li>Ne réglez que si le <b>groupement est regroupé et décalé de façon répétée</b> (plusieurs séries). Un groupe étalé se corrige par la technique, pas par les réglages.</li><li>On déplace la hausse (ou la tourelle) <b>dans le sens où l'on veut déplacer les impacts</b> : pour remonter les coups, on monte la hausse ; pour les décaler à droite, on la déplace vers la droite.</li><li>Faites un réglage, puis tirez au moins 5 coups avant de juger.</li></ol>
@@ -2633,7 +2702,8 @@ function renderLearn() {
 function openLearn(key) {
   const [tab, id] = key.split(':'), c = (tab === 'cours' ? COURS : DRILLS).find(x => x.id === id); if (!c) return;
   $('learnBody').innerHTML = `<div class="card-h">${ICON(c.ic)}<span class="l">${tab === 'cours' ? 'Cours' : 'Exercice'}${c.lvl ? ' · ' + c.lvl + ' · ' + c.dur : ''}</span></div><h2>${c.t}</h2><p class="hint">${c.s}</p>${c.b}`
-    + (c.q ? `<a class="yt" href="${YT(c.q)}" target="_blank" rel="noopener">${ICON('play')} Voir des vidéos sur YouTube</a>` : '');
+    + ((v => v ? `<a class="yt" href="https://www.youtube.com/watch?v=${v}" target="_blank" rel="noopener">${ICON('play')} Voir la vidéo</a>` : '')(VIDEO[(tab === 'cours' ? 'c_' : '') + c.id]))
+    + (c.q ? `<a class="yt alt" href="${YT(c.q)}" target="_blank" rel="noopener">Autres vidéos sur le sujet</a>` : '');
   $('learnModal').hidden = false;
 }
 // exercices conseillés selon le diagnostic
