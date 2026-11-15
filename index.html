@@ -684,7 +684,7 @@ function drawMarks(c, map, k, u) {
   oldPx().forEach(o => { const [a, b] = map(o.x, o.y); ring(c, a, b, Math.max(5 * u, rh * k), 'rgba(248,81,73,.95)', 1.5 * u); });
   S.amb.forEach((z, i) => { const [a, b] = map(z.cx, z.cy); const r = Math.max(12 * u, z.r * k + 4 * u); ring(c, a, b, r, '#d29922', 2.5 * u, [5 * u, 4 * u]); label(c, '?' + (i + 1), a + r + 2 * u, b, '#d29922', u); });
   S.impacts.forEach(im => {
-    const [a, b] = map(im.x, im.y), r = Math.max(6 * u, rh * k), col = im.flag === 'doubt' ? '#d29922' : '#3fb950';
+    const [a, b] = map(im.x, im.y), r = Math.max(6 * u, rh * k), col = im.flag === 'doubt' || im.flag === 'check' ? '#d29922' : '#3fb950';
     ring(c, a, b, r, col, 2.5 * u);
     label(c, im.score === 0 ? 'M' : String(im.score), a + r + 3 * u, b - 4 * u, col, u);
   });
@@ -1206,7 +1206,7 @@ function redo() { if (S.review || !U.redo.length) return; U.stack.push(capture()
 function detect(opt = {}) {
   if (!hasCal()) { toast('Calibrez la cible d\'abord', 'err'); return; }
   const p = P(), cal = S.cal, rh = holeR(), W = imgCanvas.width, H = imgCanvas.height;
-  const Rmax = (p.q + 10) * cal.w + 3 * rh;
+  const Rmax = (p.q + 9) * cal.w + 2 * rh;   // bord extérieur de l'anneau 1
   const x0 = clamp(Math.floor(cal.cx - Rmax), 0, W), y0 = clamp(Math.floor(cal.cy - Rmax), 0, H);
   const x1 = clamp(Math.ceil(cal.cx + Rmax), 0, W), y1 = clamp(Math.ceil(cal.cy + Rmax), 0, H);
   const w0 = x1 - x0, h0 = y1 - y0;
@@ -1264,7 +1264,13 @@ function detect(opt = {}) {
     // seuil absolu : un trou « plus noir que le noir » doit être sous le 5e centile du papier noir
     const hg = new Uint32Array(256); let ng = 0;
     for (let i = 0; i < N; i += 3) { if (!inRoi[i] || hyp(i % w - ccx, ((i / w) | 0) - ccy) >= Rb - band) continue; hg[clamp(g1[i] | 0, 0, 255)]++; ng++; }
-    let a2 = 0; for (let v = 0; v < 256; v++) { a2 += hg[v]; if (a2 >= ng * 0.05) { darkCut = v - 3; break; } }
+    let a2 = 0; for (let v = 0; v < 256; v++) { a2 += hg[v]; if (a2 >= ng * 0.05) { darkCut = v - 1; break; } }
+  }
+  let paperLvl = 0;
+  if (!colorTarget) {
+    const hp = new Uint32Array(256); let np = 0;
+    for (let i = 0; i < N; i += 2) { if (!inRoi[i] || hyp(i % w - ccx, ((i / w) | 0) - ccy) <= Rb + band) continue; hp[clamp(clo[i] | 0, 0, 255)]++; np++; }
+    let a3 = 0; for (let v = 0; v < 256; v++) { a3 += hp[v]; if (a3 >= np * 0.6) { paperLvl = v; break; } }
   }
   const feat = new Float32Array(N), hist = new Uint32Array(256); let cnt = 0;
   for (let i = 0; i < N; i++) {
@@ -1274,7 +1280,7 @@ function detect(opt = {}) {
     else {
       const d = hyp(i % w - ccx, ((i / w) | 0) - ccy), fl = g1[i] - opn[i], fd = clo[i] - g1[i];
       if (d < Rb - band) f = g1[i] < darkCut ? Math.max(fl, (clo[i] - g1[i]) * kd) : fl;
-      else if (d > Rb + band) f = fd;
+      else if (d > Rb + band) f = clo[i] < 0.7 * paperLvl ? 0 : fd;   // hors du papier (sol, bord déchiré) : ignoré
       else {
         const x = i % w, y = (i / w) | 0, bi = clamp(Math.round(d - rIn), 0, NB - 1);
         const si = Math.floor((Math.atan2(y - ccy, x - ccx) + Math.PI) / (2 * Math.PI) * NS) % NS;
@@ -1309,7 +1315,7 @@ function detect(opt = {}) {
   // chiffres imprimés : sur les 4 axes de la cible, au milieu des anneaux (et artefacts au bord du visuel)
   const polar = c => { const [X, Y] = toI(c.cx, c.cy), dx = (X - cal.cx) / cal.w, dy = (Y - cal.cy) / cal.w; return { r: hyp(dx, dy), a: Math.atan2(dy, dx) }; };
   const digitSpot = (pr, phi) => {
-    if (pr.r < p.q + 1.2 || pr.r > p.q + 10.2) return false;
+    if (pr.r < p.q + 1.2 || pr.r > p.q + 9.2) return false;
     let da = ((pr.a - phi) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2); da = Math.min(da, Math.PI / 2 - da);
     if (da * pr.r > 0.38) return false;
     const fr = ((pr.r - p.q - 0.5) % 1 + 1) % 1;   // 0 = milieu d'anneau
@@ -1320,7 +1326,7 @@ function detect(opt = {}) {
   if (!$('discipline').value.startsWith('arc')) {
     const votes = new Float32Array(90);
     comps.forEach(c => {
-      const pr = c.pr; if (pr.r < p.q + 1.2 || pr.r > p.q + 10.2) return;
+      const pr = c.pr; if (pr.r < p.q + 1.2 || pr.r > p.q + 9.2) return;
       const fr = ((pr.r - p.q - 0.5) % 1 + 1) % 1; if (Math.min(fr, 1 - fr) > 0.2) return;
       const deg = ((pr.a * 180 / Math.PI) % 90 + 90) % 90;
       for (let k = -2; k <= 2; k++) votes[(Math.round(deg) + k + 90) % 90] += 1 - Math.abs(k) / 3;
@@ -1344,19 +1350,31 @@ function detect(opt = {}) {
   const sing = kept.filter(c => c.n > 0.5 * A1n && c.n < 2.6 * A1n && compact(c) && c.conf > 1.6 * thr).map(c => c.n).sort((a, b) => a - b);
   let A1 = A1n * 0.9;
   if (sing.length >= 3) A1 = clamp(sing[sing.length >> 1], 0.75 * A1n, 2.4 * A1n);
+  const rEff = Math.sqrt(A1 / Math.PI);
+  // chiffres fins (vraies cibles) : une tache sur un chiffre qui contient un disque plein de la taille d'un trou est un impact
+  // un chiffre est imprimé sur les 4 axes : si la tache est nettement plus grosse que ses « jumelles », un trou s'y est collé
+  const twins = c => digits.filter(o => o !== c && Math.abs(o.pr.r - c.pr.r) < 0.3 && Math.abs(Math.atan2(Math.sin(o.pr.a - c.pr.a), Math.cos(o.pr.a - c.pr.a))) > Math.PI / 4);
+  const rescued = digits.filter(c => {
+    if (c.n < 0.5 * A1) return false;
+    const tw = twins(c).map(o => o.n).sort((a, b) => a - b);
+    return tw.length ? c.n > 1.3 * tw[tw.length >> 1] + 0.3 * A1 : c.ins >= 0.85 * rEff;
+  });
+  rescued.forEach(c => { c.strict = true; let m = 0; for (const q of c.pix) m += feat[q]; c.conf = m / c.n; kept.push(c); });
+  digits.splice(0, digits.length, ...digits.filter(c => !rescued.includes(c)));
 
   // partie « pleine » de chaque tache : union des disques de rayon rc qui tiennent dedans
   // (ignore les traits fins d'un chiffre ou d'une ligne collés à un trou)
   const rc = Math.max(1, 0.6 * r), rc2 = rc * rc, rci = Math.ceil(rc);
   const opened = c => {
-    const cores = c.pix.filter(q => dt[q] / 3 >= rc);
+    const rcx = c.strict ? Math.max(rc, 0.8 * rEff) : rc, rcx2 = rcx * rcx, rcxi = Math.ceil(rcx);
+    const cores = c.pix.filter(q => dt[q] / 3 >= rcx);
     if (!cores.length) return null;
-    if (cores.length > 0.5 * c.n) return c.pix;           // tache déjà compacte
+    if (!c.strict && cores.length > 0.5 * c.n) return c.pix;           // tache déjà compacte
     const inBlob = new Set(c.pix), keep = new Set();
     for (const q of cores) {
       const qx = q % w, qy = (q / w) | 0;
-      for (let dy = -rci; dy <= rci; dy++) for (let dx = -rci; dx <= rci; dx++) {
-        if (dx * dx + dy * dy > rc2) continue;
+      for (let dy = -rcxi; dy <= rcxi; dy++) for (let dx = -rcxi; dx <= rcxi; dx++) {
+        if (dx * dx + dy * dy > rcx2) continue;
         const t = (qy + dy) * w + qx + dx; if (inBlob.has(t)) keep.add(t);
       }
     }
@@ -1364,14 +1382,18 @@ function detect(opt = {}) {
   };
   const singles = [], groups = [];
   for (const c0 of kept) {
-    if (c0.n < 0.35 * A1) continue;
-    const op = opened(c0); if (!op || op.length < 0.4 * A1) continue;
+    if (c0.n < 0.35 * A1) {
+      if (c0.n >= 0.2 * A1 && c0.conf >= 3 * thr && c0.circ >= 0.5 && c0.ins >= 0.4 * rEff) { const [ix, iy] = toI(c0.cx, c0.cy); singles.push({ x: ix, y: iy, n: c0.n / A1, conf: c0.conf, c: c0, doubt: true }); }
+      continue;
+    }
+    const op = opened(c0); if (!op || op.length < (c0.strict ? 0.45 : 0.4) * A1) continue;
     let sx2 = 0, sy2 = 0, x0b = w, x1b = 0, y0b = h, y1b = 0;
     for (const q of op) { const x = q % w, y = (q / w) | 0; sx2 += x; sy2 += y; if (x < x0b) x0b = x; if (x > x1b) x1b = x; if (y < y0b) y0b = y; if (y > y1b) y1b = y; }
     const c = { pix: op, n: op.length, cx: sx2 / op.length, cy: sy2 / op.length, x0: x0b, x1: x1b, y0: y0b, y1: y1b, bw: x1b - x0b + 1, bh: y1b - y0b + 1 };
     const n = c.n / A1, asp = Math.max(c.bw, c.bh) / Math.min(c.bw, c.bh), fill = c.n / (c.bw * c.bh);
     let conf = 0, far = 0; for (const q of c.pix) { conf += feat[q]; far = Math.max(far, hyp(q % w - c.cx, ((q / w) | 0) - c.cy)); } conf /= c.n;
     const round = c.n / (Math.PI * (far + 0.5) ** 2);
+    if (c0.strict && (round < 0.6 || asp > 1.4 || n > 1.8)) continue; // sur un chiffre : seul un disque plein et rond est un impact
     const [ix, iy] = toI(c.cx, c.cy);
     // une tache bien ronde = un seul impact (même un peu grosse)
     if (n < 1.55 || (n < 2.3 && round >= 0.62 && asp <= 1.35)) { if (asp <= 2.2 && fill >= 0.4) singles.push({ x: ix, y: iy, n, conf, c }); }
@@ -1425,7 +1447,7 @@ function detect(opt = {}) {
   }
 
   snapshot();
-  S.impacts = news.map(d => ({ x: d.x, y: d.y, conf: d.conf, flag: '' }));
+  S.impacts = news.map(d => ({ x: d.x, y: d.y, conf: d.conf, flag: d.doubt ? 'check' : '' }));
   S.detSet = { ref: S.detRef || 1, list: news.map(d => ({ x: d.x, y: d.y, conf: d.conf })) };
   S.amb = amb;
   rescore();
@@ -1569,7 +1591,7 @@ function updateStats() {
   set('sGroup', st.n > 1 ? fmm(st.esmm) + (st.moa ? ` · ${st.moa.toFixed(1)} MOA` : '') : '—');
   set('sMr', st.n > 1 ? fmm(st.mrmm) : '—');
   if (st.n > 1) { const [t, c] = regLabel(st.mrR); set('sReg', t, c); } else set('sReg', '—');
-  $('impList').innerHTML = S.impacts.map((i, k) => `<div><span>#${k + 1}${i.flag === 'doubt' ? ' ⚠️' : i.flag === 'manual' ? ' 👆' : ''}</span><span>${i.score === 0 ? 'Manqué' : i.score + ' pts'}${isDec ? ' · ' + i.dec.toFixed(1) : ''}</span></div>`).join('');
+  $('impList').innerHTML = S.impacts.map((i, k) => `<div><span>#${k + 1}${i.flag === 'doubt' || i.flag === 'check' ? ' ⚠️' : i.flag === 'manual' ? ' 👆' : ''}</span><span>${i.score === 0 ? 'Manqué' : i.score + ' pts'}${isDec ? ' · ' + i.dec.toFixed(1) : ''}</span></div>`).join('');
   diag(st);
 }
 function diag(st) {
@@ -1791,7 +1813,7 @@ function drawCompare() {
   const c = $('cmpPlot'), x = c.getContext('2d'), Wd = c.width, C = Wd / 2;
   const pr = preset(A.discipline || 'autre', A.distance || 25), q = pr.q, er = q + 10 - pr.edge, arc = (A.discipline || '').startsWith('arc');
   const all = A.impacts.concat(B.impacts);
-  const Rm = Math.min(q + 10.3, Math.max(er + 1, ...all.map(i => hyp(i.dx, i.dy) + 0.8))), k = (C - 8) / Rm;
+  const Rm = Math.min(q + 9.3, Math.max(er + 1, ...all.map(i => hyp(i.dx, i.dy) + 0.8))), k = (C - 8) / Rm;
   const P2 = (dx, dy) => [C + dx * k, C + dy * k];
   x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = '#ece6d6'; x.fillRect(0, 0, Wd, Wd);
   if (arc) { const cols = ['#f2f2f2', '#f2f2f2', '#222', '#222', '#2878d2', '#2878d2', '#d72828', '#d72828', '#fad728', '#fad728']; for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.fillStyle = cols[n - 1]; x.fill(); } }
