@@ -31,6 +31,26 @@ header b{font-size:17px}
 .banner span{flex:1}
 .banner button{padding:6px 12px;border-radius:8px;background:var(--ac);color:#04111f;font-weight:700;border:0}
 .zoom{position:absolute;right:8px;bottom:8px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.hist{position:absolute;left:8px;bottom:8px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.hist button{width:44px;height:44px;border-radius:10px;border:1px solid var(--bd);background:rgba(22,27,34,.92);font-size:19px}
+.hist button:disabled{opacity:.35}
+.hist button.on,.btn.lit{background:#5a4a12;border-color:var(--wa)}
+.cal-head{display:flex;align-items:center;justify-content:space-between}
+.cal-head button{width:40px;height:36px;border-radius:9px;border:1px solid var(--bd);background:var(--s2);font-size:18px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal div{aspect-ratio:1;border-radius:8px;background:var(--s2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer}
+.cal .h{background:none;color:var(--mu);font-size:11px;aspect-ratio:auto;cursor:default}
+.cal .x{visibility:hidden}
+.cal .has{background:#1f3a5f;font-weight:700}
+.cal .has small{font-size:10px;color:var(--ok);line-height:1}
+.cal .sel{outline:2px solid var(--ac)}
+.cal .today{color:var(--wa)}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13.5px;padding:5px 8px;border-radius:8px;background:var(--s2)}
+.srow .act{display:flex;gap:4px;flex:none}
+.srow button{width:36px;height:32px;border-radius:8px;border:1px solid var(--bd);background:var(--s3);font-size:15px}
+table.cmp{width:100%;border-collapse:collapse;font-size:13.5px}
+table.cmp td,table.cmp th{padding:6px 4px;border-bottom:1px solid var(--bd);text-align:right}
+table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:var(--mu)}
 .zoom button{width:44px;height:44px;border-radius:10px;border:1px solid var(--bd);background:rgba(22,27,34,.92);font-size:20px}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:4px}
 .steps button{padding:9px 2px;border-radius:9px;border:0;background:none;color:var(--mu);font-weight:600;font-size:13.5px}
@@ -90,6 +110,7 @@ input[type=range]{width:100%;accent-color:var(--ac)}
 #toasts{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:70;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:92%;max-width:460px}
 .toast{background:var(--s3);border:1px solid var(--bd);padding:9px 14px;border-radius:10px;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.5);transition:opacity .3s}
 .toast.ok{border-color:var(--ok)}.toast.err{border-color:var(--er)}.toast.warn{border-color:var(--wa)}
+@media(max-width:430px){.long{display:none}}
 @media(min-width:1000px){
   .app{display:grid;grid-template-columns:340px minmax(0,1fr) 360px;align-items:start}
   .stage-wrap{grid-column:2;grid-row:1;position:sticky;top:62px}
@@ -103,7 +124,7 @@ input[type=range]{width:100%;accent-color:var(--ac)}
 </style>
 </head>
 <body data-step="photo">
-<header><div><b>🎯 Analyseur de Tir</b></div><span class="pill" id="statusPill">Prêt</span></header>
+<header><div><b style="white-space:nowrap">🎯 <span class="long">Analyseur de </span>Tir</b></div><div style="display:flex;gap:6px;align-items:center"><button class="pill" id="profBtn" style="border:1px solid var(--bd);color:var(--tx)">👤</button><span class="pill" id="statusPill">Prêt</span></div></header>
 
 <div class="app">
   <section class="stage-wrap">
@@ -113,6 +134,7 @@ input[type=range]{width:100%;accent-color:var(--ac)}
       <canvas id="loupe"></canvas>
       <div class="empty" id="stageEmpty"><div class="big">📷</div><div>Prenez ou choisissez une photo de la cible</div><div class="hint">Pincez pour zoomer · glissez pour déplacer</div></div>
       <div class="banner" id="banner"><span id="bannerTxt">Chargez une photo de cible pour commencer</span><button id="bannerDone" hidden>Terminer</button></div>
+      <div class="hist"><button id="sUndo" aria-label="Annuler">↶</button><button id="sRedo" aria-label="Rétablir">↷</button><button id="sDark" aria-label="Éclaircir le noir">🔦</button></div>
       <div class="zoom"><button id="zIn" aria-label="Zoomer">＋</button><button id="zOut" aria-label="Dézoomer">－</button><button id="zFit" aria-label="Vue entière">⤢</button></div>
     </div>
     <nav class="steps" id="steps">
@@ -148,6 +170,7 @@ input[type=range]{width:100%;accent-color:var(--ac)}
         <label class="f">Luminosité <span id="brightnessVal">100%</span><input type="range" id="brightness" min="40" max="200" value="100"></label>
         <label class="f">Contraste <span id="contrastVal">100%</span><input type="range" id="contrast" min="40" max="350" value="100"></label>
         <label class="f">Seuil binaire <span id="thresholdVal">90</span><input type="range" id="threshold" min="10" max="240" value="90"></label>
+        <button class="btn" id="btnDark">🔦 Zoomer et éclaircir le noir (voir les trous)</button>
         <button class="btn" id="btnResetFilter">↺ Réinitialiser les filtres</button>
       </details>
     </section>
@@ -217,8 +240,9 @@ input[type=range]{width:100%;accent-color:var(--ac)}
           <button class="btn" id="btnManual">👆 Ajouter</button>
           <button class="btn" id="btnDelete">🗑 Supprimer</button>
         </div>
-        <div class="row">
+        <div class="row3">
           <button class="btn" id="btnUndo">↶ Annuler</button>
+          <button class="btn" id="btnRedo">↷ Rétablir</button>
           <button class="btn dan" id="btnClear">Tout effacer</button>
         </div>
         <div class="legend"><span><i style="border-color:#3fb950"></i>Nouveau</span><span><i style="border-color:#f85149"></i>Séries précédentes</span><span><i style="border-color:#d29922"></i>À vérifier</span></div>
@@ -251,10 +275,17 @@ input[type=range]{width:100%;accent-color:var(--ac)}
       <div class="list" id="impList"></div>
     </details>
     <div class="card">
-      <h3>Progression</h3>
+      <h3>Cible en cours</h3>
+      <div class="list" id="seriesList"></div>
+      <button class="btn" id="btnCompare">⇄ Comparer des séries</button>
+    </div>
+    <div class="card">
+      <h3>Suivi des tirs</h3>
+      <div class="cal-head"><button id="calPrev" aria-label="Mois précédent">‹</button><b id="calTitle"></b><button id="calNext" aria-label="Mois suivant">›</button></div>
+      <div class="cal" id="calGrid"></div>
+      <div class="list" id="dayList"></div>
       <div class="spark" id="spark"></div>
       <div class="hint" id="histInfo">Aucune série enregistrée</div>
-      <div class="list" id="seriesList"></div>
     </div>
     <details class="card no-print">
       <summary>Réglages, export et sauvegarde</summary>
@@ -273,6 +304,30 @@ input[type=range]{width:100%;accent-color:var(--ac)}
     <p class="hint">Ces zones contiennent probablement plusieurs impacts groupés ou un impact dans un trou existant. Indiquez combien de <b>nouveaux</b> impacts se trouvent dans chaque zone.</p>
     <div id="ambList" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="row"><button class="btn" id="ambLater">Plus tard</button><button class="btn pri" id="ambOk">Valider</button></div>
+  </div>
+</div>
+<div class="modal" id="cmpModal" hidden>
+  <div class="sheet">
+    <h3 style="font-size:17px">⇄ Comparer deux séries</h3>
+    <div class="row">
+      <label class="f"><span style="color:#3fb950">● Série A</span><select id="cmpA"></select></label>
+      <label class="f"><span style="color:#58a6ff">● Série B</span><select id="cmpB"></select></label>
+    </div>
+    <canvas id="cmpPlot" width="640" height="640" style="width:100%;max-width:330px;align-self:center;border-radius:12px"></canvas>
+    <div id="cmpTable"></div>
+    <div class="row"><button class="btn" id="cmpRevA">👁 Revoir A</button><button class="btn" id="cmpRevB">👁 Revoir B</button></div>
+    <button class="btn pri" id="cmpClose">Fermer</button>
+  </div>
+</div>
+<div class="modal" id="profModal" hidden>
+  <div class="sheet">
+    <h3 style="font-size:17px">👤 Tireurs sur cet appareil</h3>
+    <p class="hint">Chaque tireur a son propre suivi (séries, calendrier, photos), enregistré uniquement sur cet appareil.</p>
+    <div class="list" id="profList" style="max-height:none"></div>
+    <div class="row"><input type="text" id="profName" placeholder="Nom du nouveau tireur"><button class="btn pri" id="profAdd">＋ Ajouter</button></div>
+    <div class="info" id="storeInfo"></div>
+    <div class="row"><button class="btn" id="profExport">💾 Sauvegarder</button><button class="btn" id="profImport">📥 Restaurer</button></div>
+    <button class="btn" id="profClose">Fermer</button>
   </div>
 </div>
 <div id="toasts"></div>
@@ -374,7 +429,8 @@ const S = {
   impacts: [], amb: [], undo: [],
   mode: 'idle', warpPts: [], aim: null,
   align: { th: 0, tx: 0, ty: 0 },
-  target: { series: [] }, history: [], reserve: []
+  target: { series: [] }, history: [], reserve: [],
+  darkBoost: false, review: null, stash: null, calMonth: null, calDay: null
 };
 const V = { k: 1, tx: 0, ty: 0, fitK: 1 };
 
@@ -388,7 +444,7 @@ function toast(msg, type = '', ms = 2800) {
 function banner(msg, type = '') {
   $('bannerTxt').textContent = msg;
   $('banner').className = 'banner ' + type;
-  $('bannerDone').hidden = S.mode === 'idle';
+  $('bannerDone').hidden = S.mode === 'idle' && !S.review;
 }
 function freeCanvas(c) { if (c && c !== S.src) { c.width = 0; c.height = 0; } }
 
@@ -429,7 +485,7 @@ function scoreAt(x, y) {
   return { s, dec: Math.max(s, dec) };
 }
 function rescore() {
-  if (!hasCal()) return;
+  if (!hasCal() || S.review) return;
   S.impacts.forEach(i => { const t = scoreAt(i.x, i.y); i.score = t.s; i.dec = t.dec; });
 }
 
@@ -438,6 +494,7 @@ function oldNorm() { return S.target.series.flatMap(s => s.impacts.map(i => ({ x
 function tf(o, a = S.align) { const c = Math.cos(a.th), s = Math.sin(a.th); return { x: c * o.x - s * o.y + a.tx, y: s * o.x + c * o.y + a.ty }; }
 function invTf(o, a = S.align) { const c = Math.cos(a.th), s = Math.sin(a.th), x = o.x - a.tx, y = o.y - a.ty; return { x: c * x + s * y, y: -s * x + c * y }; }
 function oldPx() {
+  if (S.review) return S.review.olds.map(([x, y]) => ({ x, y }));
   if (!hasCal()) return [];
   return oldNorm().map(o => { const t = tf(o); return { x: S.cal.cx + t.x * S.cal.w, y: S.cal.cy + t.y * S.cal.w }; });
 }
@@ -445,6 +502,7 @@ function oldPx() {
 // ============ CHARGEMENT IMAGE ============
 async function loadFile(file) {
   if (!file) return;
+  if (S.review) endReview();
   const url = URL.createObjectURL(file);
   try {
     banner('⏳ Chargement…', 'act');
@@ -466,10 +524,10 @@ async function loadFile(file) {
   } finally { URL.revokeObjectURL(url); }
 }
 function setImage(c, opts = {}) {
-  if (S.warpUndo) { freeCanvas(S.warpUndo.src); S.warpUndo = null; }
-  if (S.src && S.src !== c) freeCanvas(S.src);
+  snapshot();
+  S.warpUndo = null;
   S.src = c;
-  S.impacts = []; S.amb = []; S.undo = []; S.warpPts = []; S.aim = null; S.reserve = [];
+  S.impacts = []; S.amb = []; S.warpPts = []; S.aim = null; S.reserve = [];
   S.align = { th: 0, tx: 0, ty: 0 };
   S.cal = { cx: null, cy: null, w: null };
   setMode('idle');
@@ -477,7 +535,7 @@ function setImage(c, opts = {}) {
   $('stageEmpty').hidden = true;
   renderView(); fitView(); goStep('cible');
   if (opts.cal) { S.cal = opts.cal; banner('✅ Exemple chargé — lancez la détection (③)', 'ok'); refresh(); }
-  else autoTarget(true);
+  else autoTarget(true, true);
 }
 function sizeImgCanvas() {
   imgCanvas.width = S.src.width; imgCanvas.height = S.src.height;
@@ -504,7 +562,47 @@ function renderView() {
     }
     imgCtx.putImageData(d, 0, 0);
   }
+  if (S.darkBoost) boostDark();
   drawOverlay();
+}
+// 🔦 éclaircit les tons sombres (dans le visuel noir si la cible est calibrée) :
+// le noir d'un trou n'est pas celui du papier, l'écart devient visible
+function boostDark() {
+  const W = imgCanvas.width, H = imgCanvas.height;
+  let x0 = 0, y0 = 0, x1 = W, y1 = H, Rb = null;
+  if (hasCal() && !$('discipline').value.startsWith('arc')) {
+    Rb = (P().q + 10 - preset().edge) * S.cal.w + 3;
+    x0 = clamp(Math.floor(S.cal.cx - Rb), 0, W); y0 = clamp(Math.floor(S.cal.cy - Rb), 0, H);
+    x1 = clamp(Math.ceil(S.cal.cx + Rb), 0, W); y1 = clamp(Math.ceil(S.cal.cy + Rb), 0, H);
+  }
+  const ww = x1 - x0, hh = y1 - y0; if (ww < 2 || hh < 2) return;
+  const d = imgCtx.getImageData(x0, y0, ww, hh), p = d.data, n = ww * hh;
+  const ins = new Uint8Array(n), hist = new Uint32Array(256); let cnt = 0;
+  for (let k = 0; k < n; k++) {
+    if (Rb != null && hyp(k % ww + x0 - S.cal.cx, ((k / ww) | 0) + y0 - S.cal.cy) > Rb) continue;
+    ins[k] = 1; hist[(0.299 * p[k * 4] + 0.587 * p[k * 4 + 1] + 0.114 * p[k * 4 + 2]) | 0]++; cnt++;
+  }
+  let T = 100, sum = 0, sB = 0, wB = 0, best = 0;
+  for (let v = 0; v < 256; v++) sum += v * hist[v];
+  for (let v = 0; v < 256; v++) { wB += hist[v]; if (!wB) continue; const wF = cnt - wB; if (!wF) break; sB += v * hist[v]; const dd = sB / wB - (sum - sB) / wF, b = wB * wF * dd * dd; if (b > best) { best = b; T = v; } }
+  if (Rb == null) T = Math.min(T, 110);
+  let nd = 0; for (let v = 0; v <= T; v++) nd += hist[v];
+  const pc = q => { let a = 0; for (let v = 0; v <= T; v++) { a += hist[v]; if (a >= q * nd) return v; } return T; };
+  const lo = pc(0.002), hi = Math.max(lo + 10, pc(0.995)), lut = new Uint8ClampedArray(256);
+  for (let v = 0; v < 256; v++) lut[v] = v <= hi ? 210 * Math.pow(Math.max(0, v - lo) / (hi - lo), 0.8) : 210 + (v - hi) / Math.max(1, 255 - hi) * 45;
+  for (let k = 0; k < n; k++) if (ins[k]) { const o = k * 4; p[o] = lut[p[o]]; p[o + 1] = lut[p[o + 1]]; p[o + 2] = lut[p[o + 2]]; }
+  imgCtx.putImageData(d, x0, y0);
+}
+function toggleDark() {
+  if (!S.src) return;
+  S.darkBoost = !S.darkBoost; renderView(); updateButtons();
+  if (S.darkBoost) {
+    if (hasCal() && !$('discipline').value.startsWith('arc')) {
+      const Rb = (P().q + 10 - preset().edge) * S.cal.w, { w, h } = stageSize();
+      centerOn(S.cal.cx, S.cal.cy, Math.min(w, h) * 0.46 / Rb);
+    }
+    banner('🔦 Noir éclairci : les trous ressortent (clairs ou noir profond). Pincez pour zoomer encore.', 'ok');
+  } else banner('Affichage normal', '');
 }
 
 // ============ VUE / ZOOM ============
@@ -838,8 +936,9 @@ function fillHoles(lab, c, w, h) {
   const tr = (cxx + cyy) / 2, dt = Math.sqrt(Math.max(0, (cxx - cyy) ** 2 / 4 + cxy * cxy));
   return { m, x0, y0, w: W, h: H, area, cx: mx + x0, cy: my + y0, a: 2 * Math.sqrt(tr + dt), b: 2 * Math.sqrt(Math.max(1e-6, tr - dt)) };
 }
-function autoTarget(silent) {
+function autoTarget(silent, noSnap) {
   if (!S.src) return false;
+  if (!noSnap) snapshot();
   try {
     let res = findTarget(S.src);
     if (!res) throw new Error('visuel introuvable');
@@ -904,16 +1003,16 @@ function doWarp(srcPts, anglesDeg, er) {
   }
   const oc = document.createElement('canvas'); oc.width = OUT; oc.height = OUT;
   oc.getContext('2d', { willReadFrequently: true }).putImageData(out, 0, 0);
-  if (S.warpUndo) freeCanvas(S.warpUndo.src);
   S.warpUndo = { src: S.src, cal: { ...S.cal } };
   S.src = oc;
   S.cal = { cx: C, cy: C, w };
-  S.impacts = []; S.amb = []; S.undo = [];
+  S.impacts = []; S.amb = [];
   sizeImgCanvas(); renderView(); fitView();
 }
 function manualWarpPoint(x, y) {
   S.warpPts.push([x, y]);
   const lbl = ['② à DROITE', '③ en BAS', '④ à GAUCHE'];
+  if (S.warpPts.length === 4) snapshot();
   if (S.warpPts.length < 4) { banner(`📐 Touchez le bord de l'anneau ${P().edge} : ${lbl[S.warpPts.length - 1]}`, 'act'); drawOverlay(); return; }
   try {
     doWarp(S.warpPts, [-90, 0, 90, 180], edgeRings());
@@ -974,7 +1073,32 @@ function alignOld(old, det) {
   if (pairs < Math.max(2, Math.ceil(old.length * 0.4)) || Math.abs(a.th) > 0.35 || hyp(a.tx, a.ty) > 1.2) return I;
   return a;
 }
-function snapshot() { S.undo.push({ impacts: S.impacts.map(i => ({ ...i })), amb: S.amb.slice() }); if (S.undo.length > 40) S.undo.shift(); }
+// ============ ANNULER / RÉTABLIR (toutes les manipulations) ============
+const U = { stack: [], redo: [], key: '', t: 0 };
+function capture() {
+  return { src: S.src, warpUndo: S.warpUndo, cal: { ...S.cal }, impacts: S.impacts.map(i => ({ ...i })), amb: S.amb.slice(), align: { ...S.align },
+    reserve: (S.reserve || []).slice(), target: JSON.stringify(S.target), history: JSON.stringify(S.history) };
+}
+function snapshot(key) {
+  if (S.review) return;
+  const now = Date.now();
+  if (key && key === U.key && now - U.t < 1500) { U.t = now; return; } // réglages fins successifs = une seule étape
+  U.key = key || ''; U.t = now;
+  U.stack.push(capture()); if (U.stack.length > 40) U.stack.shift();
+  U.redo = [];
+}
+function restore(st) {
+  const srcChanged = st.src !== S.src;
+  Object.assign(S, { src: st.src, warpUndo: st.warpUndo, cal: st.cal, impacts: st.impacts, amb: st.amb, align: st.align, reserve: st.reserve,
+    target: JSON.parse(st.target), history: JSON.parse(st.history) });
+  if (srcChanged) {
+    if (S.src) { sizeImgCanvas(); $('stageEmpty').hidden = true; renderView(); fitView(); }
+    else { imgCanvas.width = imgCanvas.height = 10; imgCanvas.style.width = imgCanvas.style.height = '0px'; $('stageEmpty').hidden = false; }
+  }
+  setMode('idle'); save(); refresh();
+}
+function undo() { if (S.review || !U.stack.length) return; U.redo.push(capture()); restore(U.stack.pop()); U.key = ''; banner('↶ Manipulation annulée', ''); }
+function redo() { if (S.review || !U.redo.length) return; U.stack.push(capture()); restore(U.redo.pop()); U.key = ''; banner('↷ Manipulation rétablie', ''); }
 
 function detect() {
   if (!hasCal()) { toast('Calibrez la cible d\'abord', 'err'); return; }
@@ -1022,6 +1146,22 @@ function detect() {
   }
   const inRoi = new Uint8Array(N);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (hyp(x - ccx, y - ccy) <= RR) inRoi[y * w + x] = 1;
+  // trous plus noirs que le noir de la cible : écart sombre amplifié selon le bruit mesuré dans le noir
+  let kd = 0, darkCut = -1;
+  if (!colorTarget) {
+    const hd = new Uint32Array(256); let nd = 0;
+    for (let i = 0; i < N; i++) { if (!inRoi[i] || hyp(i % w - ccx, ((i / w) | 0) - ccy) >= Rb - band) continue; hd[clamp((clo[i] - g1[i]) | 0, 0, 255)]++; nd++; }
+    if (nd > 200) {
+      let a = 0, md = 0; for (let v = 0; v < 256; v++) { a += hd[v]; if (a >= nd / 2) { md = v; break; } }
+      const dv = new Uint32Array(256); for (let v = 0; v < 256; v++) dv[Math.abs(v - md)] += hd[v];
+      let mad = 0; a = 0; for (let v = 0; v < 256; v++) { a += dv[v]; if (a >= nd / 2) { mad = v; break; } }
+      kd = Math.min(3, (+$('sensitivity').value) / Math.max(6, md + 7 * Math.max(1, mad)));
+    }
+    // seuil absolu : un trou « plus noir que le noir » doit être sous le 5e centile du papier noir
+    const hg = new Uint32Array(256); let ng = 0;
+    for (let i = 0; i < N; i += 3) { if (!inRoi[i] || hyp(i % w - ccx, ((i / w) | 0) - ccy) >= Rb - band) continue; hg[clamp(g1[i] | 0, 0, 255)]++; ng++; }
+    let a2 = 0; for (let v = 0; v < 256; v++) { a2 += hg[v]; if (a2 >= ng * 0.05) { darkCut = v - 3; break; } }
+  }
   const feat = new Float32Array(N), hist = new Uint32Array(256); let cnt = 0;
   for (let i = 0; i < N; i++) {
     if (!inRoi[i]) continue;
@@ -1029,7 +1169,7 @@ function detect() {
     if (colorTarget) f = Math.abs(g1[i] - bgm[i]);
     else {
       const d = hyp(i % w - ccx, ((i / w) | 0) - ccy), fl = g1[i] - opn[i], fd = clo[i] - g1[i];
-      if (d < Rb - band) f = fl;
+      if (d < Rb - band) f = g1[i] < darkCut ? Math.max(fl, (clo[i] - g1[i]) * kd) : fl;
       else if (d > Rb + band) f = fd;
       else {
         const x = i % w, y = (i / w) | 0, bi = clamp(Math.round(d - rIn), 0, NB - 1);
@@ -1177,12 +1317,16 @@ function detect() {
   rescore();
   return { singles: singles.length, groups: groups.length, news: news.length, amb: amb.length, thr, A1: Math.round(A1), A1n: Math.round(A1n), K, r: +r.toFixed(1), s: +s.toFixed(2), w, h };
 }
+function detectRaw() { // la détection travaille sur l'image non éclaircie
+  const b = S.darkBoost; if (b) { S.darkBoost = false; renderView(); }
+  try { return detect(); } finally { if (b) { S.darkBoost = true; renderView(); } }
+}
 function runDetect() {
   if (!hasCal()) { toast('Calibrez la cible d\'abord', 'err'); return; }
   banner('🤖 Détection en cours…', 'act');
   setTimeout(() => {
     try {
-      detect(); setMode('idle'); refresh();
+      detectRaw(); setMode('idle'); refresh();
       if (S.amb.length) openAmb(); else finalize();
     } catch (e) {
       console.error(e); toast('Erreur de détection : ' + e.message, 'err', 4000); banner('❌ Détection impossible', 'err');
@@ -1268,7 +1412,7 @@ function computeStats() {
   const clock = Math.round(ang / 30) % 12 || 12;
   return { n, total, dec, avg: total / n, m, mr, mrmm: mr * mm, mrR: mr / w, esmm: es * mm, moa: d > 0 && n > 1 ? es * mm / (d * 0.2909) : null, dx, dy, off, clock, flyers };
 }
-const fmm = v => v >= 100 ? (v / 10).toFixed(1) + ' cm' : v.toFixed(v < 10 ? 1 : 0) + ' mm';
+const fmm = v => v == null || isNaN(v) ? '—' : v >= 100 ? (v / 10).toFixed(1) + ' cm' : v.toFixed(v < 10 ? 1 : 0) + ' mm';
 function regLabel(mrR) {
   if (mrR < 0.6) return ['🌟 Excellente', 'good'];
   if (mrR < 1.2) return ['✅ Bonne', 'good'];
@@ -1326,7 +1470,7 @@ function diag(st) {
 // ============ SÉRIES / HISTORIQUE ============
 function save() {
   try {
-    localStorage.setItem('tir_v4', JSON.stringify({
+    localStorage.setItem(dataKey(), JSON.stringify({
       history: S.history, target: S.target,
       params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
     }));
@@ -1334,7 +1478,8 @@ function save() {
 }
 function loadSaved() {
   try {
-    const raw = localStorage.getItem('tir_v4');
+    S.history = []; S.target = { id: uid(), series: [] };
+    const raw = localStorage.getItem(dataKey());
     if (raw) {
       const d = JSON.parse(raw);
       S.history = Array.isArray(d.history) ? d.history : [];
@@ -1342,7 +1487,7 @@ function loadSaved() {
       const p = d.params || {};
       Object.entries(p).forEach(([k, v]) => { const e = $(k); if (!e) return; if (e.type === 'checkbox') e.checked = !!v; else if (v != null && v !== '') e.value = v; });
     } else {
-      const old = JSON.parse(localStorage.getItem('tir_history') || '[]'); // migration v3
+      const old = PROF.list[0].id === PROF.cur ? JSON.parse(localStorage.getItem('tir_history') || '[]') : []; // migration v3
       S.history = old.map(s => ({ date: s.date, discipline: s.discipline, distance: s.distance, n: s.count, total: s.total, avg: s.avg }));
       applyPreset();
     }
@@ -1350,15 +1495,21 @@ function loadSaved() {
   $('distanceCustom').hidden = $('distance').value !== 'custom';
   if (!$('ringMm').value) applyPreset();
   $('sensVal').textContent = $('sensitivity').value;
+  S.history.forEach(h => { if (!h.id) h.id = uid(); });
+  if (!S.target.id) S.target.id = uid();
+  S.target.series.forEach(t => { if (!t.id) { t.id = uid(); t.targetId = S.target.id; } });
 }
 function validateSeries() {
-  const st = computeStats(); if (!st) return;
+  const st = computeStats(); if (!st || S.review) return;
+  snapshot();
+  if (!S.target.id) S.target.id = uid();
   const w = S.cal.w;
   const imps = S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: +o.x.toFixed(4), dy: +o.y.toFixed(4), score: i.score, dec: i.dec }; });
-  const rec = { date: new Date().toISOString(), discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1) };
-  S.target.series.push({ ...rec, impacts: imps });
+  const rec = { id: uid(), targetId: S.target.id, num: S.target.series.length + 1, date: new Date().toISOString(), discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1), impacts: imps };
+  storePhoto(rec.id);
+  S.target.series.push(rec);
   S.history.push(rec);
-  S.impacts = []; S.amb = []; S.undo = [];
+  S.impacts = []; S.amb = [];
   save(); refresh();
   banner(`✅ Série ${S.target.series.length} enregistrée (${rec.total} pts). Tirez la suivante puis photographiez la même cible.`, 'ok');
   toast('Série enregistrée', 'ok');
@@ -1373,12 +1524,184 @@ function renderHistory() {
     const avg = H.reduce((a, s) => a + s.avg, 0) / H.length;
     $('histInfo').textContent = `${H.length} série(s) · moyenne générale ${avg.toFixed(2)} · dernière ${H[H.length - 1].avg}`;
   }
-  $('seriesList').innerHTML = S.target.series.map((s, i) => `<div><span>Cible en cours · série ${i + 1}</span><span>${s.total} pts · moy ${s.avg}${s.mr_mm != null ? ' · R ' + fmm(s.mr_mm) : ''}</span></div>`).join('');
+  $('seriesList').innerHTML = S.target.series.length ? S.target.series.map((s, i) => srow(s, `Série ${i + 1} · ${s.total} pts · moy ${s.avg}${s.mr_mm != null ? ' · R ' + fmm(s.mr_mm) : ''}`)).join('') : '<p class="hint">Aucune série validée sur cette cible.</p>';
+  renderCalendar();
 }
 function updateTargetInfo() {
   const n = S.target.series.length, k = S.target.series.reduce((a, s) => a + s.impacts.length, 0);
   $('targetInfo').innerHTML = n ? `<b>${n} série(s)</b> déjà enregistrée(s) sur cette cible · ${k} impact(s) mémorisé(s).<br>La prochaine photo sera la <b>série ${n + 1}</b>.` : 'Nouvelle cible — aucune série enregistrée.';
   $('statusPill').textContent = `Série ${n + 1}` + (S.impacts.length ? ` · ${S.impacts.length} impact(s)` : '');
+}
+
+// ============ TIREURS (profils) ET STOCKAGE SUR L'APPAREIL ============
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const PROF = { list: [], cur: null };
+const dataKey = () => 'tir_v4_' + PROF.cur;
+function saveProfiles() { try { localStorage.setItem('tir_profiles', JSON.stringify(PROF)); } catch (e) {} }
+function loadProfiles() {
+  try { const p = JSON.parse(localStorage.getItem('tir_profiles') || 'null'); if (p && p.list && p.list.length) { PROF.list = p.list; PROF.cur = p.list.some(x => x.id === p.cur) ? p.cur : p.list[0].id; } } catch (e) {}
+  if (!PROF.list.length) {
+    const id = uid(); PROF.list = [{ id, name: 'Tireur 1' }]; PROF.cur = id;
+    try { const old = localStorage.getItem('tir_v4'); if (old) localStorage.setItem('tir_v4_' + id, old); } catch (e) {}
+    saveProfiles();
+  }
+}
+const profName = () => (PROF.list.find(p => p.id === PROF.cur) || {}).name || 'Tireur';
+function switchProfile(id) {
+  if (S.review) endReview();
+  save(); PROF.cur = id; saveProfiles();
+  U.stack = []; U.redo = [];
+  S.impacts = []; S.amb = []; S.align = { th: 0, tx: 0, ty: 0 }; S.calMonth = null; S.calDay = null;
+  loadSaved(); refresh(); renderProfiles();
+  toast('Tireur : ' + profName(), 'ok');
+}
+function renderProfiles() {
+  $('profBtn').textContent = '👤 ' + profName();
+  $('profList').innerHTML = PROF.list.map(p => {
+    let n = 0; try { n = (JSON.parse(localStorage.getItem('tir_v4_' + p.id) || '{}').history || []).length; } catch (e) {}
+    if (p.id === PROF.cur) n = S.history.length;
+    return `<div class="srow"><span>${p.id === PROF.cur ? '✅ <b>' : ''}${esc(p.name)}${p.id === PROF.cur ? '</b>' : ''} · ${n} série(s)</span><span class="act">
+      ${p.id === PROF.cur ? '' : `<button data-pu="${p.id}" aria-label="Choisir">✓</button>`}<button data-pr="${p.id}" aria-label="Renommer">✏️</button><button data-pd="${p.id}" aria-label="Supprimer">🗑</button></span></div>`;
+  }).join('');
+}
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function storageInfo() {
+  let txt = '';
+  try {
+    const ps = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false;
+    const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
+    txt = ps ? '✅ Stockage permanent accordé par le navigateur.' : '⚠️ Stockage non garanti : sur iPhone, Safari peut effacer les données d\'un site non ouvert pendant 7 jours. Ajoutez la page à l\'écran d\'accueil (Partager → « Sur l\'écran d\'accueil ») et sauvegardez de temps en temps.';
+    if (est && est.usage != null) txt += ` Espace utilisé : ${(est.usage / 1048576).toFixed(1)} Mo.`;
+  } catch (e) { txt = 'Données enregistrées sur cet appareil.'; }
+  $('storeInfo').textContent = txt;
+}
+// photos des séries : IndexedDB (sur l'appareil)
+const IDB = {
+  p: null,
+  open() { return this.p || (this.p = new Promise((res, rej) => { const r = indexedDB.open('tir', 1); r.onupgradeneeded = () => r.result.createObjectStore('photos'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })); },
+  async tx(mode, fn) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction('photos', mode), q = fn(t.objectStore('photos')); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); },
+  put(k, v) { return this.tx('readwrite', s => s.put(v, k)); },
+  get(k) { return this.tx('readonly', s => s.get(k)); },
+  del(k) { return this.tx('readwrite', s => s.delete(k)); }
+};
+function storePhoto(id) {
+  try {
+    const sc = Math.min(1, 1200 / Math.max(S.src.width, S.src.height)), c = document.createElement('canvas');
+    c.width = Math.round(S.src.width * sc); c.height = Math.round(S.src.height * sc);
+    c.getContext('2d').drawImage(S.src, 0, 0, c.width, c.height);
+    const v = { img: c.toDataURL('image/jpeg', 0.8), cal: { cx: S.cal.cx * sc, cy: S.cal.cy * sc, w: S.cal.w * sc },
+      imps: S.impacts.map(i => [i.x * sc, i.y * sc, i.score, i.dec]), olds: oldPx().map(o => [o.x * sc, o.y * sc]) };
+    c.width = c.height = 0;
+    IDB.put(id, v).catch(e => console.warn('photo non enregistrée', e));
+  } catch (e) { console.warn(e); }
+}
+
+// ============ REVOIR UNE SÉRIE / COMPARER ============
+const fdate = iso => new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+async function review(id) {
+  const rec = S.history.find(h => h.id === id) || S.target.series.find(h => h.id === id); if (!rec) return;
+  let ph = null; try { ph = await IDB.get(id); } catch (e) {}
+  if (!ph) { toast('Photo non disponible pour cette série : affichage du graphique', 'warn', 3500); openCompare(id); return; }
+  const img = new Image();
+  try { await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = ph.img; }); } catch (e) { toast('Photo illisible', 'err'); return; }
+  const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  c.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0);
+  setMode('idle');
+  if (!S.review) S.stash = { src: S.src, warpUndo: S.warpUndo, cal: S.cal, impacts: S.impacts, amb: S.amb, align: S.align };
+  S.review = { rec, olds: ph.olds || [] };
+  Object.assign(S, { src: c, warpUndo: null, cal: { ...ph.cal }, amb: [], align: { th: 0, tx: 0, ty: 0 },
+    impacts: ph.imps.map(([x, y, sc, dec]) => ({ x, y, score: sc, dec, flag: '' })) });
+  sizeImgCanvas(); $('stageEmpty').hidden = true; renderView(); fitView();
+  $('cmpModal').hidden = true; $('bannerDone').textContent = 'Retour';
+  refresh(); goStep('res'); showStage();
+  banner(`👁 Série ${rec.num || ''} du ${fdate(rec.date)} · ${rec.total} pts (lecture seule)`, 'act');
+}
+function endReview() {
+  const st = S.stash; S.review = null; S.stash = null; $('bannerDone').textContent = 'Terminer';
+  Object.assign(S, st);
+  if (S.src) { sizeImgCanvas(); renderView(); fitView(); }
+  else { imgCanvas.width = imgCanvas.height = 10; imgCanvas.style.width = imgCanvas.style.height = '0px'; $('stageEmpty').hidden = false; }
+  setMode('idle'); refresh(); banner('Retour à la série en cours', '');
+}
+function curRec() {
+  const st = computeStats(); if (!st || S.review) return null;
+  const w = S.cal.w;
+  return { id: 'cur', num: S.target.series.length + 1, targetId: S.target.id, date: new Date().toISOString(), discipline: $('discipline').value, distance: dist(),
+    n: st.n, total: st.total, avg: +st.avg.toFixed(2), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1),
+    impacts: S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: o.x, dy: o.y, score: i.score }; }) };
+}
+function cmpRecs() { const L = S.history.filter(h => h.impacts && h.id).slice().reverse(), c = curRec(); return c ? [c, ...L] : L; }
+function openCompare(idA) {
+  const L = cmpRecs(); if (!L.length) { toast('Pas encore de série à comparer', 'warn'); return; }
+  const opt = L.map(h => `<option value="${h.id}">${h.id === 'cur' ? 'Série en cours' : fdate(h.date) + ' · S' + (h.num || '?')} · ${h.total} pts</option>`).join('');
+  $('cmpA').innerHTML = opt; $('cmpB').innerHTML = opt;
+  const A = L.find(h => h.id === idA) || L[0];
+  let B = null;
+  if (A.id === 'cur') B = L.find(h => h.id !== 'cur' && h.targetId === A.targetId) || L[1];
+  else {
+    const same = S.history.filter(h => h.impacts && h.targetId && h.targetId === A.targetId), k = same.findIndex(h => h.id === A.id);
+    B = same[k + 1] || (A.targetId === S.target.id ? L.find(h => h.id === 'cur') : null) || same[k - 1] || L.find(h => h.id !== A.id);
+  }
+  $('cmpA').value = A.id; $('cmpB').value = (B || A).id;
+  $('cmpModal').hidden = false; drawCompare();
+}
+function drawCompare() {
+  const L = cmpRecs(), A = L.find(h => h.id === $('cmpA').value), B = L.find(h => h.id === $('cmpB').value);
+  if (!A || !B) return;
+  const c = $('cmpPlot'), x = c.getContext('2d'), Wd = c.width, C = Wd / 2;
+  const pr = preset(A.discipline || 'autre', A.distance || 25), q = pr.q, er = q + 10 - pr.edge, arc = (A.discipline || '').startsWith('arc');
+  const all = A.impacts.concat(B.impacts);
+  const Rm = Math.min(q + 10.3, Math.max(er + 1, ...all.map(i => hyp(i.dx, i.dy) + 0.8))), k = (C - 8) / Rm;
+  const P2 = (dx, dy) => [C + dx * k, C + dy * k];
+  x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = '#ece6d6'; x.fillRect(0, 0, Wd, Wd);
+  if (arc) { const cols = ['#f2f2f2', '#f2f2f2', '#222', '#222', '#2878d2', '#2878d2', '#d72828', '#d72828', '#fad728', '#fad728']; for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.fillStyle = cols[n - 1]; x.fill(); } }
+  else { x.beginPath(); x.arc(C, C, er * k, 0, 7); x.fillStyle = '#151515'; x.fill(); }
+  for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.strokeStyle = (!arc && n >= pr.edge) ? '#cfcfcf' : '#555'; x.lineWidth = 1.5; x.stroke(); }
+  const plot = (h, col) => {
+    h.impacts.forEach(i => { const [a, b] = P2(i.dx, i.dy); x.beginPath(); x.arc(a, b, 10, 0, 7); x.fillStyle = col; x.fill(); x.lineWidth = 2.5; x.strokeStyle = '#000'; x.stroke(); });
+    const n = h.impacts.length; if (!n) return;
+    const [a, b] = P2(h.impacts.reduce((s, i) => s + i.dx, 0) / n, h.impacts.reduce((s, i) => s + i.dy, 0) / n);
+    cross(x, a, b, 20, '#000', 8); cross(x, a, b, 20, col, 4);
+  };
+  plot(A, '#3fb950'); plot(B, '#58a6ff');
+  const sg = v => (v > 0 ? '+' : '') + v, off = h => hyp(h.dx_mm || 0, h.dy_mm || 0);
+  const row = (l, a, b, d, good) => `<tr><td>${l}</td><td>${a}</td><td>${b}</td><td class="${d == null ? '' : good ? 'good' : 'bad'}">${d == null ? '' : d}</td></tr>`;
+  const dm = (a, b) => (a == null || b == null) ? null : sg(+(b - a).toFixed(1)) + ' mm';
+  $('cmpTable').innerHTML = `<table class="cmp"><tr><th></th><th style="color:#3fb950">A</th><th style="color:#58a6ff">B</th><th>B − A</th></tr>
+    ${row('Score', A.total, B.total, sg(B.total - A.total), B.total >= A.total)}
+    ${row('Impacts', A.n, B.n, null)}
+    ${row('Moyenne', A.avg, B.avg, sg(+(B.avg - A.avg).toFixed(2)), B.avg >= A.avg)}
+    ${row('Écart du point moyen', fmm(off(A)), fmm(off(B)), dm(off(A), off(B)), off(B) <= off(A))}
+    ${row('Groupement', fmm(A.es_mm), fmm(B.es_mm), dm(A.es_mm, B.es_mm), B.es_mm <= A.es_mm)}
+    ${row('Rayon moyen', fmm(A.mr_mm), fmm(B.mr_mm), dm(A.mr_mm, B.mr_mm), B.mr_mm <= A.mr_mm)}</table>`;
+  $('cmpRevA').disabled = A.id === 'cur'; $('cmpRevB').disabled = B.id === 'cur';
+}
+
+// ============ CALENDRIER DES TIRS ============
+const pad2 = v => String(v).padStart(2, '0');
+const dkey = d => { d = new Date(d); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+function srow(h, txt) {
+  return `<div class="srow"><span>${txt}</span>${h.id ? `<span class="act"><button data-rv="${h.id}" aria-label="Revoir">👁</button><button data-cmp="${h.id}" aria-label="Comparer">⇄</button></span>` : ''}</div>`;
+}
+function renderCalendar() {
+  const H = S.history;
+  if (!S.calMonth) { const l = H.length ? new Date(H[H.length - 1].date) : new Date(); S.calMonth = new Date(l.getFullYear(), l.getMonth(), 1); }
+  if (!S.calDay && H.length) S.calDay = dkey(H[H.length - 1].date);
+  const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth(), by = {};
+  H.forEach(h => { const k = dkey(h.date); (by[k] = by[k] || []).push(h); });
+  $('calTitle').textContent = m.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const first = (new Date(y, mo, 1).getDay() + 6) % 7, nd = new Date(y, mo + 1, 0).getDate(), today = dkey(new Date());
+  let html = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(d => `<div class="h">${d}</div>`).join('');
+  for (let i = 0; i < first; i++) html += '<div class="x"></div>';
+  for (let d = 1; d <= nd; d++) {
+    const k = `${y}-${pad2(mo + 1)}-${pad2(d)}`, L = by[k];
+    html += `<div data-day="${k}" class="${L ? 'has' : ''}${k === S.calDay ? ' sel' : ''}${k === today ? ' today' : ''}">${d}${L ? `<small>${L.length}×</small>` : ''}</div>`;
+  }
+  $('calGrid').innerHTML = html;
+  const L = by[S.calDay] || [];
+  $('dayList').innerHTML = L.length
+    ? L.map(h => srow(h, `${new Date(h.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · S${h.num || '?'} · <b>${h.total} pts</b> · moy ${h.avg}${h.distance ? ' · ' + h.distance + ' m' : ''}`)).join('')
+    : (S.calDay ? '<p class="hint">Aucune série ce jour-là.</p>' : '<p class="hint">Les séries validées apparaîtront ici, jour par jour.</p>');
 }
 
 // ============ ÉTAT DE L'INTERFACE ============
@@ -1409,9 +1732,13 @@ function updateButtons() {
   const dis = (id, v) => { $(id).disabled = !!v; };
   dis('btnAuto', !has); dis('btnCenter', !has); dis('btnRing', !ctr); dis('btnWarp', !has); dis('btnUnwarp', !S.warpUndo); dis('btnResetCal', !ctr);
   ['nu', 'nd', 'nl', 'nr', 'nc'].forEach(id => dis(id, !ctr)); dis('rp', !cal); dis('rm', !cal);
-  dis('btnDetect', !cal); dis('btnManual', !cal); dis('btnDelete', !any); dis('btnUndo', !S.undo.length); dis('btnClear', !any);
+  dis('btnDetect', !cal); dis('btnManual', !cal); dis('btnDelete', !any); dis('btnClear', !any);
+  ['btnUndo', 'sUndo'].forEach(id => dis(id, !U.stack.length || S.review)); ['btnRedo', 'sRedo'].forEach(id => dis(id, !U.redo.length || S.review));
+  $('sDark').classList.toggle('on', S.darkBoost); $('btnDark').classList.toggle('lit', S.darkBoost); dis('sDark', !has); dis('btnDark', !has);
+  dis('btnCompare', S.history.filter(h => h.impacts).length + (n ? 1 : 0) < 2);
   $('btnAmb').hidden = !S.amb.length; $('btnAmb').textContent = `⚠️ Vérifier ${S.amb.length} zone(s) douteuse(s)`;
-  dis('btnValidate', !n || !cal); dis('btnReport', !n); dis('btnPng', !has); dis('btnClearHist', !S.history.length);
+  dis('btnValidate', !n || !cal || S.review); dis('btnReport', !n); dis('btnPng', !has); dis('btnClearHist', !S.history.length);
+  if (S.review) ['btnAuto', 'btnCenter', 'btnRing', 'btnWarp', 'btnUnwarp', 'btnResetCal', 'nu', 'nd', 'nl', 'nr', 'rp', 'rm', 'btnDetect', 'btnManual', 'btnDelete', 'btnClear', 'btnNewTarget'].forEach(id => dis(id, true));
   const st = { photo: has, cible: cal, impacts: n > 0, res: S.history.length > 0 };
   document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('done', !!st[b.dataset.step]));
 }
@@ -1423,13 +1750,13 @@ function rel(e) { const r = stage.getBoundingClientRect(); return [e.clientX - r
 function aimAt(sx, sy) { const [x, y] = toImg(sx, sy); S.aim = { x, y }; drawOverlay(); showLoupe(sx, sy); }
 function commit(x, y) {
   if (S.mode === 'center') {
-    S.cal.cx = x; S.cal.cy = y;
+    snapshot(); S.cal.cx = x; S.cal.cy = y;
     if (!S.cal.w) { setMode('ring', `② Glissez jusqu'au bord de l'anneau ${P().edge} puis relâchez`); refresh(); return; }
     setMode('idle'); banner('✅ Centre placé — affinez avec les flèches si besoin', 'ok');
   } else if (S.mode === 'ring') {
     const d = hyp(x - S.cal.cx, y - S.cal.cy);
     if (d < 3) { toast('Trop près du centre', 'err'); return; }
-    S.cal.w = d / edgeRings(); setMode('idle'); banner('✅ Cible calibrée — passez à ③ Impacts', 'ok');
+    snapshot(); S.cal.w = d / edgeRings(); setMode('idle'); banner('✅ Cible calibrée — passez à ③ Impacts', 'ok');
   } else if (S.mode === 'manual') {
     snapshot(); S.impacts.push({ x, y, conf: 999, flag: 'manual' });
   } else if (S.mode === 'warp') { manualWarpPoint(x, y); return; }
@@ -1504,13 +1831,13 @@ on('btnGallery', () => $('fileInput').click());
 ['fileInput', 'cameraInput'].forEach(id => $(id).addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); e.target.value = ''; }));
 on('btnNewTarget', () => {
   if (S.target.series.length && !confirm('Commencer une nouvelle cible ? Les séries de la cible actuelle restent dans l\'historique.')) return;
-  S.target = { series: [] }; S.align = { th: 0, tx: 0, ty: 0 }; save(); refresh(); toast('Nouvelle cible', 'ok');
+  snapshot(); S.target = { id: uid(), series: [] }; S.align = { th: 0, tx: 0, ty: 0 }; save(); refresh(); toast('Nouvelle cible', 'ok');
 });
 on('btnSample', makeSample);
 on('zIn', () => { const { w, h } = stageSize(); zoomAt(1.5, w / 2, h / 2); });
 on('zOut', () => { const { w, h } = stageSize(); zoomAt(1 / 1.5, w / 2, h / 2); });
 on('zFit', fitView);
-on('bannerDone', () => { setMode('idle'); banner('Mode terminé', ''); });
+on('bannerDone', () => { if (S.review) endReview(); else { setMode('idle'); banner('Mode terminé', ''); } });
 document.querySelectorAll('#steps button').forEach(b => b.addEventListener('click', () => goStep(b.dataset.step)));
 
 $('viewMode').addEventListener('change', renderView);
@@ -1521,6 +1848,7 @@ $('viewMode').addEventListener('change', renderView);
   clearTimeout(renderView.t); renderView.t = setTimeout(renderView, 60);
 }));
 on('btnResetFilter', () => {
+  S.darkBoost = false; updateButtons();
   $('viewMode').value = 'normal'; $('brightness').value = 100; $('contrast').value = 100; $('threshold').value = 90;
   $('brightnessVal').textContent = '100%'; $('contrastVal').textContent = '100%'; $('thresholdVal').textContent = '90';
   renderView();
@@ -1538,25 +1866,59 @@ on('btnRing', () => setMode('ring', `② Glissez jusqu'au bord de l'anneau ${P()
 on('btnWarp', () => { setMode('warp', `📐 Touchez le bord de l'anneau ${P().edge} : ① en HAUT`); });
 on('btnUnwarp', () => {
   if (!S.warpUndo) return;
-  const u = S.warpUndo; S.warpUndo = null; freeCanvas(S.src); S.src = u.src; S.cal = u.cal;
-  S.impacts = []; S.amb = []; S.undo = []; sizeImgCanvas(); renderView(); fitView(); refresh(); toast('Redressement annulé', 'ok');
+  snapshot(); const u = S.warpUndo; S.warpUndo = null; S.src = u.src; S.cal = u.cal;
+  S.impacts = []; S.amb = []; sizeImgCanvas(); renderView(); fitView(); refresh(); toast('Redressement annulé', 'ok');
 });
-on('btnResetCal', () => { S.cal = { cx: null, cy: null, w: null }; S.impacts = []; S.amb = []; setMode('idle'); refresh(); banner('Calibrage réinitialisé', ''); });
-const nudge = (dx, dy) => { const st = Math.max(0.25, 1 / V.k); S.cal.cx += dx * st; S.cal.cy += dy * st; refresh(); };
+on('btnResetCal', () => { snapshot(); S.cal = { cx: null, cy: null, w: null }; S.impacts = []; S.amb = []; setMode('idle'); refresh(); banner('Calibrage réinitialisé', ''); });
+const nudge = (dx, dy) => { snapshot('nudge'); const st = Math.max(0.25, 1 / V.k); S.cal.cx += dx * st; S.cal.cy += dy * st; refresh(); };
 on('nu', () => nudge(0, -1)); on('nd', () => nudge(0, 1)); on('nl', () => nudge(-1, 0)); on('nr', () => nudge(1, 0));
 on('nc', () => centerOn(S.cal.cx, S.cal.cy, Math.max(V.k, V.fitK * 4)));
-on('rp', () => { S.cal.w *= 1.004; refresh(); }); on('rm', () => { S.cal.w /= 1.004; refresh(); });
+on('rp', () => { snapshot('ring'); S.cal.w *= 1.004; refresh(); }); on('rm', () => { snapshot('ring'); S.cal.w /= 1.004; refresh(); });
 
 on('btnDetect', runDetect);
+on('sDark', toggleDark); on('btnDark', toggleDark);
+on('btnCompare', () => openCompare());
+on('cmpClose', () => { $('cmpModal').hidden = true; });
+$('cmpA').addEventListener('change', drawCompare); $('cmpB').addEventListener('change', drawCompare);
+on('cmpRevA', () => review($('cmpA').value)); on('cmpRevB', () => review($('cmpB').value));
+on('calPrev', () => { S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() - 1, 1); renderCalendar(); });
+on('calNext', () => { S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + 1, 1); renderCalendar(); });
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-rv],[data-cmp],[data-day],[data-pu],[data-pr],[data-pd]'); if (!t) return;
+  const d = t.dataset;
+  if (d.rv) review(d.rv);
+  else if (d.cmp) openCompare(d.cmp);
+  else if (d.day) { S.calDay = d.day; renderCalendar(); }
+  else if (d.pu) switchProfile(d.pu);
+  else if (d.pr) { const p = PROF.list.find(x => x.id === d.pr), n = prompt('Nom du tireur', p.name); if (n && n.trim()) { p.name = n.trim().slice(0, 30); saveProfiles(); renderProfiles(); } }
+  else if (d.pd) {
+    const p = PROF.list.find(x => x.id === d.pd);
+    if (!confirm(`Supprimer « ${p.name} » et tout son suivi sur cet appareil ?`)) return;
+    try { (JSON.parse(localStorage.getItem('tir_v4_' + p.id) || '{}').history || []).forEach(h => h.id && IDB.del(h.id).catch(() => {})); localStorage.removeItem('tir_v4_' + p.id); } catch (e) {}
+    PROF.list = PROF.list.filter(x => x.id !== p.id);
+    if (!PROF.list.length) PROF.list.push({ id: uid(), name: 'Tireur 1' });
+    if (PROF.cur === p.id) { PROF.cur = PROF.list[0].id; saveProfiles(); U.stack = []; U.redo = []; S.calMonth = S.calDay = null; loadSaved(); refresh(); }
+    saveProfiles(); renderProfiles();
+  }
+});
+on('profBtn', () => { renderProfiles(); storageInfo(); $('profModal').hidden = false; });
+on('profClose', () => { $('profModal').hidden = true; });
+on('profAdd', () => {
+  const n = $('profName').value.trim(); if (!n) { toast('Entrez un nom', 'warn'); return; }
+  const id = uid(); PROF.list.push({ id, name: n.slice(0, 30) }); $('profName').value = '';
+  switchProfile(id);
+});
+on('profExport', () => $('btnJson').click());
+on('profImport', () => $('btnImport').click());
 on('btnAmb', openAmb);
 on('ambOk', applyAmb);
 on('ambLater', () => { $('ambModal').hidden = true; refresh(); banner(`⚠️ ${S.amb.length} zone(s) à vérifier (orange) — bouton ⚠️ dans ③`, 'warn'); });
 on('btnManual', () => setMode(S.mode === 'manual' ? 'idle' : 'manual', '👆 Glissez sur chaque impact manquant et relâchez'));
 on('btnDelete', () => setMode(S.mode === 'del' ? 'idle' : 'del', '🗑 Touchez un impact (ou une zone orange) pour le supprimer'));
-on('btnUndo', () => { const u = S.undo.pop(); if (!u) return; S.impacts = u.impacts; S.amb = u.amb; refresh(); });
+on('btnUndo', undo); on('sUndo', undo); on('btnRedo', redo); on('sRedo', redo);
 on('btnClear', () => { snapshot(); S.impacts = []; S.amb = []; refresh(); });
 on('btnValidate', validateSeries);
-on('btnClearHist', () => { if (!confirm('Effacer tout l\'historique et la cible en cours ?')) return; S.history = []; S.target = { series: [] }; save(); refresh(); });
+on('btnClearHist', () => { if (!confirm('Effacer tout l\'historique et la cible en cours ?')) return; snapshot(); S.history = []; S.target = { series: [] }; save(); refresh(); });
 
 // ============ EXPORT ============
 async function shareBlob(blob, name) {
@@ -1572,7 +1934,7 @@ on('btnReport', () => {
   const st = computeStats(); if (!st) return;
   const txt = `RAPPORT D'ANALYSE DE TIR
 ==========================
-Tireur : ${$('shooter').value || 'Anonyme'}
+Tireur : ${$('shooter').value || profName()}
 Discipline : ${$('discipline').selectedOptions[0].text} · ${dist()} m
 Date : ${new Date().toLocaleString('fr-FR')}
 Cible : série ${S.target.series.length + 1}
@@ -1602,7 +1964,7 @@ on('btnPng', () => {
   c.toBlob(b => { c.width = c.height = 0; if (b) shareBlob(b, `cible-${Date.now()}.png`); }, 'image/png');
 });
 on('btnJson', () => {
-  const data = { version: 4, exported: new Date().toISOString(), history: S.history, target: S.target };
+  const data = { version: 4, tireur: profName(), exported: new Date().toISOString(), history: S.history, target: S.target };
   shareBlob(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }), `sauvegarde-tir-${Date.now()}.json`);
 });
 on('btnImport', () => $('jsonInput').click());
@@ -1623,6 +1985,7 @@ on('btnPrint', () => window.print());
 
 // ============ EXEMPLE (cible photographiée en biais) ============
 function makeSample() {
+  if (S.review) endReview();
   const W = 1200, H = 1500, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   x.fillStyle = '#5a5146'; x.fillRect(0, 0, W, H);
@@ -1648,10 +2011,12 @@ function makeSample() {
 
 // ============ INIT ============
 new ResizeObserver(() => { if (S.src) { if (Math.abs(V.k - V.fitK) < 1e-6) fitView(); else { clampView(); applyView(); } } else drawOverlay(); }).observe(stage);
+loadProfiles();
 loadSaved();
-refresh();
+refresh(); renderProfiles();
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
 banner('Chargez une photo de cible pour commencer', '');
-window.__tir = { S, V, P, detect, autoTarget, findTarget, computeStats, setImage, validateSeries, applyAmb, finalize, loadFile, scoreAt };
+window.__tir = { S, V, P, U, PROF, undo, redo, review, endReview, openCompare, switchProfile, toggleDark, IDB, detectRaw, detect, autoTarget, findTarget, computeStats, setImage, validateSeries, applyAmb, finalize, loadFile, scoreAt };
 </script>
 </body>
 </html>
