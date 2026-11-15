@@ -2,882 +2,289 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d1117">
 <title>🎯 Analyseur de Tir Pro</title>
 <style>
-:root {
-  --bg: #0d1117;
-  --surface: #161b22;
-  --surface-2: #21262d;
-  --surface-3: #30363d;
-  --border: #30363d;
-  --border-hi: #484f58;
-  --text: #e6edf3;
-  --text-muted: #8b949e;
-  --text-dim: #6e7681;
-  --accent: #58a6ff;
-  --accent-hi: #79c0ff;
-  --success: #3fb950;
-  --success-hi: #56d364;
-  --warning: #d29922;
-  --warning-hi: #e3b341;
-  --danger: #f85149;
-  --danger-hi: #ff7b72;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-xs: 6px;
-  --shadow: 0 8px 24px rgba(0,0,0,0.5);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --transition: 150ms ease;
+:root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--s3:#30363d;--bd:#30363d;--tx:#e6edf3;--mu:#8b949e;--ac:#58a6ff;--ok:#3fb950;--wa:#d29922;--er:#f85149;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+body{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(13,17,23,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--bd)}
+header b{font-size:17px}
+.pill{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--s2);color:var(--mu);white-space:nowrap}
+.app{display:flex;flex-direction:column;gap:10px;padding:10px;max-width:1500px;margin:0 auto}
+.stage-wrap{display:flex;flex-direction:column;gap:8px}
+.stage{position:relative;height:min(60vh,640px);min-height:300px;background:#000;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.stage canvas{position:absolute;left:0;top:0;pointer-events:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#imgCanvas{transform-origin:0 0}
+#loupe{display:none;width:150px;height:150px;border-radius:50%;border:3px solid var(--ac);box-shadow:0 6px 20px rgba(0,0,0,.6);z-index:6}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mu);text-align:center;padding:20px}
+.empty .big{font-size:46px}
+.banner{position:absolute;left:8px;right:8px;top:8px;z-index:5;display:flex;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:rgba(22,27,34,.9);border:1px solid var(--bd);font-size:13.5px}
+.banner.ok{border-color:var(--ok)}.banner.warn{border-color:var(--wa)}.banner.err{border-color:var(--er)}.banner.act{border-color:var(--ac)}
+.banner span{flex:1}
+.banner button{padding:6px 12px;border-radius:8px;background:var(--ac);color:#04111f;font-weight:700;border:0}
+.zoom{position:absolute;right:8px;bottom:8px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:44px;height:44px;border-radius:10px;border:1px solid var(--bd);background:rgba(22,27,34,.92);font-size:20px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:4px}
+.steps button{padding:9px 2px;border-radius:9px;border:0;background:none;color:var(--mu);font-weight:600;font-size:13.5px}
+.steps button.done{color:var(--ok)}
+.steps button.on{background:var(--ac);color:#04111f}
+.ctl,.panel{display:flex;flex-direction:column;gap:10px}
+.panel{display:none}
+body[data-step=photo] [data-panel=photo],body[data-step=cible] [data-panel=cible],body[data-step=impacts] [data-panel=impacts],body[data-step=res] [data-panel=res]{display:flex}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:10px}
+.card h3{font-size:12.5px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+details.card summary{font-size:12.5px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:8px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--s2);font-weight:600;font-size:14.5px;width:100%;text-align:center}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#04111f}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#04110a}
+.btn.warn{background:var(--wa);border-color:var(--wa);color:#1a1200}
+.btn.dan{color:var(--er)}
+.btn.on{outline:2px solid var(--ac);outline-offset:1px;background:#1f3a5f}
+.btn:disabled{opacity:.38;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--mu)}
+label.chk{display:flex;align-items:center;gap:8px;font-size:14px}
+label.chk input{width:20px;height:20px}
+select,input[type=number],input[type=text]{width:100%;min-height:42px;padding:8px 10px;border-radius:9px;border:1px solid var(--bd);background:var(--s2);font-size:16px}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.hint{font-size:12.5px;color:var(--mu)}
+.info{font-size:13.5px;background:var(--s2);border-radius:9px;padding:8px 10px}
+.adj{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
+.pad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,42px);gap:5px}
+.pad button,.rsz button{border-radius:9px;border:1px solid var(--bd);background:var(--s2);font-size:18px}
+.rsz{display:flex;flex-direction:column;gap:5px;align-items:center}
+.rsz button{width:56px;height:42px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--mu)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid;margin-right:4px;vertical-align:-1px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--s2);border-radius:10px;padding:8px 10px;min-width:0}
+.stat .l{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.stat .v{font-size:16px;font-weight:700;overflow-wrap:anywhere}
+.stat.big{grid-column:span 2;display:flex;justify-content:space-between;align-items:baseline}
+.stat.big .v{font-size:32px;color:var(--ac)}
+.good{color:var(--ok)}.mid{color:var(--wa)}.bad{color:var(--er)}
+.diag h4{font-size:15px;margin-bottom:6px}
+.diag p,.diag li{font-size:14px;margin:3px 0}
+.diag ul{padding-left:18px}
+.drill{background:var(--s2);border-left:3px solid var(--ac);border-radius:6px;padding:8px 10px;font-size:13.5px;margin-top:8px}
+.list{display:flex;flex-direction:column;gap:3px;max-height:260px;overflow:auto}
+.list div{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 8px;border-radius:7px;background:var(--s2)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:60px}
+.spark div{flex:1;background:var(--ac);border-radius:3px 3px 0 0;min-height:3px}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--s1);border:1px solid var(--bd);border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:85vh;overflow:auto;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+.amb{display:flex;gap:10px;align-items:center;background:var(--s2);border-radius:10px;padding:8px}
+.amb canvas{width:96px;height:96px;border-radius:8px;flex:none;background:#000}
+.stepper{display:flex;align-items:center;gap:10px;margin-top:6px}
+.stepper button{width:40px;height:40px;border-radius:9px;border:1px solid var(--bd);background:var(--s3);font-size:20px}
+.stepper b{min-width:22px;text-align:center;font-size:18px}
+#toasts{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:70;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:92%;max-width:460px}
+.toast{background:var(--s3);border:1px solid var(--bd);padding:9px 14px;border-radius:10px;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.5);transition:opacity .3s}
+.toast.ok{border-color:var(--ok)}.toast.err{border-color:var(--er)}.toast.warn{border-color:var(--wa)}
+@media(min-width:1000px){
+  .app{display:grid;grid-template-columns:340px minmax(0,1fr) 360px;align-items:start}
+  .stage-wrap{grid-column:2;grid-row:1;position:sticky;top:62px}
+  .stage{height:calc(100vh - 150px)}
+  .ctl{grid-column:1;grid-row:1}
+  [data-panel=res]{display:flex!important;grid-column:3;grid-row:1}
+  .steps{grid-template-columns:repeat(3,1fr)}
+  .steps [data-step=res]{display:none}
 }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-html, body { height: 100%; overflow-x: hidden; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.5;
-  min-height: 100vh;
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-
-/* ===== HEADER ===== */
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: rgba(13,17,23,0.85);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.app-title {
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.app-title .emoji { font-size: 20px; }
-.status-pill {
-  font-size: 11px;
-  padding: 4px 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-muted);
-  font-weight: 500;
-  white-space: nowrap;
-  max-width: 55vw;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.status-pill.active { color: var(--warning-hi); border-color: var(--warning); }
-.status-pill.ready { color: var(--success-hi); border-color: var(--success); }
-
-/* ===== LAYOUT ===== */
-.app-main {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  padding: 16px;
-  max-width: 1600px;
-  margin: 0 auto;
-}
-@media (min-width: 1100px) {
-  .app-main {
-    grid-template-columns: 320px 1fr 340px;
-    align-items: start;
-  }
-}
-
-/* ===== CARDS ===== */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-}
-.card + .card { margin-top: 12px; }
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 8px;
-}
-.card-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.card-title .icon { font-size: 14px; }
-.card-body { display: flex; flex-direction: column; gap: 10px; }
-.card.collapsible > .card-body { display: none; }
-.card.collapsible.open > .card-body { display: flex; }
-.card.collapsible .card-header { cursor: pointer; user-select: none; }
-.card.collapsible .chevron {
-  transition: transform var(--transition);
-  color: var(--text-muted);
-  font-size: 12px;
-}
-.card.collapsible.open .chevron { transform: rotate(180deg); }
-
-/* ===== FORM ELEMENTS ===== */
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-.field-hint { font-size: 11px; color: var(--text-dim); }
-select, input[type="text"], input[type="number"] {
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-family: inherit;
-  transition: border-color var(--transition);
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
-  padding-right: 36px;
-}
-select:focus, input:focus { outline: none; border-color: var(--accent); }
-input[type="text"], input[type="number"] { background-image: none; padding-right: 12px; }
-input[type="file"] {
-  width: 100%; padding: 10px; background: var(--bg); color: var(--text-muted);
-  border: 1px dashed var(--border-hi); border-radius: var(--radius-sm);
-  font-size: 12px; cursor: pointer;
-}
-input[type="range"] {
-  width: 100%; accent-color: var(--accent);
-  height: 4px; background: var(--surface-3);
-  border-radius: 2px; appearance: none; -webkit-appearance: none;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 20px; height: 20px;
-  background: var(--accent); border-radius: 50%; cursor: pointer;
-  border: 2px solid var(--bg);
-}
-.range-row { display: flex; align-items: center; gap: 10px; }
-.range-row input[type="range"] { flex: 1; }
-.range-value {
-  font-size: 12px; color: var(--accent); font-weight: 600;
-  min-width: 44px; text-align: right; font-variant-numeric: tabular-nums;
-}
-
-/* ===== BUTTONS ===== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 11px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  transition: all var(--transition);
-  min-height: 44px;
-  white-space: nowrap;
-}
-.btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--border-hi); }
-.btn:active:not(:disabled) { transform: scale(0.98); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn .btn-icon { font-size: 16px; }
-.btn.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
-.btn.primary:hover:not(:disabled) { background: #388bfd; border-color: #388bfd; }
-.btn.success { background: #238636; border-color: #238636; color: #fff; }
-.btn.success:hover:not(:disabled) { background: #2ea043; border-color: #2ea043; }
-.btn.danger { background: #da3633; border-color: #da3633; color: #fff; }
-.btn.danger:hover:not(:disabled) { background: #f85149; border-color: #f85149; }
-.btn.ghost { background: transparent; border-color: var(--border); }
-.btn.ghost:hover:not(:disabled) { background: var(--surface-2); }
-.btn.active { background: var(--warning); border-color: var(--warning); color: #000; font-weight: 600; }
-.btn-row { display: flex; gap: 8px; }
-.btn-row .btn { flex: 1; }
-
-/* ===== CANVAS AREA ===== */
-.canvas-area {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: relative;
-}
-.mode-banner {
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  font-size: 13px;
-  color: var(--warning-hi);
-  text-align: center;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 500;
-  transition: all var(--transition);
-}
-.mode-banner.info { color: var(--accent-hi); border-color: var(--accent); }
-.mode-banner.success { color: var(--success-hi); border-color: var(--success); }
-.mode-banner.error { color: var(--danger-hi); border-color: var(--danger); }
-.canvas-container {
-  background: #000;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  position: relative;
-  aspect-ratio: 1 / 1;
-  max-height: 70vh;
-}
-@media (min-width: 1100px) {
-  .canvas-container { max-height: 75vh; }
-}
-canvas#canvas {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  cursor: crosshair;
-  touch-action: none;
-  width: 100%;
-  height: 100%;
-}
-.canvas-empty {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-dim);
-  padding: 20px;
-  text-align: center;
-  pointer-events: none;
-}
-.canvas-empty .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
-.canvas-empty .empty-text { font-size: 14px; }
-
-/* ===== TOOLBAR ===== */
-.toolbar {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  scrollbar-width: none;
-}
-.toolbar::-webkit-scrollbar { display: none; }
-.tool-btn {
-  flex: 1 0 auto;
-  min-width: 62px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 10px 6px;
-  background: transparent;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 500;
-  transition: all var(--transition);
-  border: 1px solid transparent;
-}
-.tool-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
-.tool-btn:active:not(:disabled) { transform: scale(0.95); }
-.tool-btn.active { background: var(--warning); color: #000; border-color: var(--warning-hi); }
-.tool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.tool-btn .tool-icon { font-size: 22px; line-height: 1; }
-
-/* ===== RESULTS ===== */
-.results-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.result-item {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.result-item.span-2 { grid-column: span 2; }
-.result-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  font-weight: 500;
-}
-.result-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-.result-value.big { font-size: 28px; color: var(--warning-hi); }
-.result-value.small { font-size: 14px; }
-.result-value.good { color: var(--success-hi); }
-.result-value.warn { color: var(--warning-hi); }
-.result-value.bad { color: var(--danger-hi); }
-
-/* ===== DIAGNOSTIC ===== */
-.diagnostic {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--warning);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  font-size: 13px;
-  line-height: 1.6;
-}
-.diagnostic h3 {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--warning-hi);
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-}
-.diagnostic .diag-section { margin-top: 10px; }
-.diagnostic .diag-section:first-of-type { margin-top: 0; }
-.diagnostic .diag-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin-bottom: 4px;
-}
-.diagnostic ul { padding-left: 20px; margin: 4px 0; }
-.diagnostic li { margin: 3px 0; }
-.diagnostic .drill {
-  background: rgba(88,166,255,0.1);
-  border: 1px solid rgba(88,166,255,0.3);
-  border-radius: var(--radius-xs);
-  padding: 10px;
-  margin-top: 10px;
-  font-size: 12px;
-}
-.diagnostic .drill strong { color: var(--accent-hi); }
-.diagnostic .placeholder { color: var(--text-dim); font-style: italic; text-align: center; padding: 20px 0; }
-
-/* ===== IMPACT LIST ===== */
-.impact-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 300px;
-  overflow-y: auto;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-}
-.impact-list:empty::after {
-  content: "Aucun impact enregistré";
-  display: block;
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 13px;
-  font-style: italic;
-  padding: 20px;
-}
-.impact-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: var(--radius-xs);
-  background: var(--surface-2);
-  font-size: 12px;
-}
-.impact-row .idx {
-  width: 22px; height: 22px;
-  background: var(--surface-3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 11px;
-  flex-shrink: 0;
-}
-.impact-row.new .idx { background: var(--success); color: #000; }
-.impact-row.old .idx { background: var(--danger); color: #fff; }
-.impact-row .score { margin-left: auto; font-weight: 600; color: var(--accent); }
-
-/* ===== HISTORY ===== */
-.spark {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 60px;
-  padding: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-.spark .bar {
-  flex: 1;
-  min-height: 4px;
-  background: linear-gradient(180deg, var(--accent-hi), var(--accent));
-  border-radius: 2px 2px 0 0;
-  transition: height 0.3s ease;
-}
-.history-info {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 8px;
-}
-
-/* ===== LEGEND ===== */
-.legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.legend-item { display: flex; align-items: center; gap: 5px; }
-.legend-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  border: 2px solid currentColor;
-  background: transparent;
-}
-.legend-dot.new { color: var(--success-hi); }
-.legend-dot.old { color: var(--danger-hi); }
-.legend-dot.center { color: var(--warning-hi); }
-.legend-dot.mpi { color: var(--accent); background: currentColor; border-color: currentColor; }
-
-/* ===== MAGNIFIER ===== */
-#magnifier {
-  position: fixed;
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  border: 3px solid var(--accent);
-  box-shadow: 0 0 0 2px var(--bg), 0 8px 24px rgba(0,0,0,0.7);
-  pointer-events: none;
-  display: none;
-  z-index: 200;
-  background: #000;
-}
-
-/* ===== TOAST ===== */
-#toast-container {
-  position: fixed;
-  top: 70px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 300;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-  max-width: 90vw;
-}
-.toast {
-  background: var(--surface-2);
-  border: 1px solid var(--border-hi);
-  color: var(--text);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
-  font-size: 13px;
-  font-weight: 500;
-  animation: toast-in 0.2s ease;
-  pointer-events: auto;
-  max-width: 100%;
-}
-.toast.success { border-color: var(--success); color: var(--success-hi); }
-.toast.error { border-color: var(--danger); color: var(--danger-hi); }
-.toast.warning { border-color: var(--warning); color: var(--warning-hi); }
-@keyframes toast-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ===== MOBILE ===== */
-@media (max-width: 1099px) {
-  .app-main { padding: 12px; gap: 12px; }
-  .card { padding: 14px; }
-  .results-grid { grid-template-columns: 1fr 1fr; }
-  .canvas-container { min-height: 250px; max-height: 55vh; }
-}
-@media (max-width: 500px) {
-  .app-header { padding: 10px 12px; }
-  .app-title { font-size: 15px; }
-  .result-value { font-size: 18px; }
-  .result-value.big { font-size: 24px; }
-}
-
-/* ===== PRINT ===== */
-@media print {
-  body { background: #fff; color: #000; padding: 20px; }
-  .app-header, .toolbar, .canvas-container, .btn, input, select, .legend { display: none !important; }
-  .app-main { display: block; }
-  .card { background: #fff; border: 1px solid #ccc; page-break-inside: avoid; }
-  .result-item { background: #f8f8f8; }
-  .result-value { color: #000; }
-  .diagnostic { background: #f8f8f8; color: #000; border-left-color: #000; }
-  .diagnostic h3 { color: #000; }
-  .card-title { color: #000; }
-}
+@media print{header,.stage-wrap,.ctl,.no-print,#toasts{display:none!important}[data-panel=res]{display:flex!important}body{background:#fff;color:#000}.card,.stat{background:#fff;border-color:#ccc}}
 </style>
 </head>
-<body>
+<body data-step="photo">
+<header><div><b>🎯 Analyseur de Tir</b></div><span class="pill" id="statusPill">Prêt</span></header>
 
-<header class="app-header">
-  <div class="app-title">
-    <span class="emoji">🎯</span>
-    <span>Analyseur de Tir <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Pro</span></span>
-  </div>
-  <span class="status-pill" id="statusPill">Prêt</span>
-</header>
-
-<main class="app-main">
-
-  <!-- ===== LEFT PANEL ===== -->
-  <aside id="leftPanel">
-    <!-- IMAGE -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">📁</span>Image de la cible</div>
-      </div>
-      <div class="card-body">
-        <input type="file" id="fileInput" accept="image/*">
-        <div class="btn-row">
-          <button class="btn primary" id="btnCamera"><span class="btn-icon">📷</span>Appareil photo</button>
-          <button class="btn ghost" id="btnSample"><span class="btn-icon">🖼</span>Exemple</button>
-        </div>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
-      </div>
+<div class="app">
+  <section class="stage-wrap">
+    <div class="stage" id="stage">
+      <canvas id="imgCanvas" width="10" height="10"></canvas>
+      <canvas id="ovCanvas"></canvas>
+      <canvas id="loupe"></canvas>
+      <div class="empty" id="stageEmpty"><div class="big">📷</div><div>Prenez ou choisissez une photo de la cible</div><div class="hint">Pincez pour zoomer · glissez pour déplacer</div></div>
+      <div class="banner" id="banner"><span id="bannerTxt">Chargez une photo de cible pour commencer</span><button id="bannerDone" hidden>Terminer</button></div>
+      <div class="zoom"><button id="zIn" aria-label="Zoomer">＋</button><button id="zOut" aria-label="Dézoomer">－</button><button id="zFit" aria-label="Vue entière">⤢</button></div>
     </div>
-
-    <!-- PERSPECTIVE -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">📐</span>Redressement</div>
-      </div>
-      <div class="card-body">
-        <p class="field-hint">Si la photo a été prise de travers, redressez la cible pour aligner les anneaux sur la référence.</p>
-        <button class="btn primary" id="btnWarp"><span class="btn-icon">📐</span>Corriger la perspective</button>
-        <button class="btn ghost" id="btnWarpReset" disabled><span class="btn-icon">↺</span>Annuler le redressement</button>
-      </div>
-    </div>
-
-    <!-- CALIBRATION -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">🎯</span>Calibrage</div>
-      </div>
-      <div class="card-body">
-        <button class="btn primary" id="btnCalCenter"><span class="btn-icon">①</span>Définir le centre</button>
-        <div class="field">
-          <label class="field-label">Anneau cliqué (étape ②)</label>
-          <select id="ringSelect">
-            <option value="1">Anneau 1 (extérieur)</option>
-            <option value="2">Anneau 2</option><option value="3">Anneau 3</option>
-            <option value="4">Anneau 4</option><option value="5">Anneau 5</option>
-            <option value="6">Anneau 6</option>
-            <option value="7" selected>Anneau 7 (bord du noir)</option>
-            <option value="8">Anneau 8</option><option value="9">Anneau 9</option>
-            <option value="10">Anneau 10 (centre)</option>
-          </select>
-        </div>
-        <button class="btn primary" id="btnCalRing"><span class="btn-icon">②</span>Définir l'anneau</button>
-        <button class="btn ghost" id="btnResetCal" disabled><span class="btn-icon">↺</span>Réinitialiser</button>
-      </div>
-    </div>
-
-    <!-- FILTERS -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">🎨</span>Affichage & Filtres</div>
-      </div>
-      <div class="card-body">
-        <div class="field">
-          <label class="field-label">Mode de vue</label>
-          <select id="viewMode">
-            <option value="normal">Originale</option>
-            <option value="enhanced">Améliorée (contraste)</option>
-            <option value="binary">Binaire (seuil)</option>
-            <option value="negative">Négatif (inversé)</option>
-            <option value="negative-enhanced">Négatif amélioré</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="field-label">Luminosité <span class="range-value" id="brightnessVal">100%</span></label>
-          <input type="range" id="brightness" min="40" max="200" value="100">
-        </div>
-        <div class="field">
-          <label class="field-label">Contraste <span class="range-value" id="contrastVal">100%</span></label>
-          <input type="range" id="contrast" min="40" max="350" value="100">
-        </div>
-        <div class="field">
-          <label class="field-label">Seuil binaire <span class="range-value" id="thresholdVal">90</span></label>
-          <input type="range" id="threshold" min="10" max="240" value="90">
-        </div>
-        <button class="btn ghost" id="btnResetFilter"><span class="btn-icon">↺</span>Réinitialiser filtres</button>
-      </div>
-    </div>
-
-    <!-- DETECTION -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">🤖</span>Détection</div>
-      </div>
-      <div class="card-body">
-        <div class="field">
-          <label class="field-label">Sensibilité <span class="range-value" id="sensitivityVal">25</span></label>
-          <input type="range" id="sensitivity" min="10" max="60" value="25">
-        </div>
-        <div class="field">
-          <label class="field-label">Type de détection</label>
-          <select id="detectionMode">
-            <option value="dark">Trous sombres (normal)</option>
-            <option value="light">Trous clairs (négatif)</option>
-          </select>
-        </div>
-        <button class="btn primary" id="btnDetect"><span class="btn-icon">🤖</span>Détection automatique</button>
-        <button class="btn" id="btnManual"><span class="btn-icon">👆</span>Ajout manuel (loupe)</button>
-        <button class="btn" id="btnDeleteMode"><span class="btn-icon">🗑</span>Supprimer un impact</button>
-        <div class="btn-row">
-          <button class="btn ghost" id="btnUndo"><span class="btn-icon">↶</span>Annuler</button>
-          <button class="btn danger" id="btnClearAll"><span class="btn-icon">🗑</span>Tout effacer</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PARAMETERS -->
-    <div class="card collapsible open" id="paramsCard">
-      <div class="card-header" data-toggle="paramsCard">
-        <div class="card-title"><span class="icon">⚙️</span>Paramètres de tir</div>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="card-body">
-        <div class="field">
-          <label class="field-label">Discipline</label>
-          <select id="discipline">
-            <option value="pistolet">Pistolet (ISSF)</option>
-            <option value="carabine">Carabine (ISSF)</option>
-            <option value="arc_pointe">Arc à lames de pointe</option>
-            <option value="arc_epaule">Arc à lames d'épaule</option>
-            <option value="arc_compound">Arc compound</option>
-            <option value="arbalete">Arbalète</option>
-            <option value="autre">Autre</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="field-label">Distance</label>
-          <select id="distance">
-            <option value="10">10 m</option><option value="18">18 m</option>
-            <option value="20">20 m</option><option value="25" selected>25 m</option>
-            <option value="30">30 m</option><option value="50">50 m</option>
-            <option value="70">70 m</option><option value="90">90 m</option>
-            <option value="custom">Autre…</option>
-          </select>
-          <input type="number" id="distanceCustom" placeholder="Distance en m" style="display:none">
-        </div>
-        <div class="field">
-          <label class="field-label">Impacts attendus</label>
-          <input type="number" id="expectedImpacts" min="1" max="60" value="10" placeholder="10">
-        </div>
-        <div class="field">
-          <label class="field-label">Nom du tireur</label>
-          <input type="text" id="shooterName" placeholder="Optionnel">
-        </div>
-      </div>
-    </div>
-
-    <!-- SESSION -->
-    <div class="card collapsible" id="sessionCard">
-      <div class="card-header" data-toggle="sessionCard">
-        <div class="card-title"><span class="icon">💾</span>Sessions</div>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="card-body">
-        <button class="btn" id="btnSaveSession"><span class="btn-icon">💾</span>Sauvegarder</button>
-        <button class="btn" id="btnLoadSession"><span class="btn-icon">📂</span>Charger dernière session</button>
-        <button class="btn" id="btnCompare"><span class="btn-icon">🔄</span>Comparer (nouveaux = vert)</button>
-        <button class="btn danger" id="btnClearHistory"><span class="btn-icon">🗑</span>Effacer l'historique</button>
-      </div>
-    </div>
-
-    <!-- EXPORT -->
-    <div class="card collapsible" id="exportCard">
-      <div class="card-header" data-toggle="exportCard">
-        <div class="card-title"><span class="icon">📤</span>Exporter</div>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="card-body">
-        <button class="btn" id="btnExportText"><span class="btn-icon">📄</span>Rapport texte</button>
-        <button class="btn" id="btnExportImage"><span class="btn-icon">🖼</span>Image annotée (PNG)</button>
-        <button class="btn" id="btnExportJSON"><span class="btn-icon">💾</span>Sauvegarde JSON</button>
-        <button class="btn" id="btnImportJSON"><span class="btn-icon">📥</span>Importer JSON</button>
-        <button class="btn ghost" onclick="window.print()"><span class="btn-icon">🖨</span>Imprimer / PDF</button>
-        <input type="file" id="jsonInput" accept=".json" style="display:none">
-      </div>
-    </div>
-  </aside>
-
-  <!-- ===== CENTER: CANVAS ===== -->
-  <section class="canvas-area">
-    <div class="mode-banner" id="modeBanner">Choisissez une image pour commencer</div>
-    <div class="canvas-container" id="canvasContainer">
-      <canvas id="canvas" width="800" height="800"></canvas>
-      <div class="canvas-empty" id="canvasEmpty">
-        <div class="empty-icon">🎯</div>
-        <div class="empty-text">Chargez une photo de cible pour commencer</div>
-      </div>
-    </div>
-    <div class="toolbar">
-      <button class="tool-btn" data-tool="image"><span class="tool-icon">📷</span>Image</button>
-      <button class="tool-btn" data-tool="warp"><span class="tool-icon">📐</span>Redresser</button>
-      <button class="tool-btn" data-tool="calibrate"><span class="tool-icon">🎯</span>Calibrer</button>
-      <button class="tool-btn" data-tool="detect"><span class="tool-icon">🤖</span>Détecter</button>
-      <button class="tool-btn" data-tool="manual"><span class="tool-icon">👆</span>Manuel</button>
-      <button class="tool-btn" data-tool="delete"><span class="tool-icon">🗑</span>Suppr.</button>
-      <button class="tool-btn" data-tool="undo"><span class="tool-icon">↶</span>Annuler</button>
-    </div>
-    <div class="legend">
-      <span class="legend-item"><span class="legend-dot new"></span>Nouveau</span>
-      <span class="legend-item"><span class="legend-dot old"></span>Ancien</span>
-      <span class="legend-item"><span class="legend-dot center"></span>Centre</span>
-      <span class="legend-item"><span class="legend-dot mpi"></span>MPI</span>
-    </div>
+    <nav class="steps" id="steps">
+      <button data-step="photo" class="on">① Photo</button>
+      <button data-step="cible">② Cible</button>
+      <button data-step="impacts">③ Impacts</button>
+      <button data-step="res">④ Résultats</button>
+    </nav>
   </section>
 
-  <!-- ===== RIGHT: RESULTS ===== -->
-  <aside id="rightPanel">
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">📊</span>Résultats</div>
-      </div>
-      <div class="card-body">
-        <div class="results-grid">
-          <div class="result-item span-2">
-            <span class="result-label">Score total</span>
-            <span class="result-value big" id="totalScore">—</span>
-          </div>
-          <div class="result-item">
-            <span class="result-label">Impacts</span>
-            <span class="result-value" id="impactCount">0</span>
-          </div>
-          <div class="result-item">
-            <span class="result-label">Moyenne</span>
-            <span class="result-value" id="avgScore">—</span>
-          </div>
-          <div class="result-item span-2">
-            <span class="result-label">MPI (point moyen)</span>
-            <span class="result-value small" id="mpi">—</span>
-          </div>
-          <div class="result-item">
-            <span class="result-label">Dispersion</span>
-            <span class="result-value small" id="dispersion">—</span>
-          </div>
-          <div class="result-item">
-            <span class="result-label">Groupement</span>
-            <span class="result-value small" id="groupment">—</span>
-          </div>
-          <div class="result-item span-2">
-            <span class="result-label">Régularité</span>
-            <span class="result-value small" id="regularity">—</span>
-          </div>
+  <div class="ctl">
+    <!-- ① PHOTO -->
+    <section class="panel" data-panel="photo">
+      <div class="card">
+        <h3>Cible en cours</h3>
+        <div class="info" id="targetInfo">Nouvelle cible</div>
+        <div class="row">
+          <button class="btn pri" id="btnCamera">📷 Appareil photo</button>
+          <button class="btn" id="btnGallery">🖼 Galerie</button>
         </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><span class="icon">🩺</span>Diagnostic & Conseils</div>
-      </div>
-      <div class="card-body">
-        <div class="diagnostic" id="diagnostic">
-          <div class="placeholder">Le diagnostic s'affichera après la détection des impacts.</div>
+        <div class="row">
+          <button class="btn dan" id="btnNewTarget">🆕 Nouvelle cible</button>
+          <button class="btn" id="btnSample">🧪 Exemple</button>
         </div>
+        <p class="hint">Pour la série suivante, re-photographiez la <b>même cible</b> : les impacts déjà enregistrés sont reconnus et ne sont pas recomptés.</p>
       </div>
-    </div>
+      <details class="card">
+        <summary>Filtres d'affichage</summary>
+        <label class="f">Mode<select id="viewMode">
+          <option value="normal">Originale</option><option value="enhanced">Contraste renforcé</option>
+          <option value="binary">Binaire (seuil)</option><option value="negative">Négatif</option><option value="negative-enhanced">Négatif renforcé</option>
+        </select></label>
+        <label class="f">Luminosité <span id="brightnessVal">100%</span><input type="range" id="brightness" min="40" max="200" value="100"></label>
+        <label class="f">Contraste <span id="contrastVal">100%</span><input type="range" id="contrast" min="40" max="350" value="100"></label>
+        <label class="f">Seuil binaire <span id="thresholdVal">90</span><input type="range" id="threshold" min="10" max="240" value="90"></label>
+        <button class="btn" id="btnResetFilter">↺ Réinitialiser les filtres</button>
+      </details>
+    </section>
 
-    <div class="card collapsible" id="impactsCard">
-      <div class="card-header" data-toggle="impactsCard">
-        <div class="card-title"><span class="icon">📋</span>Détail des impacts</div>
-        <span class="chevron">▾</span>
+    <!-- ② CIBLE -->
+    <section class="panel" data-panel="cible">
+      <div class="card">
+        <h3>Discipline</h3>
+        <div class="row">
+          <label class="f">Discipline<select id="discipline">
+            <option value="pistolet">Pistolet (ISSF)</option><option value="carabine">Carabine (ISSF)</option>
+            <option value="arc_pointe">Arc à lames de pointe</option><option value="arc_epaule">Arc à lames d'épaule</option>
+            <option value="arc_compound">Arc compound</option><option value="arbalete">Arbalète</option><option value="autre">Autre</option>
+          </select></label>
+          <label class="f">Distance<select id="distance">
+            <option value="10">10 m</option><option value="18">18 m</option><option value="20">20 m</option><option value="25" selected>25 m</option>
+            <option value="30">30 m</option><option value="50">50 m</option><option value="70">70 m</option><option value="90">90 m</option><option value="custom">Autre…</option>
+          </select></label>
+        </div>
+        <input type="number" id="distanceCustom" placeholder="Distance en mètres" hidden>
+        <div class="row">
+          <label class="f">Largeur d'anneau (mm)<input type="number" id="ringMm" step="0.1" min="0.5"></label>
+          <label class="f">Diamètre impact (mm)<input type="number" id="calMm" step="0.1" min="1"></label>
+        </div>
+        <label class="f">Limite de référence<select id="ringSelect">
+          <option value="1">Bord extérieur de l'anneau 1</option><option value="2">Bord de l'anneau 2</option><option value="3">Bord de l'anneau 3 (noir carabine 50 m)</option>
+          <option value="4">Bord de l'anneau 4 (noir carabine 10 m)</option><option value="5">Bord de l'anneau 5</option><option value="6">Bord de l'anneau 6</option>
+          <option value="7">Bord de l'anneau 7 (noir pistolet)</option><option value="8">Bord de l'anneau 8</option><option value="9">Bord de l'anneau 9 (jaune arc)</option><option value="10">Bord de l'anneau 10</option>
+        </select></label>
       </div>
-      <div class="card-body">
-        <div class="impact-list" id="impactList"></div>
+      <div class="card">
+        <h3>Calibrage</h3>
+        <button class="btn pri" id="btnAuto">✨ Proposer le centre et la limite</button>
+        <div class="row">
+          <button class="btn" id="btnCenter">① Placer le centre</button>
+          <button class="btn" id="btnRing">② Placer la limite</button>
+        </div>
+        <p class="hint">Posez le doigt, faites glisser en regardant la loupe, relâchez pour valider.</p>
+        <div class="adj">
+          <div class="pad">
+            <span></span><button id="nu" aria-label="Centre vers le haut">↑</button><span></span>
+            <button id="nl" aria-label="Centre vers la gauche">←</button><button id="nc" aria-label="Recentrer la vue" title="Recentrer">◎</button><button id="nr" aria-label="Centre vers la droite">→</button>
+            <span></span><button id="nd" aria-label="Centre vers le bas">↓</button><span></span>
+          </div>
+          <div class="rsz"><button id="rp" aria-label="Agrandir les anneaux">＋</button><span class="hint">anneaux</span><button id="rm" aria-label="Réduire les anneaux">－</button></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnWarp">📐 Redresser (4 pts)</button>
+          <button class="btn" id="btnUnwarp">↺ Annuler redress.</button>
+        </div>
+        <button class="btn dan" id="btnResetCal">Réinitialiser le calibrage</button>
       </div>
-    </div>
+    </section>
 
-    <div class="card collapsible" id="historyCard">
-      <div class="card-header" data-toggle="historyCard">
-        <div class="card-title"><span class="icon">📈</span>Historique</div>
-        <span class="chevron">▾</span>
+    <!-- ③ IMPACTS -->
+    <section class="panel" data-panel="impacts">
+      <div class="card">
+        <h3>Détection</h3>
+        <div class="row">
+          <label class="f">Impacts de la série<input type="number" id="expected" min="0" max="100" value="10"></label>
+          <label class="f">Sensibilité <span id="sensVal">25</span><input type="range" id="sensitivity" min="8" max="70" value="25"></label>
+        </div>
+        <p class="hint">Sensibilité : valeur basse = détecte plus (et plus de faux impacts).</p>
+        <button class="btn pri" id="btnDetect">🤖 Détecter les impacts</button>
+        <button class="btn warn" id="btnAmb" hidden>⚠️ Zones à vérifier</button>
+        <div class="row">
+          <button class="btn" id="btnManual">👆 Ajouter</button>
+          <button class="btn" id="btnDelete">🗑 Supprimer</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnUndo">↶ Annuler</button>
+          <button class="btn dan" id="btnClear">Tout effacer</button>
+        </div>
+        <div class="legend"><span><i style="border-color:#3fb950"></i>Nouveau</span><span><i style="border-color:#f85149"></i>Séries précédentes</span><span><i style="border-color:#d29922"></i>À vérifier</span></div>
       </div>
-      <div class="card-body">
-        <div class="spark" id="spark"></div>
-        <div class="history-info" id="historyInfo">Aucune session enregistrée</div>
+    </section>
+  </div>
+
+  <!-- ④ RÉSULTATS -->
+  <aside class="panel" data-panel="res">
+    <div class="card">
+      <h3>Résultats de la série</h3>
+      <div class="stats">
+        <div class="stat big"><div><div class="l">Score</div><div class="v" id="sTotal">—</div></div><div style="text-align:right"><div class="l">Décimal</div><div class="v" style="font-size:18px;color:var(--tx)" id="sDec">—</div></div></div>
+        <div class="stat"><div class="l">Impacts</div><div class="v" id="sN">0</div></div>
+        <div class="stat"><div class="l">Moyenne</div><div class="v" id="sAvg">—</div></div>
+        <div class="stat"><div class="l">Point moyen (MPI)</div><div class="v" id="sMpi">—</div></div>
+        <div class="stat"><div class="l">Groupement</div><div class="v" id="sGroup">—</div></div>
+        <div class="stat"><div class="l">Rayon moyen</div><div class="v" id="sMr">—</div></div>
+        <div class="stat"><div class="l">Régularité</div><div class="v" id="sReg">—</div></div>
       </div>
+      <button class="btn ok" id="btnValidate">✅ Valider la série</button>
     </div>
+    <div class="card">
+      <h3>Diagnostic</h3>
+      <label class="chk"><input type="checkbox" id="leftHanded"> Tireur gaucher</label>
+      <div class="diag" id="diag"><p class="hint">Les conseils apparaissent après l'analyse.</p></div>
+    </div>
+    <details class="card">
+      <summary>Détail des impacts</summary>
+      <div class="list" id="impList"></div>
+    </details>
+    <div class="card">
+      <h3>Progression</h3>
+      <div class="spark" id="spark"></div>
+      <div class="hint" id="histInfo">Aucune série enregistrée</div>
+      <div class="list" id="seriesList"></div>
+    </div>
+    <details class="card no-print">
+      <summary>Réglages, export et sauvegarde</summary>
+      <label class="f">Tireur<input type="text" id="shooter" placeholder="Optionnel"></label>
+      <label class="chk"><input type="checkbox" id="lineRule" checked> Une touche de ligne compte pour l'anneau supérieur</label>
+      <div class="row"><button class="btn" id="btnReport">📄 Rapport</button><button class="btn" id="btnPng">🖼 Image annotée</button></div>
+      <div class="row"><button class="btn" id="btnJson">💾 Sauvegarde</button><button class="btn" id="btnImport">📥 Importer</button></div>
+      <div class="row"><button class="btn" id="btnPrint">🖨 Imprimer / PDF</button><button class="btn dan" id="btnClearHist">Effacer l'historique</button></div>
+    </details>
   </aside>
-</main>
+</div>
 
-<canvas id="magnifier"></canvas>
-<div id="toast-container"></div>
+<div class="modal" id="ambModal" hidden>
+  <div class="sheet">
+    <h3 style="font-size:17px">⚠️ Zones à vérifier</h3>
+    <p class="hint">Ces zones contiennent probablement plusieurs impacts groupés ou un impact dans un trou existant. Indiquez combien de <b>nouveaux</b> impacts se trouvent dans chaque zone.</p>
+    <div id="ambList" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="row"><button class="btn" id="ambLater">Plus tard</button><button class="btn pri" id="ambOk">Valider</button></div>
+  </div>
+</div>
+<div id="toasts"></div>
+<input type="file" id="fileInput" accept="image/*" hidden>
+<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+<input type="file" id="jsonInput" accept=".json,application/json" hidden>
 
 <script>
+'use strict';
 /* ============================================================
-   ANALYSEUR DE TIR PRO v3.0
+   ANALYSEUR DE TIR PRO v4.0
    ============================================================ */
-
-// ============ BIBLIOTHÈQUE DE CONSEILS ============
 const ADVICE = {
   pistolet: {
     basGauche: { title:"⚠️ Anticipation du recul + doigté latéral", cause:"Serrage de toute la main en pressant la détente : le canon plonge et pousse à gauche.", corrections:["Presser la détente avec le creux de la 1ère phalange, mouvement rectiligne","Ne pas serrer plus fort au départ du coup","Se laisser surprendre par le tir"], drills:"Tir à sec quotidien + exercice ball & dummy (cartouche à blanc au hasard)." },
@@ -951,1276 +358,1300 @@ const ADVICE = {
   }
 };
 
-// ============ ÉTAT ============
-const state = {
-  sourceImage: null,        // image source (avant filtres)
-  displayImage: null,       // canvas affiché
-  originalCanvas: null,     // canvas avant warp (pour undo)
-  warped: false,
-  calibration: { center: null, ringWidth: null },
-  impacts: [],
-  previousImpacts: [],
-  mode: 'idle',
-  warpPoints: [],
-  undoStack: [],
-  warpUndo: null,
-  sessionHistory: []
-};
 
-// ============ DOM ============
+// ============ OUTILS ============
 const $ = id => document.getElementById(id);
-const canvas = $('canvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-const magnifier = $('magnifier');
-const mCtx = magnifier.getContext('2d');
+const stage = $('stage'), imgCanvas = $('imgCanvas'), ov = $('ovCanvas'), loupe = $('loupe');
+const imgCtx = imgCanvas.getContext('2d', { willReadFrequently: true });
+const ovCtx = ov.getContext('2d'), lCtx = loupe.getContext('2d');
+const DPR = Math.min(3, window.devicePixelRatio || 1);
+const hyp = Math.hypot;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-// ============ TOAST ============
-function toast(msg, type='info', duration=2800) {
+const S = {
+  src: null, warpUndo: null,
+  cal: { cx: null, cy: null, w: null },
+  impacts: [], amb: [], undo: [],
+  mode: 'idle', warpPts: [], aim: null,
+  align: { th: 0, tx: 0, ty: 0 },
+  target: { series: [] }, history: [], reserve: []
+};
+const V = { k: 1, tx: 0, ty: 0, fitK: 1 };
+
+function toast(msg, type = '', ms = 2800) {
   const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  el.textContent = msg;
-  $('toast-container').appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; }, duration - 300);
-  setTimeout(() => el.remove(), duration);
+  el.className = 'toast ' + type; el.textContent = msg;
+  $('toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; }, ms - 300);
+  setTimeout(() => el.remove(), ms);
 }
+function banner(msg, type = '') {
+  $('bannerTxt').textContent = msg;
+  $('banner').className = 'banner ' + type;
+  $('bannerDone').hidden = S.mode === 'idle';
+}
+function freeCanvas(c) { if (c && c !== S.src) { c.width = 0; c.height = 0; } }
 
-// ============ MODE BANNER ============
-function setMode(msg, type='info') {
-  const el = $('modeBanner');
-  el.textContent = msg;
-  el.className = 'mode-banner' + (type !== 'info' ? ' ' + type : '');
+// ============ PARAMÈTRES CIBLE ============
+function dist() {
+  const v = $('distance').value;
+  return v === 'custom' ? (parseFloat($('distanceCustom').value) || 0) : parseFloat(v);
 }
-function setStatus(msg, cls='') {
-  const el = $('statusPill');
-  el.textContent = msg;
-  el.className = 'status-pill' + (cls ? ' ' + cls : '');
-}
-
-// ============ IMAGE LOADING (FIX) ============
-async function loadImageFile(file) {
-  if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    toast('Fichier non reconnu comme image', 'error');
-    return;
+// ring = largeur d'anneau (mm), cal = diamètre impact (mm), q = rayon du 10 / largeur d'anneau, edge = anneau du bord du visuel
+function preset(disc = $('discipline').value, d = dist()) {
+  switch (disc) {
+    case 'pistolet': return d <= 10 ? { ring: 8, cal: 4.5, q: 0.72, edge: 7 } : { ring: 25, cal: 5.6, q: 1, edge: 7 };
+    case 'carabine': return d <= 10 ? { ring: 2.5, cal: 4.5, q: 0.1, edge: 4 } : { ring: 8, cal: 5.6, q: 0.65, edge: 3 };
+    case 'arc_pointe': case 'arc_epaule': case 'arc_compound':
+      return { ring: d <= 18 ? 20 : d <= 30 ? 40 : 61, cal: 7, q: 1, edge: 9 };
+    case 'arbalete': return { ring: 15, cal: 8, q: 1, edge: 7 };
+    default: return { ring: 25, cal: 9, q: 1, edge: 7 };
   }
+}
+function P() {
+  const p = preset();
+  return { ring: parseFloat($('ringMm').value) || p.ring, cal: parseFloat($('calMm').value) || p.cal, q: p.q, edge: parseInt($('ringSelect').value) || p.edge };
+}
+function applyPreset() { const p = preset(); $('ringMm').value = p.ring; $('calMm').value = p.cal; $('ringSelect').value = p.edge; }
+const hasCenter = () => S.cal.cx != null;
+const hasCal = () => hasCenter() && S.cal.w > 0;
+function holeR() { const p = P(); return Math.max(1.5, p.cal / p.ring * S.cal.w / 2); }
+function mmpp() { return P().ring / S.cal.w; }
+function edgeRings() { const p = P(); return p.q + 10 - p.edge; }
+
+function scoreAt(x, y) {
+  const p = P();
+  let d = hyp(x - S.cal.cx, y - S.cal.cy);
+  if ($('lineRule').checked) d = Math.max(0, d - holeR());
+  const r = d / S.cal.w;
+  const s = r <= p.q ? 10 : Math.max(0, 10 - Math.ceil(r - p.q - 1e-9));
+  const dec = s === 0 ? 0 : Math.floor(Math.min(10.9, 10 + p.q - r) * 10 + 1e-6) / 10;
+  return { s, dec: Math.max(s, dec) };
+}
+function rescore() {
+  if (!hasCal()) return;
+  S.impacts.forEach(i => { const t = scoreAt(i.x, i.y); i.score = t.s; i.dec = t.dec; });
+}
+
+// Impacts des séries précédentes (repère de la cible -> image courante)
+function oldNorm() { return S.target.series.flatMap(s => s.impacts.map(i => ({ x: i.dx, y: i.dy }))); }
+function tf(o, a = S.align) { const c = Math.cos(a.th), s = Math.sin(a.th); return { x: c * o.x - s * o.y + a.tx, y: s * o.x + c * o.y + a.ty }; }
+function invTf(o, a = S.align) { const c = Math.cos(a.th), s = Math.sin(a.th), x = o.x - a.tx, y = o.y - a.ty; return { x: c * x + s * y, y: -s * x + c * y }; }
+function oldPx() {
+  if (!hasCal()) return [];
+  return oldNorm().map(o => { const t = tf(o); return { x: S.cal.cx + t.x * S.cal.w, y: S.cal.cy + t.y * S.cal.w }; });
+}
+
+// ============ CHARGEMENT IMAGE ============
+async function loadFile(file) {
+  if (!file) return;
   const url = URL.createObjectURL(file);
   try {
+    banner('⏳ Chargement…', 'act');
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = () => reject(new Error('Chargement impossible'));
-      img.src = url;
-    });
-    if (img.decode) {
-      try { await img.decode(); } catch (e) { /* decode parfois inutile */ }
-    }
-    const natW = img.naturalWidth || img.width;
-    const natH = img.naturalHeight || img.height;
-    if (!natW || !natH) throw new Error('Image vide ou corrompue');
-
-    // Cap 1600 px max
-    const MAX = 1600;
-    let w = natW, h = natH;
-    if (w > MAX || h > MAX) {
-      const r = Math.min(MAX / w, MAX / h);
-      w = Math.round(w * r); h = Math.round(h * r);
-    }
-
-    const off = document.createElement('canvas');
-    off.width = w; off.height = h;
-    const octx = off.getContext('2d');
-    octx.imageSmoothingEnabled = true;
-    octx.imageSmoothingQuality = 'high';
-    octx.drawImage(img, 0, 0, w, h);
-
-    // Test rapide de lecture pixels (détecte les éventuels blocages iOS)
-    try { octx.getImageData(0, 0, 1, 1); }
-    catch (e) { throw new Error('Lecture pixel refusée par le navigateur'); }
-
-    state.sourceImage = off;
-    state.displayImage = off;
-    state.originalCanvas = null;
-    state.warped = false;
-    state.calibration = { center: null, ringWidth: null };
-    state.impacts = [];
-    state.undoStack = [];
-    state.warpPoints = [];
-
-    canvas.width = w; canvas.height = h;
-    $('canvasEmpty').style.display = 'none';
-
-    applyView();
-    redraw();
-    updateStats();
-    updateButtons();
-    setMode('✅ Image chargée — Calibrez la cible ou redressez la perspective', 'success');
-    toast(`Image chargée (${w}×${h})`, 'success');
-  } catch (err) {
-    console.error('loadImageFile error:', err);
-    toast('Erreur : ' + (err.message || 'inconnue'), 'error', 4000);
-    setMode('❌ Impossible de charger l\'image', 'error');
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('format non lisible')); img.src = url; });
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) throw new Error('image vide');
+    const r = Math.min(1, 1600 / Math.max(w, h));
+    w = Math.round(w * r); h = Math.round(h * r);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.imageSmoothingQuality = 'high'; x.drawImage(img, 0, 0, w, h);
+    x.getImageData(0, 0, 1, 1);
+    setImage(c);
+  } catch (e) {
+    console.error(e);
+    toast('Erreur image : ' + e.message, 'err', 4000);
+    banner('❌ Impossible de charger cette image', 'err');
+  } finally { URL.revokeObjectURL(url); }
+}
+function setImage(c, opts = {}) {
+  if (S.warpUndo) { freeCanvas(S.warpUndo.src); S.warpUndo = null; }
+  if (S.src && S.src !== c) freeCanvas(S.src);
+  S.src = c;
+  S.impacts = []; S.amb = []; S.undo = []; S.warpPts = []; S.aim = null; S.reserve = [];
+  S.align = { th: 0, tx: 0, ty: 0 };
+  S.cal = { cx: null, cy: null, w: null };
+  setMode('idle');
+  sizeImgCanvas();
+  $('stageEmpty').hidden = true;
+  renderView(); fitView(); goStep('cible');
+  if (opts.cal) { S.cal = opts.cal; banner('✅ Exemple chargé — lancez la détection (③)', 'ok'); refresh(); }
+  else autoTarget(true);
+}
+function sizeImgCanvas() {
+  imgCanvas.width = S.src.width; imgCanvas.height = S.src.height;
+  imgCanvas.style.width = S.src.width + 'px'; imgCanvas.style.height = S.src.height + 'px';
 }
 
-$('fileInput').addEventListener('change', e => {
-  const f = e.target.files && e.target.files[0];
-  if (f) loadImageFile(f);
-  e.target.value = '';
-});
-$('btnCamera').addEventListener('click', () => $('cameraInput').click());
-$('cameraInput').addEventListener('change', e => {
-  const f = e.target.files && e.target.files[0];
-  if (f) loadImageFile(f);
-  e.target.value = '';
-});
-
-// ============ SAMPLE ============
-$('btnSample').addEventListener('click', () => {
-  const W = 1400, H = 1400;
-  const off = document.createElement('canvas');
-  off.width = W; off.height = H;
-  const c = off.getContext('2d');
-  c.fillStyle = '#e8e0c8'; c.fillRect(0, 0, W, H);
-  const cx = W/2, cy = H/2, R = W * 0.45;
-  // 10 rings
-  for (let i = 1; i <= 10; i++) {
-    const rr = R * i / 10;
-    c.beginPath(); c.arc(cx, cy, rr, 0, Math.PI * 2);
-    if (i <= 4) { c.fillStyle = '#1a1a1a'; c.fill(); }
-    c.strokeStyle = i <= 4 ? '#fff' : '#333';
-    c.lineWidth = 1.5; c.stroke();
+// ============ FILTRES (calcul pixel, compatible Safari) ============
+function renderView() {
+  if (!S.src) return;
+  const m = $('viewMode').value, br = +$('brightness').value, co = +$('contrast').value, th = +$('threshold').value;
+  imgCtx.drawImage(S.src, 0, 0);
+  if (m !== 'normal') {
+    const W = imgCanvas.width, H = imgCanvas.height, d = imgCtx.getImageData(0, 0, W, H), p = d.data;
+    const lut = new Uint8ClampedArray(256);
+    for (let v = 0; v < 256; v++) {
+      let t = v;
+      if (m === 'enhanced' || m === 'negative-enhanced') t = ((t * br / 100) - 128) * co / 100 + 128;
+      if (m.startsWith('negative')) t = 255 - t;
+      lut[v] = t;
+    }
+    for (let i = 0; i < p.length; i += 4) {
+      if (m === 'binary') { const g = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; p[i] = p[i + 1] = p[i + 2] = g < th ? 0 : 255; }
+      else { p[i] = lut[p[i]]; p[i + 1] = lut[p[i + 1]]; p[i + 2] = lut[p[i + 2]]; }
+    }
+    imgCtx.putImageData(d, 0, 0);
   }
-  // Fake bullet holes
-  const rand = (a, b) => a + Math.random() * (b - a);
-  const holes = [
-    [cx + rand(-20,20), cy + rand(-20,20)],
-    [cx - 40 + rand(-10,10), cy + 30 + rand(-10,10)],
-    [cx + 60, cy - 45],
-    [cx - 80, cy - 20],
-    [cx + 30, cy + 75],
-    [cx - 120, cy + 100],
-    [cx + 150, cy + 60],
-    [cx - 60, cy - 120],
-    [cx + 100, cy + 150],
-    [cx - 200, cy - 50]
-  ];
-  holes.forEach(([x, y]) => {
-    const grd = c.createRadialGradient(x, y, 1, x, y, 10);
-    grd.addColorStop(0, '#000'); grd.addColorStop(0.7, '#111'); grd.addColorStop(1, '#666');
-    c.fillStyle = grd;
-    c.beginPath(); c.arc(x, y, 9, 0, Math.PI * 2); c.fill();
-  });
-  state.sourceImage = off;
-  state.displayImage = off;
-  state.originalCanvas = null;
-  state.warped = false;
-  state.calibration = { center: { x: cx, y: cy }, ringWidth: R / 10 };
-  state.impacts = [];
-  state.undoStack = [];
-  canvas.width = W; canvas.height = H;
-  $('canvasEmpty').style.display = 'none';
-  applyView();
-  redraw();
-  updateStats();
-  updateButtons();
-  setMode('Exemple chargé (déjà calibré). Lancez la détection.', 'success');
-});
+  drawOverlay();
+}
 
-// ============ VIEW MODE (FILTERS) ============
+// ============ VUE / ZOOM ============
+function stageSize() { const r = stage.getBoundingClientRect(); return { w: r.width, h: r.height }; }
+function fitView() {
+  if (!S.src) return;
+  const { w, h } = stageSize();
+  V.fitK = Math.min(w / S.src.width, h / S.src.height);
+  V.k = V.fitK; V.tx = (w - S.src.width * V.k) / 2; V.ty = (h - S.src.height * V.k) / 2;
+  applyView();
+}
+function clampView() {
+  const { w, h } = stageSize(), iw = S.src.width * V.k, ih = S.src.height * V.k;
+  V.tx = iw <= w ? (w - iw) / 2 : clamp(V.tx, w - iw, 0);
+  V.ty = ih <= h ? (h - ih) / 2 : clamp(V.ty, h - ih, 0);
+}
 function applyView() {
-  if (!state.sourceImage) return;
-  const mode = $('viewMode').value;
-  const br = parseInt($('brightness').value);
-  const co = parseInt($('contrast').value);
-  const th = parseInt($('threshold').value);
-  const src = state.sourceImage;
-
-  if (mode === 'normal' && br === 100 && co === 100) {
-    state.displayImage = src;
-    redraw();
-    return;
-  }
-
-  const off = document.createElement('canvas');
-  off.width = src.width; off.height = src.height;
-  const c = off.getContext('2d', { willReadFrequently: true });
-
-  if (mode === 'binary') {
-    c.drawImage(src, 0, 0);
-    const d = c.getImageData(0, 0, off.width, off.height);
-    const px = d.data;
-    for (let i = 0; i < px.length; i += 4) {
-      const g = 0.299*px[i] + 0.587*px[i+1] + 0.114*px[i+2];
-      const v = g < th ? 0 : 255;
-      px[i] = px[i+1] = px[i+2] = v;
-    }
-    c.putImageData(d, 0, 0);
-  } else if (mode === 'negative' || mode === 'negative-enhanced') {
-    c.filter = mode === 'negative-enhanced' ? `brightness(${br}%) contrast(${co}%)` : 'none';
-    c.drawImage(src, 0, 0);
-    c.filter = 'none';
-    const d = c.getImageData(0, 0, off.width, off.height);
-    const px = d.data;
-    for (let i = 0; i < px.length; i += 4) {
-      px[i] = 255 - px[i];
-      px[i+1] = 255 - px[i+1];
-      px[i+2] = 255 - px[i+2];
-    }
-    c.putImageData(d, 0, 0);
-  } else if (mode === 'enhanced') {
-    c.filter = `brightness(${br}%) contrast(${co}%)`;
-    c.drawImage(src, 0, 0);
-    c.filter = 'none';
-  } else {
-    c.drawImage(src, 0, 0);
-  }
-
-  state.displayImage = off;
-  redraw();
+  imgCanvas.style.transform = `translate(${V.tx}px,${V.ty}px) scale(${V.k})`;
+  drawOverlay();
 }
-$('viewMode').addEventListener('change', () => {
-  applyView();
-  // Auto-switch detection mode when negative view
-  const vm = $('viewMode').value;
-  $('detectionMode').value = vm.startsWith('negative') ? 'light' : 'dark';
-});
-['brightness','contrast','threshold'].forEach(id => {
-  $(id).addEventListener('input', e => {
-    $(id + 'Val').textContent = e.target.value + (id === 'threshold' ? '' : '%');
+function zoomAt(f, sx, sy) {
+  if (!S.src) return;
+  const nk = clamp(V.k * f, V.fitK, Math.max(V.fitK * 20, 6));
+  const ix = (sx - V.tx) / V.k, iy = (sy - V.ty) / V.k;
+  V.k = nk; V.tx = sx - ix * nk; V.ty = sy - iy * nk;
+  clampView(); applyView();
+}
+function centerOn(x, y, k) {
+  const { w, h } = stageSize();
+  if (k) V.k = clamp(k, V.fitK, V.fitK * 20);
+  V.tx = w / 2 - x * V.k; V.ty = h / 2 - y * V.k;
+  clampView(); applyView();
+}
+const toImg = (sx, sy) => [(sx - V.tx) / V.k, (sy - V.ty) / V.k];
+
+// ============ DESSIN ============
+function ring(c, x, y, r, col, lw, dash) {
+  c.beginPath(); c.arc(x, y, Math.max(1, r), 0, Math.PI * 2);
+  c.setLineDash(dash || []); c.lineWidth = lw; c.strokeStyle = col; c.stroke(); c.setLineDash([]);
+}
+function cross(c, x, y, s, col, lw, gap = 0) {
+  c.beginPath();
+  c.moveTo(x - s, y); c.lineTo(x - gap, y); c.moveTo(x + gap, y); c.lineTo(x + s, y);
+  c.moveTo(x, y - s); c.lineTo(x, y - gap); c.moveTo(x, y + gap); c.lineTo(x, y + s);
+  c.lineWidth = lw; c.strokeStyle = col; c.stroke();
+}
+function label(c, t, x, y, col, u) {
+  c.font = `bold ${Math.round(13 * u)}px -apple-system,system-ui,sans-serif`;
+  c.lineWidth = 3 * u; c.strokeStyle = 'rgba(0,0,0,.85)'; c.strokeText(t, x, y);
+  c.fillStyle = col; c.fillText(t, x, y);
+}
+// map : image -> écran ; k : px écran par px image ; u : unité de trait
+function drawMarks(c, map, k, u) {
+  const cal = S.cal, p = P();
+  const rh = hasCal() ? holeR() : 4;
+  if (hasCenter()) {
+    const [sx, sy] = map(cal.cx, cal.cy);
+    if (cal.w) for (let n = 1; n <= 10; n++) {
+      const isEdge = n === p.edge;
+      ring(c, sx, sy, (p.q + 10 - n) * cal.w * k, isEdge ? 'rgba(255,193,7,.95)' : 'rgba(255,193,7,.42)', (isEdge ? 2 : 1) * u);
+    }
+    cross(c, sx, sy, 14 * u, '#ffc107', 2 * u, 3 * u);
+  }
+  // aperçu pendant la visée
+  if (S.aim) {
+    const [ax, ay] = map(S.aim.x, S.aim.y);
+    if (S.mode === 'center' && cal.w) for (const n of [p.edge, 10]) ring(c, ax, ay, (p.q + 10 - n) * cal.w * k, '#39c5ff', 1.5 * u, [6 * u, 4 * u]);
+    if (S.mode === 'ring' && hasCenter()) { const [sx, sy] = map(cal.cx, cal.cy); ring(c, sx, sy, hyp(ax - sx, ay - sy), '#39c5ff', 2 * u, [6 * u, 4 * u]); }
+  }
+  S.warpPts.forEach((pt, i) => { const [a, b] = map(pt[0], pt[1]); ring(c, a, b, 10 * u, '#f85149', 2 * u); label(c, String(i + 1), a + 12 * u, b - 10 * u, '#f85149', u); });
+  oldPx().forEach(o => { const [a, b] = map(o.x, o.y); ring(c, a, b, Math.max(5 * u, rh * k), 'rgba(248,81,73,.95)', 1.5 * u); });
+  S.amb.forEach((z, i) => { const [a, b] = map(z.cx, z.cy); const r = Math.max(12 * u, z.r * k + 4 * u); ring(c, a, b, r, '#d29922', 2.5 * u, [5 * u, 4 * u]); label(c, '?' + (i + 1), a + r + 2 * u, b, '#d29922', u); });
+  S.impacts.forEach(im => {
+    const [a, b] = map(im.x, im.y), r = Math.max(6 * u, rh * k), col = im.flag === 'doubt' ? '#d29922' : '#3fb950';
+    ring(c, a, b, r, col, 2.5 * u);
+    label(c, im.score === 0 ? 'M' : String(im.score), a + r + 3 * u, b - 4 * u, col, u);
   });
-  $(id).addEventListener('change', applyView);
-});
-$('btnResetFilter').addEventListener('click', () => {
-  $('viewMode').value = 'normal';
-  $('brightness').value = 100; $('contrast').value = 100; $('threshold').value = 90;
-  $('brightnessVal').textContent = '100%'; $('contrastVal').textContent = '100%'; $('thresholdVal').textContent = '90';
-  applyView();
-  toast('Filtres réinitialisés', 'success');
-});
-
-// ============ PERSPECTIVE CORRECTION (HOMOGRAPHY) ============
-function solveLinearSystem(A, b) {
-  const n = A.length;
-  const M = A.map((row, i) => [...row, b[i]]);
-  for (let i = 0; i < n; i++) {
-    let pivot = i;
-    for (let k = i + 1; k < n; k++) {
-      if (Math.abs(M[k][i]) > Math.abs(M[pivot][i])) pivot = k;
-    }
-    if (Math.abs(M[pivot][i]) < 1e-12) throw new Error('Matrice singulière');
-    [M[i], M[pivot]] = [M[pivot], M[i]];
-    for (let k = i + 1; k < n; k++) {
-      const f = M[k][i] / M[i][i];
-      for (let j = i; j <= n; j++) M[k][j] -= f * M[i][j];
-    }
-  }
-  const x = new Array(n);
-  for (let i = n - 1; i >= 0; i--) {
-    let s = M[i][n];
-    for (let j = i + 1; j < n; j++) s -= M[i][j] * x[j];
-    x[i] = s / M[i][i];
-  }
-  return x;
-}
-
-function computeHomography(src, dst) {
-  const A = [], b = [];
-  for (let i = 0; i < 4; i++) {
-    const [x, y] = src[i];
-    const [u, v] = dst[i];
-    A.push([x, y, 1, 0, 0, 0, -u*x, -u*y]); b.push(u);
-    A.push([0, 0, 0, x, y, 1, -v*x, -v*y]); b.push(v);
-  }
-  const h = solveLinearSystem(A, b);
-  return [[h[0],h[1],h[2]], [h[3],h[4],h[5]], [h[6],h[7],1]];
-}
-
-function invertH(H) {
-  const [[a,b,c],[d,e,f],[g,h,i]] = H;
-  const det = a*(e*i-f*h) - b*(d*i-f*g) + c*(d*h-e*g);
-  if (Math.abs(det) < 1e-12) throw new Error('Homographie non inversible');
-  const inv = 1/det;
-  return [
-    [(e*i-f*h)*inv, (c*h-b*i)*inv, (b*f-c*e)*inv],
-    [(f*g-d*i)*inv, (a*i-c*g)*inv, (c*d-a*f)*inv],
-    [(d*h-e*g)*inv, (b*g-a*h)*inv, (a*e-b*d)*inv]
-  ];
-}
-
-function applyH(H, x, y) {
-  const w = H[2][0]*x + H[2][1]*y + H[2][2];
-  return [(H[0][0]*x + H[0][1]*y + H[0][2])/w, (H[1][0]*x + H[1][1]*y + H[1][2])/w];
-}
-
-function warpImage(srcCanvas, srcPts) {
-  const OUT = 1600;
-  const cx = OUT/2, cy = OUT/2, R = OUT * 0.46;
-  const dstPts = [[cx, cy-R], [cx+R, cy], [cx, cy+R], [cx-R, cy]];
-  const H = computeHomography(srcPts, dstPts);
-  const Hinv = invertH(H);
-
-  const srcData = srcCanvas.getContext('2d').getImageData(0, 0, srcCanvas.width, srcCanvas.height).data;
-  const sw = srcCanvas.width, sh = srcCanvas.height;
-  const out = new ImageData(OUT, OUT);
-  const od = out.data;
-
-  for (let y = 0; y < OUT; y++) {
-    for (let x = 0; x < OUT; x++) {
-      const [sx, sy] = applyH(Hinv, x, y);
-      const idx = (y * OUT + x) * 4;
-      if (sx < 0 || sy < 0 || sx >= sw-1 || sy >= sh-1) {
-        od[idx+3] = 255; // noir opaque
-        continue;
-      }
-      const x0 = sx|0, y0 = sy|0;
-      const fx = sx-x0, fy = sy-y0;
-      const i00 = (y0*sw + x0)*4;
-      const i10 = i00+4, i01 = i00+sw*4, i11 = i01+4;
-      for (let ch = 0; ch < 3; ch++) {
-        od[idx+ch] = srcData[i00+ch]*(1-fx)*(1-fy)
-                   + srcData[i10+ch]*fx*(1-fy)
-                   + srcData[i01+ch]*(1-fx)*fy
-                   + srcData[i11+ch]*fx*fy;
-      }
-      od[idx+3] = 255;
-    }
-  }
-
-  const outCanvas = document.createElement('canvas');
-  outCanvas.width = OUT; outCanvas.height = OUT;
-  outCanvas.getContext('2d').putImageData(out, 0, 0);
-
-  return { canvas: outCanvas, autoCenter: { x: cx, y: cy }, autoRingWidth: R / 10 };
-}
-
-$('btnWarp').addEventListener('click', () => {
-  if (!state.sourceImage) { toast('Chargez une image d\'abord', 'error'); return; }
-  state.warpPoints = [];
-  state.mode = 'warp';
-  setActiveTool(null);
-  setMode('📐 Tapez les 4 points extrêmes de la cible — ① EN HAUT', 'info');
-  updateButtons();
-});
-
-$('btnWarpReset').addEventListener('click', () => {
-  if (!state.warpUndo) return;
-  state.sourceImage = state.warpUndo;
-  state.warped = false;
-  state.calibration = { center: null, ringWidth: null };
-  state.impacts = [];
-  state.undoStack = [];
-  state.warpUndo = null;
-  canvas.width = state.sourceImage.width;
-  canvas.height = state.sourceImage.height;
-  applyView();
-  redraw();
-  updateStats();
-  updateButtons();
-  setMode('Redressement annulé.', 'info');
-  toast('Redressement annulé', 'success');
-});
-
-function handleWarpPoint(x, y) {
-  state.warpPoints.push({ x, y });
-  const labels = ['② À DROITE', '③ EN BAS', '④ À GAUCHE'];
-  if (state.warpPoints.length < 4) {
-    setMode(`📐 Tapez le point ${labels[state.warpPoints.length - 1]}`, 'info');
-    redraw();
-  } else {
-    try {
-      setMode('⏳ Redressement en cours…', 'info');
-      const res = warpImage(state.sourceImage, state.warpPoints);
-      state.warpUndo = state.sourceImage;
-      state.sourceImage = res.canvas;
-      state.warped = true;
-      state.calibration = { center: res.autoCenter, ringWidth: res.autoRingWidth };
-      state.impacts = [];
-      state.undoStack = [];
-      state.warpPoints = [];
-      state.mode = 'idle';
-      canvas.width = res.canvas.width;
-      canvas.height = res.canvas.height;
-      applyView();
-      redraw();
-      updateStats();
-      updateButtons();
-      setMode('✅ Image redressée et auto-calibrée !', 'success');
-      toast('Perspective corrigée', 'success');
-    } catch (err) {
-      console.error(err);
-      setMode('❌ Erreur de redressement', 'error');
-      toast('Erreur : ' + err.message, 'error');
-      state.warpPoints = [];
-      state.mode = 'idle';
-    }
+  if (S.impacts.length >= 2 && hasCal()) {
+    const st = computeStats(); const [a, b] = map(st.m.x, st.m.y);
+    ring(c, a, b, st.mr * k, 'rgba(88,166,255,.6)', 1.5 * u, [6 * u, 5 * u]);
+    cross(c, a, b, 11 * u, '#58a6ff', 3 * u);
   }
 }
-
-// ============ CALIBRATION ============
-$('btnCalCenter').addEventListener('click', () => {
-  if (!state.sourceImage) { toast('Chargez une image', 'error'); return; }
-  state.mode = 'cal-center';
-  setActiveTool('calibrate');
-  setMode('🎯 Tapez le CENTRE du 10 (loupe active)', 'info');
-});
-$('btnCalRing').addEventListener('click', () => {
-  if (!state.calibration.center) { toast('Définissez d\'abord le centre', 'error'); return; }
-  state.mode = 'cal-ring';
-  setActiveTool('calibrate');
-  setMode(`🎯 Tapez la LIGNE de l'anneau ${$('ringSelect').value}`, 'info');
-});
-$('btnResetCal').addEventListener('click', () => {
-  state.calibration = { center: null, ringWidth: null };
-  state.impacts = [];
-  state.mode = 'idle';
-  setActiveTool(null);
-  redraw();
-  updateStats();
-  updateButtons();
-  setMode('Calibrage réinitialisé.', 'info');
-});
-
-// ============ DETECTION MODES ============
-$('btnDetect').addEventListener('click', () => {
-  if (!state.calibration.ringWidth) { toast('Calibrez la cible d\'abord', 'error'); return; }
-  setMode('🤖 Détection en cours…', 'info');
-  setTimeout(() => {
-    try {
-      state.undoStack.push(state.impacts.slice());
-      state.impacts = autoDetect();
-      state.mode = 'idle';
-      setActiveTool(null);
-      redraw();
-      updateStats();
-      setMode(`🤖 ${state.impacts.length} impact(s) détecté(s)`, 'success');
-      toast(`${state.impacts.length} impact(s)`, 'success');
-    } catch (e) {
-      console.error(e);
-      toast('Erreur de détection : ' + e.message, 'error');
-      setMode('❌ Erreur de détection', 'error');
-    }
-  }, 50);
-});
-
-$('btnManual').addEventListener('click', () => {
-  if (!state.calibration.ringWidth) { toast('Calibrez d\'abord', 'error'); return; }
-  state.mode = 'manual';
-  setActiveTool('manual');
-  setMode('👆 Touchez chaque impact (loupe active)', 'info');
-});
-
-$('btnDeleteMode').addEventListener('click', () => {
-  if (!state.impacts.length) { toast('Aucun impact', 'error'); return; }
-  state.mode = 'delete';
-  setActiveTool('delete');
-  setMode('🗑 Touchez un impact pour le supprimer', 'info');
-});
-
-$('btnUndo').addEventListener('click', () => {
-  if (!state.undoStack.length) return;
-  state.impacts = state.undoStack.pop();
-  redraw();
-  updateStats();
-});
-
-$('btnClearAll').addEventListener('click', () => {
-  if (!state.impacts.length) return;
-  state.undoStack.push(state.impacts.slice());
-  state.impacts = [];
-  redraw();
-  updateStats();
-});
-
-// ============ AUTO DETECT ============
-function autoDetect() {
-  const img = state.displayImage;
-  const w = img.width, h = img.height;
-  const off = document.createElement('canvas');
-  off.width = w; off.height = h;
-  const octx = off.getContext('2d', { willReadFrequently: true });
-  octx.drawImage(img, 0, 0);
-  const data = octx.getImageData(0, 0, w, h).data;
-
-  const gray = new Float32Array(w * h);
-  for (let i = 0; i < w * h; i++) {
-    gray[i] = 0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2];
-  }
-
-  const win = Math.max(9, Math.round(state.calibration.ringWidth * 0.8) | 1);
-  const blur = boxBlur(gray, w, h, win);
-
-  const offset = parseInt($('sensitivity').value);
-  const mode = $('detectionMode').value;
-  const bin = new Uint8Array(w * h);
-  const cal = state.calibration;
-
-  for (let i = 0; i < w * h; i++) {
-    const x = i % w, y = (i / w) | 0;
-    const d = Math.hypot(x - cal.center.x, y - cal.center.y);
-    if (d > cal.ringWidth * 10.5) continue;
-    if (mode === 'light') {
-      if (gray[i] > blur[i] + offset) bin[i] = 1;
-    } else {
-      if (gray[i] < blur[i] - offset) bin[i] = 1;
-    }
-  }
-
-  const eroded = erode(bin, w, h);
-  const cleaned = dilate(eroded, w, h);
-  const blobs = findBlobs(cleaned, w, h);
-
-  const w0 = cal.ringWidth;
-  const minArea = Math.max(20, w0 * w0 * 0.06);
-  const maxArea = w0 * w0 * 4;
-  const candidates = [];
-
-  for (const b of blobs) {
-    if (b.count < minArea || b.count > maxArea) continue;
-    const bw = b.width, bh = b.height;
-    if (bw < 3 || bh < 3) continue;
-    const aspect = bw / bh;
-    if (aspect < 0.4 || aspect > 2.5) continue;
-    const fill = b.count / (bw * bh);
-    if (fill < 0.25 || fill > 0.95) continue;
-    candidates.push({ x: b.cx, y: b.cy, area: b.count });
-  }
-
-  const merged = [];
-  const mergeDist = w0 * 0.5;
-  for (const c of candidates) {
-    let found = false;
-    for (const m of merged) {
-      if (Math.hypot(m.x - c.x, m.y - c.y) < mergeDist) {
-        const tw = m.area + c.area;
-        m.x = (m.x * m.area + c.x * c.area) / tw;
-        m.y = (m.y * m.area + c.y * c.area) / tw;
-        m.area = tw;
-        found = true;
-        break;
-      }
-    }
-    if (!found) merged.push({ ...c });
-  }
-
-  const expected = parseInt($('expectedImpacts').value);
-  let final = merged;
-  if (expected > 0 && merged.length > expected) {
-    final = merged.sort((a, b) => b.area - a.area).slice(0, expected);
-  }
-
-  return final.map(c => ({
-    x: c.x, y: c.y,
-    score: calcScore(c.x, c.y),
-    isNew: isNewImpact(c.x, c.y)
-  }));
+function drawOverlay() {
+  const { w, h } = stageSize(), W = Math.round(w * DPR), H = Math.round(h * DPR);
+  if (ov.width !== W || ov.height !== H) { ov.width = W; ov.height = H; ov.style.width = w + 'px'; ov.style.height = h + 'px'; }
+  ovCtx.setTransform(1, 0, 0, 1, 0, 0); ovCtx.clearRect(0, 0, W, H);
+  if (!S.src) return;
+  ovCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  drawMarks(ovCtx, (x, y) => [V.tx + x * V.k, V.ty + y * V.k], V.k, 1);
 }
+// drawImage avec rectangle source borné (Safari n'affiche rien si la source déborde)
+function safeDraw(c, src, sx, sy, sw, sh, dx, dy, dw, dh) {
+  const fx = dw / sw, fy = dh / sh;
+  const x0 = Math.max(0, sx), y0 = Math.max(0, sy), x1 = Math.min(src.width, sx + sw), y1 = Math.min(src.height, sy + sh);
+  if (x1 <= x0 || y1 <= y0) return;
+  c.drawImage(src, x0, y0, x1 - x0, y1 - y0, dx + (x0 - sx) * fx, dy + (y0 - sy) * fy, (x1 - x0) * fx, (y1 - y0) * fy);
+}
+function showLoupe(sx, sy) {
+  const L = 150, [ix, iy] = toImg(sx, sy), m = clamp(V.k * 3, 2.5, 24);
+  if (loupe.width !== L * DPR) { loupe.width = loupe.height = L * DPR; }
+  const { w, h } = stageSize();
+  let lx = sx - L / 2, ly = sy - L - 55;
+  if (ly < 4) ly = Math.min(h - L - 4, sy + 55);
+  lx = clamp(lx, 4, w - L - 4);
+  loupe.style.transform = `translate(${lx}px,${ly}px)`;
+  loupe.style.display = 'block';
+  const c = lCtx;
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  c.fillStyle = '#000'; c.fillRect(0, 0, L, L);
+  c.imageSmoothingEnabled = m < 8;
+  const half = L / 2 / m;
+  safeDraw(c, imgCanvas, ix - half, iy - half, half * 2, half * 2, 0, 0, L, L);
+  drawMarks(c, (x, y) => [L / 2 + (x - ix) * m, L / 2 + (y - iy) * m], m, 1);
+  cross(c, L / 2, L / 2, 22, 'rgba(0,0,0,.8)', 4, 4);
+  cross(c, L / 2, L / 2, 22, '#39c5ff', 1.6, 4);
+}
+function hideLoupe() { loupe.style.display = 'none'; }
 
+// ============ TRAITEMENT D'IMAGE ============
+function grayOf(data, n) {
+  const g = new Float32Array(n);
+  for (let i = 0; i < n; i++) g[i] = 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2];
+  return g;
+}
+function otsu(g, mask) {
+  const h = new Float64Array(256); let tot = 0;
+  for (let i = 0; i < g.length; i++) { if (mask && !mask[i]) continue; h[clamp(g[i] | 0, 0, 255)]++; tot++; }
+  let sum = 0; for (let i = 0; i < 256; i++) sum += i * h[i];
+  let sB = 0, wB = 0, best = 0, t = 128;
+  for (let i = 0; i < 256; i++) {
+    wB += h[i]; if (!wB) continue;
+    const wF = tot - wB; if (!wF) break;
+    sB += i * h[i];
+    const d = sB / wB - (sum - sB) / wF, b = wB * wF * d * d;
+    if (b > best) { best = b; t = i; }
+  }
+  return t + 0.5;
+}
+// filtre min/max 1D (van Herk / Gil-Werman), fenêtre 2r+1
+function vh(line, n, r, isMax, Pp, G, Hh, out) {
+  const k = 2 * r + 1, N = n + 2 * r, pad = isMax ? -Infinity : Infinity;
+  for (let i = 0; i < N; i++) { const j = i - r; Pp[i] = (j < 0 || j >= n) ? pad : line[j]; }
+  for (let i = 0; i < N; i++) G[i] = (i % k === 0) ? Pp[i] : (isMax ? Math.max(G[i - 1], Pp[i]) : Math.min(G[i - 1], Pp[i]));
+  for (let i = N - 1; i >= 0; i--) Hh[i] = (i === N - 1 || (i + 1) % k === 0) ? Pp[i] : (isMax ? Math.max(Hh[i + 1], Pp[i]) : Math.min(Hh[i + 1], Pp[i]));
+  for (let j = 0; j < n; j++) { const a = Hh[j], b = G[j + k - 1]; out[j] = isMax ? Math.max(a, b) : Math.min(a, b); }
+}
+function mmf(src, w, h, r, isMax) {
+  if (r < 1) return Float32Array.from(src);
+  const L = Math.max(w, h), N = L + 2 * r;
+  const Pp = new Float32Array(N), G = new Float32Array(N), Hh = new Float32Array(N), line = new Float32Array(L), res = new Float32Array(L);
+  const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) { const o = y * w; for (let x = 0; x < w; x++) line[x] = src[o + x]; vh(line, w, r, isMax, Pp, G, Hh, res); for (let x = 0; x < w; x++) tmp[o + x] = res[x]; }
+  for (let x = 0; x < w; x++) { for (let y = 0; y < h; y++) line[y] = tmp[y * w + x]; vh(line, h, r, isMax, Pp, G, Hh, res); for (let y = 0; y < h; y++) out[y * w + x] = res[y]; }
+  return out;
+}
 function boxBlur(src, w, h, size) {
-  const half = (size - 1) >> 1;
-  const tmp = new Float32Array(w * h);
-  const out = new Float32Array(w * h);
+  const half = (size - 1) >> 1, tmp = new Float32Array(w * h), out = new Float32Array(w * h);
   for (let y = 0; y < h; y++) {
     let sum = 0, cnt = 0;
     for (let x = 0; x < w + half; x++) {
-      if (x < w) { sum += src[y*w + x]; cnt++; }
-      if (x - size >= 0) { sum -= src[y*w + x - size]; cnt--; }
-      const ox = x - half;
-      if (ox >= 0 && ox < w && cnt > 0) tmp[y*w + ox] = sum / cnt;
+      if (x < w) { sum += src[y * w + x]; cnt++; }
+      if (x - size >= 0) { sum -= src[y * w + x - size]; cnt--; }
+      const ox = x - half; if (ox >= 0 && ox < w && cnt > 0) tmp[y * w + ox] = sum / cnt;
     }
   }
   for (let x = 0; x < w; x++) {
     let sum = 0, cnt = 0;
     for (let y = 0; y < h + half; y++) {
-      if (y < h) { sum += tmp[y*w + x]; cnt++; }
-      if (y - size >= 0) { sum -= tmp[(y-size)*w + x]; cnt--; }
-      const oy = y - half;
-      if (oy >= 0 && oy < h && cnt > 0) out[oy*w + x] = sum / cnt;
+      if (y < h) { sum += tmp[y * w + x]; cnt++; }
+      if (y - size >= 0) { sum -= tmp[(y - size) * w + x]; cnt--; }
+      const oy = y - half; if (oy >= 0 && oy < h && cnt > 0) out[oy * w + x] = sum / cnt;
     }
   }
   return out;
 }
-function erode(bin, w, h) {
-  const out = new Uint8Array(w * h);
-  for (let y = 1; y < h-1; y++) for (let x = 1; x < w-1; x++) {
-    const i = y*w + x;
-    if (bin[i] && bin[i-1] && bin[i+1] && bin[i-w] && bin[i+w]) out[i] = 1;
-  }
-  return out;
-}
-function dilate(bin, w, h) {
-  const out = new Uint8Array(w * h);
-  for (let y = 1; y < h-1; y++) for (let x = 1; x < w-1; x++) {
-    const i = y*w + x;
-    if (bin[i] || bin[i-1] || bin[i+1] || bin[i-w] || bin[i+w]) out[i] = 1;
-  }
-  return out;
-}
-function findBlobs(bin, w, h) {
-  const visited = new Uint8Array(w * h);
-  const blobs = [];
-  const stack = new Int32Array(w * h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const idx = y*w + x;
-    if (!bin[idx] || visited[idx]) continue;
-    let top = 0; stack[top++] = idx; visited[idx] = 1;
-    let sx = 0, sy = 0, count = 0;
-    let minX = x, maxX = x, minY = y, maxY = y;
-    while (top > 0) {
-      const p = stack[--top];
-      const px = p % w, py = (p/w)|0;
-      sx += px; sy += py; count++;
-      if (px < minX) minX = px; if (px > maxX) maxX = px;
-      if (py < minY) minY = py; if (py > maxY) maxY = py;
-      if (px > 0) { const n = p-1; if (bin[n] && !visited[n]) { visited[n]=1; stack[top++]=n; } }
-      if (px < w-1) { const n = p+1; if (bin[n] && !visited[n]) { visited[n]=1; stack[top++]=n; } }
-      if (py > 0) { const n = p-w; if (bin[n] && !visited[n]) { visited[n]=1; stack[top++]=n; } }
-      if (py < h-1) { const n = p+w; if (bin[n] && !visited[n]) { visited[n]=1; stack[top++]=n; } }
+// composantes connexes (4-voisins), avec liste de pixels optionnelle
+function components(bin, w, h, keepPix, minArea = 1) {
+  const lab = new Int32Array(w * h), stack = new Int32Array(w * h), out = [];
+  let id = 0;
+  for (let s = 0; s < w * h; s++) {
+    if (!bin[s] || lab[s]) continue;
+    id++; let top = 0; stack[top++] = s; lab[s] = id;
+    let sx = 0, sy = 0, n = 0, x0 = w, x1 = 0, y0 = h, y1 = 0; const pix = keepPix ? [] : null;
+    while (top) {
+      const p = stack[--top], px = p % w, py = (p / w) | 0;
+      sx += px; sy += py; n++; if (pix) pix.push(p);
+      if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py;
+      if (px > 0 && bin[p - 1] && !lab[p - 1]) { lab[p - 1] = id; stack[top++] = p - 1; }
+      if (px < w - 1 && bin[p + 1] && !lab[p + 1]) { lab[p + 1] = id; stack[top++] = p + 1; }
+      if (py > 0 && bin[p - w] && !lab[p - w]) { lab[p - w] = id; stack[top++] = p - w; }
+      if (py < h - 1 && bin[p + w] && !lab[p + w]) { lab[p + w] = id; stack[top++] = p + w; }
     }
-    if (count >= 10) blobs.push({ cx: sx/count, cy: sy/count, count, width: maxX-minX+1, height: maxY-minY+1 });
+    if (n >= minArea) out.push({ id, n, cx: sx / n, cy: sy / n, x0, x1, y0, y1, bw: x1 - x0 + 1, bh: y1 - y0 + 1, pix, border: x0 === 0 || y0 === 0 || x1 === w - 1 || y1 === h - 1 });
   }
-  return blobs;
+  return { lab, comps: out };
 }
-
-// ============ SCORE & STATS ============
-function calcScore(x, y) {
-  const { center, ringWidth } = state.calibration;
-  if (!center || !ringWidth) return 0;
-  const d = Math.hypot(x - center.x, y - center.y);
-  const s = 11 - Math.ceil(d / ringWidth);
-  return Math.max(0, Math.min(10, s));
-}
-function addImpact(x, y, isNew) {
-  state.impacts.push({ x, y, score: calcScore(x, y), isNew: !!isNew });
-  redraw();
-  updateStats();
-}
-function isNewImpact(x, y) {
-  if (!state.previousImpacts.length) return true;
-  const { center, ringWidth } = state.calibration;
-  if (!center || !ringWidth) return true;
-  const dx = (x - center.x) / ringWidth;
-  const dy = (y - center.y) / ringWidth;
-  return state.previousImpacts.every(p => Math.hypot(p.dx - dx, p.dy - dy) > 0.4);
-}
-function getMPI() {
-  if (!state.impacts.length) return null;
-  const sx = state.impacts.reduce((s, i) => s + i.x, 0);
-  const sy = state.impacts.reduce((s, i) => s + i.y, 0);
-  return { x: sx / state.impacts.length, y: sy / state.impacts.length };
-}
-
-// ============ DRAW ============
-function redraw() {
-  if (!state.displayImage) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    return;
+function solve(A, b) {
+  const n = A.length, M = A.map((r, i) => [...r, b[i]]);
+  for (let i = 0; i < n; i++) {
+    let p = i; for (let k = i + 1; k < n; k++) if (Math.abs(M[k][i]) > Math.abs(M[p][i])) p = k;
+    if (Math.abs(M[p][i]) < 1e-12) throw new Error('système singulier');
+    [M[i], M[p]] = [M[p], M[i]];
+    for (let k = i + 1; k < n; k++) { const f = M[k][i] / M[i][i]; for (let j = i; j <= n; j++) M[k][j] -= f * M[i][j]; }
   }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(state.displayImage, 0, 0, canvas.width, canvas.height);
-
-  const cal = state.calibration;
-
-  // Reference rings overlay
-  if (cal.center) {
-    ctx.strokeStyle = '#ffc107';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cal.center.x - 20, cal.center.y); ctx.lineTo(cal.center.x + 20, cal.center.y);
-    ctx.moveTo(cal.center.x, cal.center.y - 20); ctx.lineTo(cal.center.x, cal.center.y + 20);
-    ctx.stroke();
-    if (cal.ringWidth) {
-      ctx.strokeStyle = 'rgba(255, 193, 7, 0.15)';
-      ctx.lineWidth = 1;
-      for (let r = 1; r <= 10; r++) {
-        ctx.beginPath();
-        ctx.arc(cal.center.x, cal.center.y, r * cal.ringWidth, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
+  const x = new Array(n);
+  for (let i = n - 1; i >= 0; i--) { let s = M[i][n]; for (let j = i + 1; j < n; j++) s -= M[i][j] * x[j]; x[i] = s / M[i][i]; }
+  return x;
+}
+function lsq(rows, rhs) { // moindres carrés via équations normales
+  const m = rows[0].length, A = Array.from({ length: m }, () => new Array(m).fill(0)), b = new Array(m).fill(0);
+  rows.forEach((r, k) => { for (let i = 0; i < m; i++) { b[i] += r[i] * rhs[k]; for (let j = 0; j < m; j++) A[i][j] += r[i] * r[j]; } });
+  return solve(A, b);
+}
+function fitCircle(pts) {
+  const s = lsq(pts.map(([x, y]) => [x, y, 1]), pts.map(([x, y]) => -(x * x + y * y)));
+  const cx = -s[0] / 2, cy = -s[1] / 2;
+  return { cx, cy, r: Math.sqrt(Math.max(0, cx * cx + cy * cy - s[2])) };
+}
+function robustCircle(pts) {
+  let P2 = pts, c = fitCircle(P2);
+  for (let it = 0; it < 4; it++) {
+    const res = P2.map(([x, y]) => Math.abs(hyp(x - c.cx, y - c.cy) - c.r));
+    const med = [...res].sort((a, b) => a - b)[res.length >> 1];
+    const lim = Math.max(1.5, 3 * 1.4826 * med);
+    const keep = P2.filter((_, i) => res[i] <= lim);
+    if (keep.length < 12 || keep.length === P2.length) break;
+    P2 = keep; c = fitCircle(P2);
   }
-
-  // Warp points in progress
-  if (state.mode === 'warp' && state.warpPoints.length) {
-    state.warpPoints.forEach((p, i) => {
-      ctx.strokeStyle = '#f85149';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = '#f85149';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText((i + 1), p.x + 20, p.y - 15);
-      if (i > 0) {
-        ctx.strokeStyle = 'rgba(248, 81, 73, 0.6)';
-        ctx.beginPath();
-        ctx.moveTo(state.warpPoints[i-1].x, state.warpPoints[i-1].y);
-        ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-      }
-    });
-  }
-
-  // Impacts
-  state.impacts.forEach(imp => {
-    const col = imp.isNew ? '#3fb950' : '#f85149';
-    ctx.strokeStyle = col;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(imp.x, imp.y, 12, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = col;
-    ctx.font = 'bold 13px sans-serif';
-    const label = imp.score === 0 ? 'M' : imp.score;
-    ctx.fillText(label, imp.x + 14, imp.y - 8);
-  });
-
-  // MPI circle
-  if (state.impacts.length >= 2) {
-    const mpi = getMPI();
-    let maxD = 0;
-    state.impacts.forEach(i => {
-      const d = Math.hypot(i.x - mpi.x, i.y - mpi.y);
-      if (d > maxD) maxD = d;
-    });
-    ctx.strokeStyle = 'rgba(88, 166, 255, 0.55)';
-    ctx.setLineDash([8, 6]);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(mpi.x, mpi.y, maxD, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#58a6ff';
-    ctx.beginPath();
-    ctx.arc(mpi.x, mpi.y, 7, 0, Math.PI * 2);
-    ctx.fill();
-    // Cross on MPI
-    ctx.strokeStyle = '#58a6ff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(mpi.x - 10, mpi.y); ctx.lineTo(mpi.x + 10, mpi.y);
-    ctx.moveTo(mpi.x, mpi.y - 10); ctx.lineTo(mpi.x, mpi.y + 10);
-    ctx.stroke();
-  }
+  c.pts = P2; return c;
+}
+function fitEllipse(pts, cx, cy, R) {
+  // conique x² + Bxy + Cy² + Dx + Ey + F = 0 (coordonnées normalisées)
+  const n = pts.map(([x, y]) => [(x - cx) / R, (y - cy) / R]);
+  const s = lsq(n.map(([x, y]) => [x * y, y * y, x, y, 1]), n.map(([x]) => -x * x));
+  const [B, C, D, E, F] = s, A = 1;
+  if (B * B - 4 * A * C >= 0) return null;
+  const [x0, y0] = solve([[2 * A, B], [B, 2 * C]], [-D, -E]);
+  const F0 = A * x0 * x0 + B * x0 * y0 + C * y0 * y0 + D * x0 + E * y0 + F;
+  const th = 0.5 * Math.atan2(B, A - C), c = Math.cos(th), sn = Math.sin(th);
+  const A2 = A * c * c + B * c * sn + C * sn * sn, C2 = A * sn * sn - B * c * sn + C * c * c;
+  if (-F0 / A2 <= 0 || -F0 / C2 <= 0) return null;
+  let a = Math.sqrt(-F0 / A2) * R, b = Math.sqrt(-F0 / C2) * R, ang = th;
+  if (b > a) { [a, b] = [b, a]; ang += Math.PI / 2; }
+  return { x0: cx + x0 * R, y0: cy + y0 * R, a, b, th: ang };
 }
 
-// ============ STATS UPDATE ============
-function updateStats() {
-  const n = state.impacts.length;
-  const total = state.impacts.reduce((s, i) => s + i.score, 0);
-  $('totalScore').textContent = n ? total : '—';
-  $('impactCount').textContent = n;
-  $('avgScore').textContent = n ? (total / n).toFixed(2) : '—';
-
-  const cal = state.calibration;
-  const mpi = getMPI();
-
-  if (mpi && cal.center && cal.ringWidth) {
-    const dx = mpi.x - cal.center.x;
-    const dy = mpi.y - cal.center.y;
-    const dist = Math.hypot(dx, dy);
-    const rings = dist / cal.ringWidth;
-    let ang = Math.atan2(-dy, dx) * 180 / Math.PI;
-    if (ang < 0) ang += 360;
-    const clock = Math.round(ang / 30) % 12 || 12;
-    $('mpi').textContent = `${rings.toFixed(2)} anneau(x) à ${clock}h`;
-
-    const disp = Math.sqrt(
-      state.impacts.reduce((s, i) => s + Math.pow(Math.hypot(i.x - mpi.x, i.y - mpi.y), 2), 0) / n
-    ) / cal.ringWidth;
-    $('dispersion').textContent = disp.toFixed(2) + ' ann.';
-
-    let maxD = 0;
-    for (let i = 0; i < n; i++) for (let j = i+1; j < n; j++) {
-      const d = Math.hypot(state.impacts[i].x - state.impacts[j].x, state.impacts[i].y - state.impacts[j].y);
-      if (d > maxD) maxD = d;
-    }
-    $('groupment').textContent = n > 1 ? (maxD / cal.ringWidth).toFixed(2) + ' ann.' : '—';
-
-    if (n > 1) {
-      const mean = total / n;
-      const variance = state.impacts.reduce((s, i) => s + Math.pow(i.score - mean, 2), 0) / n;
-      const sd = Math.sqrt(variance);
-      const cv = mean > 0 ? (sd / mean) * 100 : 0;
-      let label, cls;
-      if (cv < 10) { label = '🌟 Excellente'; cls = 'good'; }
-      else if (cv < 20) { label = '✅ Bonne'; cls = 'good'; }
-      else if (cv < 35) { label = '⚠️ Moyenne'; cls = 'warn'; }
-      else { label = '❌ Faible'; cls = 'bad'; }
-      const el = $('regularity');
-      el.textContent = `${label} (${cv.toFixed(0)}%)`;
-      el.className = 'result-value small ' + cls;
-    } else {
-      $('regularity').textContent = '—';
-    }
-    updateDiagnostic(mpi, cal.center, cal.ringWidth);
+// ============ CENTRE ET LIMITE AUTOMATIQUES ============
+function findTarget(src) {
+  const archery = $('discipline').value.startsWith('arc');
+  const sc = Math.min(1, 640 / Math.max(src.width, src.height));
+  const w = Math.round(src.width * sc), h = Math.round(src.height * sc), N = w * h;
+  const tc = document.createElement('canvas'); tc.width = w; tc.height = h;
+  const tx = tc.getContext('2d', { willReadFrequently: true }); tx.drawImage(src, 0, 0, w, h);
+  const d = tx.getImageData(0, 0, w, h).data; tc.width = tc.height = 0;
+  const g = grayOf(d, N), mask = new Float32Array(N);
+  if (archery) {
+    for (let i = 0; i < N; i++) { const r = d[i * 4], gg = d[i * 4 + 1], b = d[i * 4 + 2]; mask[i] = (r > 130 && gg > 100 && b < gg * 0.72 && r - b > 55) ? 1 : 0; }
   } else {
-    ['mpi','dispersion','groupment','regularity'].forEach(id => $(id).textContent = '—');
+    const T = otsu(g); for (let i = 0; i < N; i++) mask[i] = g[i] < T ? 1 : 0;
   }
-
-  renderImpactList();
-}
-
-function renderImpactList() {
-  const list = $('impactList');
-  if (!state.impacts.length) {
-    list.innerHTML = '';
-    return;
+  const rc = 1;
+  const closed = mmf(mmf(mask, w, h, rc, true), w, h, rc, false); // bouche les fines lignes claires
+  const bin = new Uint8Array(N); for (let i = 0; i < N; i++) bin[i] = closed[i] > 0.5 ? 1 : 0;
+  const { lab, comps } = components(bin, w, h, false, Math.round(N * 0.002));
+  let best = null;
+  for (const c of comps) {
+    const asp = c.bw / c.bh;
+    if (c.border) continue;
+    if (asp < 0.45 || asp > 2.2) continue;
+    // remplissage des trous dans la boîte englobante
+    const F = fillHoles(lab, c, w, h);
+    const fill = F.area / (Math.PI * F.a * F.b);   // 1 pour une ellipse parfaite
+    if (fill < 0.8 || fill > 1.2 || F.b / F.a < 0.45) continue;
+    const dc = hyp(F.cx - w / 2, F.cy - h / 2) / (0.5 * hyp(w, h));
+    const score = F.area * (1 - 0.6 * dc) * (1 - Math.abs(1 - fill));
+    if (!best || score > best.score) best = { c, F, score };
   }
-  list.innerHTML = state.impacts.map((imp, i) => {
-    const cls = imp.isNew ? 'new' : 'old';
-    return `<div class="impact-row ${cls}">
-      <span class="idx">${i+1}</span>
-      <span>${imp.isNew ? 'Nouveau' : 'Ancien'}</span>
-      <span class="score">${imp.score === 0 ? 'Manqué' : imp.score + ' pts'}</span>
-    </div>`;
-  }).join('');
-}
-
-// ============ DIAGNOSTIC ============
-function updateDiagnostic(mpi, center, ringWidth) {
-  const dx = mpi.x - center.x;
-  const dy = mpi.y - center.y;
-  const dist = Math.hypot(dx, dy);
-  const rings = dist / ringWidth;
-  let dir = 'center';
-  if (rings >= 0.6) {
-    let ang = Math.atan2(-dy, dx) * 180 / Math.PI;
-    if (ang < 0) ang += 360;
-    if (ang >= 22.5 && ang < 67.5) dir = 'hautDroite';
-    else if (ang >= 67.5 && ang < 112.5) dir = 'haut';
-    else if (ang >= 112.5 && ang < 157.5) dir = 'hautGauche';
-    else if (ang >= 157.5 && ang < 202.5) dir = 'gauche';
-    else if (ang >= 202.5 && ang < 247.5) dir = 'basGauche';
-    else if (ang >= 247.5 && ang < 292.5) dir = 'bas';
-    else if (ang >= 292.5 && ang < 337.5) dir = 'basDroite';
-    else dir = 'droite';
-  }
-
-  const disc = $('discipline').value;
-  const lib = ADVICE[disc] || ADVICE.autre;
-  const el = $('diagnostic');
-
-  if (dir === 'center') {
-    el.innerHTML = `
-      <h3 style="color:var(--success-hi);">✅ Excellent centrage</h3>
-      <div class="diag-section">
-        <div class="diag-label">Position</div>
-        MPI à ${rings.toFixed(2)} anneau(x) du centre
-      </div>
-      <div class="diag-section">
-        <div class="diag-label">Analyse</div>
-        Votre point moyen d'impact est très proche du centre. La technique est maîtrisée.
-      </div>
-      <div class="drill"><strong>🎯 Prochain défi :</strong> Réduire la dispersion. Visez la régularité (diminuez l'écart-type).</div>
-    `;
-    return;
-  }
-
-  const advice = lib[dir];
-  if (!advice) {
-    el.innerHTML = `<h3>Décalage ${dir}</h3>`;
-    return;
-  }
-
-  el.innerHTML = `
-    <h3>${advice.title}</h3>
-    <div class="diag-section">
-      <div class="diag-label">Position</div>
-      MPI décalé de ${rings.toFixed(2)} anneau(x) vers ${dirLabel(dir)}
-    </div>
-    <div class="diag-section">
-      <div class="diag-label">Cause probable</div>
-      ${advice.cause}
-    </div>
-    <div class="diag-section">
-      <div class="diag-label">Corrections</div>
-      <ul>${advice.corrections.map(c => `<li>${c}</li>`).join('')}</ul>
-    </div>
-    <div class="drill"><strong>🎯 Exercice :</strong> ${advice.drills}</div>
-  `;
-}
-function dirLabel(d) {
-  return { hautDroite:'haut-droite', haut:'haut', hautGauche:'haut-gauche',
-           gauche:'gauche', basGauche:'bas-gauche', bas:'bas',
-           basDroite:'bas-droite', droite:'droite' }[d] || d;
-}
-
-// ============ CANVAS INTERACTION ============
-canvas.addEventListener('pointerdown', (e) => {
-  if (!state.displayImage) return;
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const sx = canvas.width / rect.width;
-  const sy = canvas.height / rect.height;
-  const x = (e.clientX - rect.left) * sx;
-  const y = (e.clientY - rect.top) * sy;
-
-  if (state.mode === 'warp') {
-    handleWarpPoint(x, y);
-    return;
-  }
-  if (state.mode === 'cal-center') {
-    state.calibration.center = { x, y };
-    state.calibration.ringWidth = null;
-    state.mode = 'idle';
-    setActiveTool(null);
-    redraw();
-    updateStats();
-    updateButtons();
-    setMode('✅ Centre défini. Cliquez ② pour l\'anneau', 'success');
-    return;
-  }
-  if (state.mode === 'cal-ring') {
-    const ringNum = parseInt($('ringSelect').value);
-    const c = state.calibration.center;
-    const dist = Math.hypot(x - c.x, y - c.y);
-    state.calibration.ringWidth = dist / (11 - ringNum);
-    state.mode = 'idle';
-    setActiveTool(null);
-    redraw();
-    updateStats();
-    updateButtons();
-    setMode('✅ Cible calibrée — Prêt à détecter', 'success');
-    return;
-  }
-  if (state.mode === 'manual') {
-    state.undoStack.push(state.impacts.slice());
-    addImpact(x, y, isNewImpact(x, y));
-    return;
-  }
-  if (state.mode === 'delete') {
-    let nearest = -1, nd = 30;
-    state.impacts.forEach((imp, i) => {
-      const d = Math.hypot(imp.x - x, imp.y - y);
-      if (d < nd) { nd = d; nearest = i; }
-    });
-    if (nearest >= 0) {
-      state.undoStack.push(state.impacts.slice());
-      state.impacts.splice(nearest, 1);
-      redraw();
-      updateStats();
+  if (!best) return null;
+  const { c, F } = best;
+  const cx0 = F.cx, cy0 = F.cy, R0 = Math.sqrt(F.a * F.b);
+  const inside = (x, y) => { x = Math.round(x) - F.x0; y = Math.round(y) - F.y0; return x >= 0 && y >= 0 && x < F.w && y < F.h && F.m[y * F.w + x]; };
+  // rayons : on part de l'extérieur et on cherche le premier passage dans le visuel
+  const pts = [], run0 = Math.max(3, Math.round(0.1 * R0 / 0.5));
+  for (let a = 0; a < 360; a += 2) {
+    const ca = Math.cos(a * Math.PI / 180), sa = Math.sin(a * Math.PI / 180);
+    let run = 0;
+    for (let r = 1.6 * R0; r > 0.3 * R0; r -= 0.5) {
+      if (inside(cx0 + ca * r, cy0 + sa * r)) { if (++run >= run0) { const re = r + (run - 1) * 0.5; pts.push([cx0 + ca * re, cy0 + sa * re]); break; } }
+      else run = 0;
     }
   }
-});
-
-canvas.addEventListener('pointermove', (e) => {
-  if (!['warp','cal-center','cal-ring','manual'].includes(state.mode)) {
-    magnifier.style.display = 'none';
-    return;
-  }
-  if (!state.displayImage) return;
-  const rect = canvas.getBoundingClientRect();
-  const sx = canvas.width / rect.width;
-  const sy = canvas.height / rect.height;
-  const x = (e.clientX - rect.left) * sx;
-  const y = (e.clientY - rect.top) * sy;
-  if (x < 0 || y < 0 || x > canvas.width || y > canvas.height) {
-    magnifier.style.display = 'none';
-    return;
-  }
-  const size = 130, zoom = 4;
-  magnifier.width = size; magnifier.height = size;
-  magnifier.style.display = 'block';
-  magnifier.style.left = Math.min(window.innerWidth - size - 20, e.clientX + 25) + 'px';
-  magnifier.style.top = Math.max(10, e.clientY - size - 25) + 'px';
-
-  mCtx.imageSmoothingEnabled = false;
-  mCtx.fillStyle = '#000';
-  mCtx.fillRect(0, 0, size, size);
-  const sw = size / zoom;
-  mCtx.drawImage(canvas, x - sw/2, y - sw/2, sw, sw, 0, 0, size, size);
-
-  mCtx.strokeStyle = '#58a6ff';
-  mCtx.lineWidth = 1.5;
-  mCtx.beginPath();
-  mCtx.moveTo(size/2, size/2 - 20); mCtx.lineTo(size/2, size/2 - 5);
-  mCtx.moveTo(size/2, size/2 + 5); mCtx.lineTo(size/2, size/2 + 20);
-  mCtx.moveTo(size/2 - 20, size/2); mCtx.lineTo(size/2 - 5, size/2);
-  mCtx.moveTo(size/2 + 5, size/2); mCtx.lineTo(size/2 + 20, size/2);
-  mCtx.stroke();
-});
-
-canvas.addEventListener('pointerleave', () => { magnifier.style.display = 'none'; });
-canvas.addEventListener('pointerup', () => {
-  setTimeout(() => { magnifier.style.display = 'none'; }, 300);
-});
-
-// ============ TOOLBAR ============
-document.querySelectorAll('.tool-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const tool = btn.dataset.tool;
-    if (tool === 'image') {
-      $('fileInput').click();
-    } else if (tool === 'warp') {
-      $('btnWarp').click();
-    } else if (tool === 'calibrate') {
-      if (!state.calibration.center) $('btnCalCenter').click();
-      else $('btnCalRing').click();
-    } else if (tool === 'detect') {
-      $('btnDetect').click();
-    } else if (tool === 'manual') {
-      $('btnManual').click();
-    } else if (tool === 'delete') {
-      $('btnDeleteMode').click();
-    } else if (tool === 'undo') {
-      $('btnUndo').click();
+  if (pts.length < 40) return null;
+  // affinage plein résolution sur le gradient
+  const fw = src.width, fh = src.height;
+  const fd = src.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, fw, fh).data;
+  const lum = (x, y) => { x = clamp(Math.round(x), 0, fw - 1); y = clamp(Math.round(y), 0, fh - 1); const i = (y * fw + x) * 4; return 0.299 * fd[i] + 0.587 * fd[i + 1] + 0.114 * fd[i + 2]; };
+  const fcx = cx0 / sc, fcy = cy0 / sc, span = 2.5 / sc;
+  const full = pts.map(([x, y]) => {
+    const X = x / sc, Y = y / sc, ux = X - fcx, uy = Y - fcy, L = hyp(ux, uy) || 1, dx = ux / L, dy = uy / L;
+    let bestR = L, bestG = -1;
+    for (let r = L - span; r <= L + span; r += 0.5) {
+      const gr = Math.abs(lum(fcx + dx * (r + 1), fcy + dy * (r + 1)) - lum(fcx + dx * (r - 1), fcy + dy * (r - 1)));
+      if (gr > bestG) { bestG = gr; bestR = r; }
     }
+    return [fcx + dx * bestR, fcy + dy * bestR];
   });
-});
-function setActiveTool(tool) {
-  document.querySelectorAll('.tool-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.tool === tool);
-  });
+  const circ = robustCircle(full);
+  let ell = null;
+  try { ell = fitEllipse(circ.pts, circ.cx, circ.cy, circ.r); } catch (e) { ell = null; }
+  const ratio = ell ? ell.b / ell.a : 1;
+  return { cx: circ.cx, cy: circ.cy, R: circ.r, ratio, ell, n: circ.pts.length };
 }
-
-// ============ BUTTONS STATE ============
-function updateButtons() {
-  const hasImage = !!state.sourceImage;
-  const hasCal = !!state.calibration.ringWidth;
-  const hasImpacts = state.impacts.length > 0;
-  $('btnWarp').disabled = !hasImage;
-  $('btnWarpReset').disabled = !state.warped;
-  $('btnCalCenter').disabled = !hasImage;
-  $('btnCalRing').disabled = !state.calibration.center;
-  $('btnResetCal').disabled = !state.calibration.center;
-  $('btnDetect').disabled = !hasCal;
-  $('btnManual').disabled = !hasCal;
-  $('btnDeleteMode').disabled = !hasImpacts;
-  $('btnUndo').disabled = !state.undoStack.length;
-  $('btnClearAll').disabled = !hasImpacts;
-  $('btnSaveSession').disabled = !hasImpacts || !state.calibration.center;
-  $('btnLoadSession').disabled = !state.sessionHistory.length;
-  $('btnCompare').disabled = !state.previousImpacts.length || !hasImpacts;
-  $('btnClearHistory').disabled = !state.sessionHistory.length;
-  $('btnExportText').disabled = !hasImpacts;
-  $('btnExportImage').disabled = !hasImage;
-  $('btnExportJSON').disabled = !state.sessionHistory.length && !hasImpacts;
-  document.querySelectorAll('.tool-btn').forEach(b => {
-    const t = b.dataset.tool;
-    if (t === 'image') b.disabled = false;
-    else if (t === 'warp') b.disabled = !hasImage;
-    else if (t === 'calibrate') b.disabled = !hasImage;
-    else if (t === 'detect' || t === 'manual') b.disabled = !hasCal;
-    else if (t === 'delete' || t === 'undo') b.disabled = !hasImpacts && t === 'delete';
-  });
-}
-
-// ============ COLLAPSIBLE CARDS ============
-document.querySelectorAll('.card.collapsible .card-header').forEach(h => {
-  h.addEventListener('click', () => {
-    h.parentElement.classList.toggle('open');
-  });
-});
-
-// ============ DISCIPLINE ============
-$('discipline').addEventListener('change', () => {
-  if (state.impacts.length && state.calibration.ringWidth) {
-    const mpi = getMPI();
-    updateDiagnostic(mpi, state.calibration.center, state.calibration.ringWidth);
+function fillHoles(lab, c, w, h) {
+  const x0 = Math.max(0, c.x0 - 1), y0 = Math.max(0, c.y0 - 1), x1 = Math.min(w - 1, c.x1 + 1), y1 = Math.min(h - 1, c.y1 + 1);
+  const W = x1 - x0 + 1, H = y1 - y0 + 1, m = new Uint8Array(W * H), seen = new Uint8Array(W * H), st = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) m[y * W + x] = lab[(y + y0) * w + x + x0] === c.id ? 1 : 0;
+  for (let x = 0; x < W; x++) { st.push(x, (H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { st.push(y * W, y * W + W - 1); }
+  while (st.length) {
+    const p = st.pop(); if (seen[p] || m[p]) continue; seen[p] = 1;
+    const x = p % W, y = (p / W) | 0;
+    if (x > 0) st.push(p - 1); if (x < W - 1) st.push(p + 1); if (y > 0) st.push(p - W); if (y < H - 1) st.push(p + W);
   }
-});
+  let area = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let i = 0; i < W * H; i++) {
+    if (!m[i] && !seen[i]) m[i] = 1;
+    if (m[i]) { const x = i % W, y = (i / W) | 0; area++; sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y; }
+  }
+  const mx = sx / area, my = sy / area, cxx = sxx / area - mx * mx, cyy = syy / area - my * my, cxy = sxy / area - mx * my;
+  const tr = (cxx + cyy) / 2, dt = Math.sqrt(Math.max(0, (cxx - cyy) ** 2 / 4 + cxy * cxy));
+  return { m, x0, y0, w: W, h: H, area, cx: mx + x0, cy: my + y0, a: 2 * Math.sqrt(tr + dt), b: 2 * Math.sqrt(Math.max(1e-6, tr - dt)) };
+}
+function autoTarget(silent) {
+  if (!S.src) return false;
+  try {
+    let res = findTarget(S.src);
+    if (!res) throw new Error('visuel introuvable');
+    const er = edgeRings();
+    if (res.ell && res.ratio < 0.95) {
+      const e = res.ell, c = Math.cos(e.th), s = Math.sin(e.th);
+      const srcPts = [[e.x0 + e.a * c, e.y0 + e.a * s], [e.x0 - e.b * s, e.y0 + e.b * c], [e.x0 - e.a * c, e.y0 - e.a * s], [e.x0 + e.b * s, e.y0 - e.b * c]];
+      const deg = e.th * 180 / Math.PI;
+      doWarp(srcPts, [deg, deg + 90, deg + 180, deg + 270], er);
+      const r2 = findTarget(S.src);
+      if (r2 && Math.abs(r2.R / (S.cal.w * er) - 1) < 0.15) S.cal = { cx: r2.cx, cy: r2.cy, w: r2.R / er };
+      banner(`✅ Perspective corrigée, centre et limite (anneau ${P().edge}) proposés — ajustez si besoin`, 'ok');
+    } else {
+      S.cal = { cx: res.cx, cy: res.cy, w: res.R / er };
+      banner(`✅ Centre et limite (anneau ${P().edge}) proposés — vérifiez avec la loupe`, 'ok');
+    }
+    refresh();
+    return true;
+  } catch (e) {
+    console.warn('autoTarget', e);
+    if (!silent) toast('Centre non trouvé : ' + e.message, 'err', 3500);
+    banner('Placez le centre (①) puis la limite (②) — ou essayez ✨ après avoir zoomé/filtré', 'warn');
+    refresh();
+    return false;
+  }
+}
 
-// ============ DISTANCE CUSTOM ============
-$('distance').addEventListener('change', () => {
-  $('distanceCustom').style.display = $('distance').value === 'custom' ? 'block' : 'none';
-});
+// ============ REDRESSEMENT (HOMOGRAPHIE) ============
+function homography(src, dst) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const [x, y] = src[i], [u, v] = dst[i];
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+  }
+  const h = solve(A, b);
+  return [[h[0], h[1], h[2]], [h[3], h[4], h[5]], [h[6], h[7], 1]];
+}
+function invert3(H) {
+  const [[a, b, c], [d, e, f], [g, h, i]] = H;
+  const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+  if (Math.abs(det) < 1e-12) throw new Error('points mal placés');
+  const k = 1 / det;
+  return [[(e * i - f * h) * k, (c * h - b * i) * k, (b * f - c * e) * k], [(f * g - d * i) * k, (a * i - c * g) * k, (c * d - a * f) * k], [(d * h - e * g) * k, (b * g - a * h) * k, (a * e - b * d) * k]];
+}
+// srcPts : 4 points [x,y] sur le bord de l'anneau de référence ; angles (°) correspondants
+function doWarp(srcPts, anglesDeg, er) {
+  const p = P(), OUT = Math.min(1600, Math.max(S.src.width, S.src.height)), C = OUT / 2;
+  const w = OUT * 0.47 / (p.q + 10), R = er * w;
+  const dst = anglesDeg.map(a => [C + R * Math.cos(a * Math.PI / 180), C + R * Math.sin(a * Math.PI / 180)]);
+  const Hi = invert3(homography(srcPts, dst));
+  const sw = S.src.width, sh = S.src.height;
+  const sd = S.src.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, sw, sh).data;
+  const out = new ImageData(OUT, OUT), od = out.data;
+  for (let y = 0; y < OUT; y++) for (let x = 0; x < OUT; x++) {
+    const ww = Hi[2][0] * x + Hi[2][1] * y + Hi[2][2];
+    const fx = (Hi[0][0] * x + Hi[0][1] * y + Hi[0][2]) / ww, fy = (Hi[1][0] * x + Hi[1][1] * y + Hi[1][2]) / ww;
+    const o = (y * OUT + x) * 4; od[o + 3] = 255;
+    const cxp = clamp(fx, 0, sw - 1.001), cyp = clamp(fy, 0, sh - 1.001);
+    const x0 = cxp | 0, y0 = cyp | 0, ax = cxp - x0, ay = cyp - y0, i00 = (y0 * sw + x0) * 4, i10 = i00 + 4, i01 = i00 + sw * 4, i11 = i01 + 4;
+    for (let ch = 0; ch < 3; ch++) od[o + ch] = sd[i00 + ch] * (1 - ax) * (1 - ay) + sd[i10 + ch] * ax * (1 - ay) + sd[i01 + ch] * (1 - ax) * ay + sd[i11 + ch] * ax * ay;
+  }
+  const oc = document.createElement('canvas'); oc.width = OUT; oc.height = OUT;
+  oc.getContext('2d', { willReadFrequently: true }).putImageData(out, 0, 0);
+  if (S.warpUndo) freeCanvas(S.warpUndo.src);
+  S.warpUndo = { src: S.src, cal: { ...S.cal } };
+  S.src = oc;
+  S.cal = { cx: C, cy: C, w };
+  S.impacts = []; S.amb = []; S.undo = [];
+  sizeImgCanvas(); renderView(); fitView();
+}
+function manualWarpPoint(x, y) {
+  S.warpPts.push([x, y]);
+  const lbl = ['② à DROITE', '③ en BAS', '④ à GAUCHE'];
+  if (S.warpPts.length < 4) { banner(`📐 Touchez le bord de l'anneau ${P().edge} : ${lbl[S.warpPts.length - 1]}`, 'act'); drawOverlay(); return; }
+  try {
+    doWarp(S.warpPts, [-90, 0, 90, 180], edgeRings());
+    setMode('idle');
+    banner('✅ Image redressée et calibrée — ajustez si besoin', 'ok');
+    toast('Perspective corrigée', 'ok');
+  } catch (e) {
+    console.error(e); toast('Redressement impossible : ' + e.message, 'err'); setMode('idle');
+  }
+  refresh();
+}
 
-// ============ SESSION ============
-$('btnSaveSession').addEventListener('click', () => {
-  if (!state.impacts.length || !state.calibration.center) return;
-  const total = state.impacts.reduce((s, i) => s + i.score, 0);
-  const session = {
-    date: new Date().toISOString(),
-    discipline: $('discipline').value,
-    distance: getDistance(),
-    total,
-    count: state.impacts.length,
-    avg: total / state.impacts.length,
-    mpi: $('mpi').textContent,
-    dispersion: $('dispersion').textContent,
-    groupment: $('groupment').textContent,
-    impacts: state.impacts.map(i => ({
-      score: i.score,
-      dx: (i.x - state.calibration.center.x) / state.calibration.ringWidth,
-      dy: (i.y - state.calibration.center.y) / state.calibration.ringWidth
-    })),
-    shooter: $('shooterName').value || 'Anonyme'
+// ============ DÉTECTION DES IMPACTS ============
+function kmeans(xs, ys, k) {
+  const n = xs.length; if (!n || k <= 0) return [];
+  k = Math.min(k, n);
+  let mx = 0, my = 0; for (let i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; } mx /= n; my /= n;
+  const C = [], dmin = new Float64Array(n).fill(Infinity);
+  let far = 0, fd = -1;
+  for (let i = 0; i < n; i++) { const d = hyp(xs[i] - mx, ys[i] - my); if (d > fd) { fd = d; far = i; } }
+  C.push([xs[far], ys[far]]);
+  while (C.length < k) {
+    const [cx, cy] = C[C.length - 1]; let bi = 0, bd = -1;
+    for (let i = 0; i < n; i++) { dmin[i] = Math.min(dmin[i], hyp(xs[i] - cx, ys[i] - cy)); if (dmin[i] > bd) { bd = dmin[i]; bi = i; } }
+    C.push([xs[bi], ys[bi]]);
+  }
+  const as = new Int32Array(n);
+  for (let it = 0; it < 30; it++) {
+    for (let i = 0; i < n; i++) { let b = 0, bd = Infinity; for (let j = 0; j < k; j++) { const d = (xs[i] - C[j][0]) ** 2 + (ys[i] - C[j][1]) ** 2; if (d < bd) { bd = d; b = j; } } as[i] = b; }
+    const sx = new Float64Array(k), sy = new Float64Array(k), sn = new Float64Array(k);
+    for (let i = 0; i < n; i++) { sx[as[i]] += xs[i]; sy[as[i]] += ys[i]; sn[as[i]]++; }
+    for (let j = 0; j < k; j++) if (sn[j]) C[j] = [sx[j] / sn[j], sy[j] / sn[j]];
+  }
+  return C;
+}
+// recalage des anciens impacts (rotation + translation) sur les détections
+function alignOld(old, det) {
+  const I = { th: 0, tx: 0, ty: 0 };
+  if (old.length < 2 || det.length < 2) return I;
+  let a = { ...I }, pairs = 0;
+  for (let it = 0; it < 20; it++) {
+    const tol = it < 6 ? 0.9 : 0.45, A = [], B = [];
+    for (const o of old) {
+      const p = tf(o, a); let best = null, bd = tol;
+      for (const d of det) { const dd = hyp(p.x - d.x, p.y - d.y); if (dd < bd) { bd = dd; best = d; } }
+      if (best) { A.push(o); B.push(best); }
+    }
+    pairs = A.length;
+    if (pairs < 2) return I;
+    let ax = 0, ay = 0, bx = 0, by = 0;
+    A.forEach((p, i) => { ax += p.x; ay += p.y; bx += B[i].x; by += B[i].y; });
+    ax /= pairs; ay /= pairs; bx /= pairs; by /= pairs;
+    let Sd = 0, Cr = 0;
+    A.forEach((p, i) => { const px = p.x - ax, py = p.y - ay, qx = B[i].x - bx, qy = B[i].y - by; Sd += px * qx + py * qy; Cr += px * qy - py * qx; });
+    const th = pairs >= 3 ? Math.atan2(Cr, Sd) : 0, c = Math.cos(th), s = Math.sin(th);
+    a = { th, tx: bx - (c * ax - s * ay), ty: by - (s * ax + c * ay) };
+  }
+  if (pairs < Math.max(2, Math.ceil(old.length * 0.4)) || Math.abs(a.th) > 0.35 || hyp(a.tx, a.ty) > 1.2) return I;
+  return a;
+}
+function snapshot() { S.undo.push({ impacts: S.impacts.map(i => ({ ...i })), amb: S.amb.slice() }); if (S.undo.length > 40) S.undo.shift(); }
+
+function detect() {
+  if (!hasCal()) { toast('Calibrez la cible d\'abord', 'err'); return; }
+  const p = P(), cal = S.cal, rh = holeR(), W = imgCanvas.width, H = imgCanvas.height;
+  const Rmax = (p.q + 10) * cal.w + 3 * rh;
+  const x0 = clamp(Math.floor(cal.cx - Rmax), 0, W), y0 = clamp(Math.floor(cal.cy - Rmax), 0, H);
+  const x1 = clamp(Math.ceil(cal.cx + Rmax), 0, W), y1 = clamp(Math.ceil(cal.cy + Rmax), 0, H);
+  const w0 = x1 - x0, h0 = y1 - y0;
+  if (w0 < 16 || h0 < 16) throw new Error('cible hors de l\'image');
+  const s = rh > 9 ? 9 / rh : 1, w = Math.max(8, Math.round(w0 * s)), h = Math.max(8, Math.round(h0 * s)), N = w * h;
+  const tc = document.createElement('canvas'); tc.width = w; tc.height = h;
+  const tx = tc.getContext('2d', { willReadFrequently: true });
+  tx.imageSmoothingQuality = 'high'; tx.drawImage(imgCanvas, x0, y0, w0, h0, 0, 0, w, h);
+  const g = grayOf(tx.getImageData(0, 0, w, h).data, N); tc.width = tc.height = 0;
+  const r = rh * s, sx = w0 / w, sy = h0 / h;
+  const toI = (x, y) => [x0 + (x + 0.5) * sx, y0 + (y + 0.5) * sy];
+  const ccx = (cal.cx - x0) / sx, ccy = (cal.cy - y0) / sy, RR = Rmax / sx;
+
+  // fond local = ouverture(fermeture(image)) : efface les petits détails (trous, traits) mais garde les grandes zones
+  // et leurs bords nets (noir/blanc, couleurs). Un impact = écart local au fond, clair OU sombre.
+  // 1) effacer les traits fins (lignes d'anneaux, chiffres) sans toucher aux trous
+  const rl = clamp(Math.round(r * 0.35), 1, 3);
+  const g1 = mmf(mmf(mmf(mmf(g, w, h, rl, false), w, h, rl, true), w, h, rl, true), w, h, rl, false);
+  // 2) fenêtre plus grande qu'un trou mais plus petite que l'écart entre deux anneaux
+  const spacing = cal.w / sx;
+  const K = Math.max(Math.ceil(r * 1.2), Math.min(Math.round(r * 2.3), Math.floor((0.9 * spacing - 1) / 2)), 2);
+  const clo = mmf(mmf(g1, w, h, K, true), w, h, K, false);          // fermeture : bouche les trous sombres
+  const opn = mmf(mmf(g1, w, h, K, false), w, h, K, true);          // ouverture : efface les trous clairs
+  const colorTarget = $('discipline').value.startsWith('arc');
+  const bgm = colorTarget ? mmf(mmf(clo, w, h, K, false), w, h, K, true) : null;
+  // zones du visuel noir connues par le calibrage : trous clairs dans le noir, sombres dans le blanc
+  const Rb = (p.q + 10 - preset().edge) * cal.w / sx, band = 1.3 * r + 1;
+  // dans la bande du bord : fond = médiane par secteur angulaire et par rayon (le bord s'annule, le trou ressort)
+  const NS = 48, rIn = Math.max(0, Rb - band - 2), NB = Math.ceil(2 * band + 4) + 1, prof = new Float32Array(NS * NB);
+  if (!colorTarget) {
+    const bins = Array.from({ length: NS * NB }, () => []);
+    const y0b = Math.max(0, Math.floor(ccy - Rb - band - 3)), y1b = Math.min(h - 1, Math.ceil(ccy + Rb + band + 3));
+    const x0b = Math.max(0, Math.floor(ccx - Rb - band - 3)), x1b = Math.min(w - 1, Math.ceil(ccx + Rb + band + 3));
+    for (let y = y0b; y <= y1b; y++) for (let x = x0b; x <= x1b; x++) {
+      const d = hyp(x - ccx, y - ccy), bi = Math.round(d - rIn); if (bi < 0 || bi >= NB) continue;
+      const si = Math.floor((Math.atan2(y - ccy, x - ccx) + Math.PI) / (2 * Math.PI) * NS) % NS;
+      bins[si * NB + bi].push(g1[y * w + x]);
+    }
+    bins.forEach((a, k) => { if (a.length) { a.sort((u, v) => u - v); prof[k] = a[a.length >> 1]; } });
+  }
+  const inRoi = new Uint8Array(N);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (hyp(x - ccx, y - ccy) <= RR) inRoi[y * w + x] = 1;
+  const feat = new Float32Array(N), hist = new Uint32Array(256); let cnt = 0;
+  for (let i = 0; i < N; i++) {
+    if (!inRoi[i]) continue;
+    let f;
+    if (colorTarget) f = Math.abs(g1[i] - bgm[i]);
+    else {
+      const d = hyp(i % w - ccx, ((i / w) | 0) - ccy), fl = g1[i] - opn[i], fd = clo[i] - g1[i];
+      if (d < Rb - band) f = fl;
+      else if (d > Rb + band) f = fd;
+      else {
+        const x = i % w, y = (i / w) | 0, bi = clamp(Math.round(d - rIn), 0, NB - 1);
+        const si = Math.floor((Math.atan2(y - ccy, x - ccx) + Math.PI) / (2 * Math.PI) * NS) % NS;
+        f = Math.abs(g1[i] - prof[si * NB + bi]);
+      }
+    }
+    feat[i] = f; hist[clamp(f | 0, 0, 255)]++; cnt++;
+  }
+  let acc = 0, med = 0; for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= cnt / 2) { med = i; break; } }
+  const dh = new Uint32Array(256); for (let i = 0; i < 256; i++) dh[Math.abs(i - med)] += hist[i];
+  let mad = 0; acc = 0; for (let i = 0; i < 256; i++) { acc += dh[i]; if (acc >= cnt / 2) { mad = i; break; } }
+  const thr = Math.max(+$('sensitivity').value, med + 6 * Math.max(1, mad));
+  let bin = new Float32Array(N); for (let i = 0; i < N; i++) bin[i] = feat[i] > thr ? 1 : 0;
+  const ro = Math.max(1, Math.round(r * 0.45)); // ouverture : supprime lignes d'anneaux et chiffres
+  bin = mmf(mmf(bin, w, h, ro, false), w, h, ro, true);
+  const B8 = new Uint8Array(N); for (let i = 0; i < N; i++) B8[i] = bin[i] > 0.5 ? 1 : 0;
+  const { comps } = components(B8, w, h, true, 3);
+  // carte de distance (chanfrein 3-4) : rayon du plus grand disque inscrit dans chaque tache
+  const dt = new Float32Array(N);
+  for (let i = 0; i < N; i++) dt[i] = B8[i] ? 1e9 : 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (!dt[i]) continue; let v = dt[i];
+    if (x > 0) v = Math.min(v, dt[i - 1] + 3); if (y > 0) { v = Math.min(v, dt[i - w] + 3); if (x > 0) v = Math.min(v, dt[i - w - 1] + 4); if (x < w - 1) v = Math.min(v, dt[i - w + 1] + 4); }
+    if (x === 0 || y === 0 || x === w - 1 || y === h - 1) v = Math.min(v, 3); dt[i] = v; }
+  for (let y = h - 1; y >= 0; y--) for (let x = w - 1; x >= 0; x--) { const i = y * w + x; if (!dt[i]) continue; let v = dt[i];
+    if (x < w - 1) v = Math.min(v, dt[i + 1] + 3); if (y < h - 1) { v = Math.min(v, dt[i + w] + 3); if (x < w - 1) v = Math.min(v, dt[i + w + 1] + 4); if (x > 0) v = Math.min(v, dt[i + w - 1] + 4); }
+    dt[i] = v; }
+  comps.forEach(c => {
+    let m = 0, far = 0; for (const q of c.pix) { if (dt[q] > m) m = dt[q]; far = Math.max(far, hyp(q % w - c.cx, ((q / w) | 0) - c.cy)); }
+    c.ins = m / 3; c.circ = c.n / (Math.PI * (far + 0.5) ** 2);
+  });
+
+  // chiffres imprimés : sur les 4 axes de la cible, au milieu des anneaux (et artefacts au bord du visuel)
+  const polar = c => { const [X, Y] = toI(c.cx, c.cy), dx = (X - cal.cx) / cal.w, dy = (Y - cal.cy) / cal.w; return { r: hyp(dx, dy), a: Math.atan2(dy, dx) }; };
+  const digitSpot = (pr, phi) => {
+    if (pr.r < p.q + 1.2 || pr.r > p.q + 10.2) return false;
+    let da = ((pr.a - phi) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2); da = Math.min(da, Math.PI / 2 - da);
+    if (da * pr.r > 0.38) return false;
+    const fr = ((pr.r - p.q - 0.5) % 1 + 1) % 1;   // 0 = milieu d'anneau
+    return Math.min(fr, 1 - fr) < 0.32 || Math.abs(pr.r - edgeRings()) < 0.22;
   };
-  state.sessionHistory.push(session);
-  state.previousImpacts = session.impacts;
-  state.impacts.forEach(i => i.isNew = false);
-  try {
-    localStorage.setItem('tir_history', JSON.stringify(state.sessionHistory));
-    localStorage.setItem('tir_last', JSON.stringify(session));
-  } catch (e) {}
-  redraw();
-  updateStats();
-  renderHistory();
-  updateButtons();
-  setMode('💾 Session sauvegardée', 'success');
-  toast(`${session.total} pts enregistrés`, 'success');
-});
+  comps.forEach(c => { c.pr = polar(c); });
+  let phi = null;
+  if (!$('discipline').value.startsWith('arc')) {
+    const votes = new Float32Array(90);
+    comps.forEach(c => {
+      const pr = c.pr; if (pr.r < p.q + 1.2 || pr.r > p.q + 10.2) return;
+      const fr = ((pr.r - p.q - 0.5) % 1 + 1) % 1; if (Math.min(fr, 1 - fr) > 0.2) return;
+      const deg = ((pr.a * 180 / Math.PI) % 90 + 90) % 90;
+      for (let k = -2; k <= 2; k++) votes[(Math.round(deg) + k + 90) % 90] += 1 - Math.abs(k) / 3;
+    });
+    let bi = 0; for (let k = 1; k < 90; k++) if (votes[k] > votes[bi]) bi = k;
+    if (votes[bi] >= 5) phi = bi * Math.PI / 180;
+  }
+  const digits = [];
+  const kept = phi === null ? comps : comps.filter(c => { if (digitSpot(c.pr, phi)) { digits.push(c); return false; } return true; });
 
-$('btnLoadSession').addEventListener('click', () => {
-  try {
-    const s = localStorage.getItem('tir_last');
-    if (!s) { toast('Aucune session', 'error'); return; }
-    const session = JSON.parse(s);
-    state.previousImpacts = session.impacts;
-    setMode(`📂 Session du ${new Date(session.date).toLocaleDateString('fr-FR')} chargée`, 'success');
-    toast('Session chargée — chargez la nouvelle image', 'success');
-  } catch (e) { toast('Erreur de chargement', 'error'); }
-});
+  // aire d'un impact isolé : nominale puis auto-ajustée sur les impacts nets
+  const A1n = Math.PI * r * r;
+  const compact = c => { const asp = Math.max(c.bw, c.bh) / Math.min(c.bw, c.bh), fill = c.n / (c.bw * c.bh); return asp <= 1.5 && fill >= 0.6 && c.ins >= 0.55 * r && c.circ >= 0.5; };
+  kept.forEach(c => { let m = 0; for (const q of c.pix) m += feat[q]; c.conf = m / c.n; });
+  const sing = kept.filter(c => c.n > 0.5 * A1n && c.n < 2.6 * A1n && compact(c) && c.conf > 1.6 * thr).map(c => c.n).sort((a, b) => a - b);
+  let A1 = A1n * 0.9;
+  if (sing.length >= 3) A1 = clamp(sing[sing.length >> 1], 0.75 * A1n, 2.4 * A1n);
 
-$('btnCompare').addEventListener('click', () => {
-  if (!state.previousImpacts.length) return;
-  state.impacts.forEach(imp => { imp.isNew = isNewImpact(imp.x, imp.y); });
-  redraw();
-  updateStats();
-  setMode('🔄 Comparaison effectuée', 'success');
-});
+  // partie « pleine » de chaque tache : union des disques de rayon rc qui tiennent dedans
+  // (ignore les traits fins d'un chiffre ou d'une ligne collés à un trou)
+  const rc = Math.max(1, 0.6 * r), rc2 = rc * rc, rci = Math.ceil(rc);
+  const opened = c => {
+    const cores = c.pix.filter(q => dt[q] / 3 >= rc);
+    if (!cores.length) return null;
+    if (cores.length > 0.5 * c.n) return c.pix;           // tache déjà compacte
+    const inBlob = new Set(c.pix), keep = new Set();
+    for (const q of cores) {
+      const qx = q % w, qy = (q / w) | 0;
+      for (let dy = -rci; dy <= rci; dy++) for (let dx = -rci; dx <= rci; dx++) {
+        if (dx * dx + dy * dy > rc2) continue;
+        const t = (qy + dy) * w + qx + dx; if (inBlob.has(t)) keep.add(t);
+      }
+    }
+    return [...keep];
+  };
+  const singles = [], groups = [];
+  for (const c0 of kept) {
+    if (c0.n < 0.35 * A1) continue;
+    const op = opened(c0); if (!op || op.length < 0.4 * A1) continue;
+    let sx2 = 0, sy2 = 0, x0b = w, x1b = 0, y0b = h, y1b = 0;
+    for (const q of op) { const x = q % w, y = (q / w) | 0; sx2 += x; sy2 += y; if (x < x0b) x0b = x; if (x > x1b) x1b = x; if (y < y0b) y0b = y; if (y > y1b) y1b = y; }
+    const c = { pix: op, n: op.length, cx: sx2 / op.length, cy: sy2 / op.length, x0: x0b, x1: x1b, y0: y0b, y1: y1b, bw: x1b - x0b + 1, bh: y1b - y0b + 1 };
+    const n = c.n / A1, asp = Math.max(c.bw, c.bh) / Math.min(c.bw, c.bh), fill = c.n / (c.bw * c.bh);
+    let conf = 0; for (const q of c.pix) conf += feat[q]; conf /= c.n;
+    const [ix, iy] = toI(c.cx, c.cy);
+    if (n < 1.55) { if (asp <= 2.2 && fill >= 0.4) singles.push({ x: ix, y: iy, n, conf, c }); }
+    else if (n <= 25 && fill >= 0.22) groups.push({ x: ix, y: iy, n, est: Math.max(2, Math.round(n)), conf, c });
+  }
+  // contraste : on écarte les taches nettement plus pâles que les vrais impacts (bruit, restes de lignes)
+  const exp0 = parseInt($('expected').value) || 0;
+  const confs = singles.concat(groups).map(d => d.conf).sort((a, b) => b - a);
+  const ref = confs.length ? confs[Math.min(confs.length - 1, Math.max(2, Math.floor((exp0 || 6) / 2)))] : 0;
+  const cmin = Math.max(1.25 * thr, 0.4 * ref);
+  for (const L of [singles, groups]) for (let k = L.length - 1; k >= 0; k--) if (L[k].conf < cmin) L.splice(k, 1);
+  // candidats écartés (position de chiffre) gardés en réserve si des impacts manquent
+  S.reserve = digits.filter(c => c.n >= 0.5 * A1 && c.n < 1.8 * A1 && c.circ >= 0.45).map(c => { const [x, y] = toI(c.cx, c.cy); return { x, y, circ: c.circ }; });
+  // centres approximatifs des groupes (pour le recalage)
+  const pixXY = c => { const xs = new Float64Array(c.n), ys = new Float64Array(c.n); c.pix.forEach((q, i) => { const [X, Y] = toI(q % w, (q / w) | 0); xs[i] = X; ys[i] = Y; }); return [xs, ys]; };
+  groups.forEach(gp => { const [xs, ys] = pixXY(gp.c); gp.centers = kmeans(xs, ys, gp.est); });
 
-$('btnClearHistory').addEventListener('click', () => {
-  if (!confirm('Effacer tout l\'historique ?')) return;
-  state.sessionHistory = [];
-  localStorage.removeItem('tir_history');
-  localStorage.removeItem('tir_last');
-  renderHistory();
-  updateButtons();
-});
+  // recalage et appariement avec les séries précédentes
+  const old = oldNorm();
+  const norm = (x, y) => ({ x: (x - cal.cx) / cal.w, y: (y - cal.cy) / cal.w });
+  const det = singles.map(d => norm(d.x, d.y)).concat(groups.flatMap(gp => gp.centers.map(([x, y]) => norm(x, y))));
+  S.align = alignOld(old, det);
+  const olds = oldPx();
+  const tol = Math.max(1.3 * rh, 0.3 * cal.w), pairs = [];
+  olds.forEach((o, oi) => singles.forEach((d, di) => { const dd = hyp(o.x - d.x, o.y - d.y); if (dd < tol) pairs.push([dd, oi, di]); }));
+  pairs.sort((a, b) => a[0] - b[0]);
+  const oUsed = new Set(), dUsed = new Map();
+  for (const [, oi, di] of pairs) { if (oUsed.has(oi) || dUsed.has(di)) continue; oUsed.add(oi); dUsed.set(di, oi); }
+  const inGroup = (o, gp) => {
+    const lx = (o.x - x0) / sx, ly = (o.y - y0) / sy, c = gp.c, lim = (1.1 * rh) / sx;
+    if (lx < c.x0 - lim || lx > c.x1 + lim || ly < c.y0 - lim || ly > c.y1 + lim) return false;
+    for (const q of c.pix) if (hyp(q % w - lx, ((q / w) | 0) - ly) <= lim) return true;
+    return false;
+  };
+  const amb = [], news = [];
+  singles.forEach((d, di) => {
+    if (!dUsed.has(di)) { news.push(d); return; }
+    if (d.n >= 1.3) amb.push(zone(d, [olds[dUsed.get(di)]], d.n >= 1.45 ? 1 : 0)); // impact possible dans un ancien trou
+  });
+  groups.forEach(gp => {
+    const ins = [];
+    olds.forEach((o, oi) => { if (!oUsed.has(oi) && inGroup(o, gp)) { oUsed.add(oi); ins.push(o); } });
+    const newEst = Math.max(0, gp.est - ins.length);
+    if (newEst === 0 && gp.n < (ins.length + 0.45)) return; // uniquement des anciens
+    amb.push(zone(gp, ins, newEst));
+  });
+  function zone(d, ins, est) {
+    const c = d.c, [xs, ys] = pixXY(c);
+    return { cx: d.x, cy: d.y, r: Math.max(c.bw * sx, c.bh * sy) / 2, est, olds: ins, xs, ys, conf: d.conf };
+  }
 
-function getDistance() {
-  const v = $('distance').value;
-  return v === 'custom' ? (parseInt($('distanceCustom').value) || 0) : parseInt(v);
+  snapshot();
+  S.impacts = news.map(d => ({ x: d.x, y: d.y, conf: d.conf, flag: '' }));
+  S.amb = amb;
+  rescore();
+  return { singles: singles.length, groups: groups.length, news: news.length, amb: amb.length, thr, A1: Math.round(A1), A1n: Math.round(A1n), K, r: +r.toFixed(1), s: +s.toFixed(2), w, h };
+}
+function runDetect() {
+  if (!hasCal()) { toast('Calibrez la cible d\'abord', 'err'); return; }
+  banner('🤖 Détection en cours…', 'act');
+  setTimeout(() => {
+    try {
+      detect(); setMode('idle'); refresh();
+      if (S.amb.length) openAmb(); else finalize();
+    } catch (e) {
+      console.error(e); toast('Erreur de détection : ' + e.message, 'err', 4000); banner('❌ Détection impossible', 'err');
+    }
+  }, 30);
+}
+function finalize(recovered = 0) {
+  if (!recovered) S.impacts.forEach(i => { if (i.flag === 'doubt') i.flag = ''; });
+  const exp = parseInt($('expected').value) || 0, n = S.impacts.length;
+  let msg = `🤖 ${n} nouvel(s) impact(s)`, type = 'ok';
+  if (recovered) { msg = `⚠️ ${recovered} impact(s) incertain(s) en orange (sur un chiffre imprimé) — vérifiez avec la loupe`; type = 'warn'; }
+  if (recovered) { /* déjà traité */ } else if (exp > 0 && n > exp) {
+    const extra = S.impacts.filter(i => i.flag !== 'manual' && i.flag !== 'split').sort((a, b) => (a.conf || 0) - (b.conf || 0)).slice(0, n - exp);
+    extra.forEach(i => i.flag = 'doubt');
+    msg = `⚠️ ${n} trouvés pour ${exp} attendus : ${extra.length} douteux en orange — supprimez-les s'ils sont faux`; type = 'warn';
+  } else if (exp > 0 && n < exp && (S.reserve || []).length) {
+    const rh = holeR(), taken = S.impacts.concat(oldPx());
+    const add = S.reserve.filter(c => taken.every(t => hyp(t.x - c.x, t.y - c.y) > 1.5 * rh)).sort((a, b) => b.circ - a.circ).slice(0, exp - n);
+    add.forEach(c => S.impacts.push({ x: c.x, y: c.y, conf: 0, flag: 'doubt' }));
+    S.reserve = [];
+    rescore(); return finalize.call(null, add.length);
+  } else if (exp > 0 && n < exp) {
+    msg = `⚠️ ${n}/${exp} trouvés : ajoutez les manquants avec 👆 (impacts groupés ou dans un ancien trou)`; type = 'warn';
+  }
+  refresh(); banner(msg, type);
+  if (type === 'ok') goStep('res');
 }
 
+// ============ ZONES DOUTEUSES ============
+function openAmb() {
+  const list = $('ambList'); list.innerHTML = '';
+  const rh = holeR();
+  S.amb.forEach((z, i) => {
+    const row = document.createElement('div'); row.className = 'amb';
+    const cv = document.createElement('canvas'); cv.width = cv.height = 192;
+    const c = cv.getContext('2d'), half = Math.max(z.r * 1.7, rh * 5), m = 96 / half;
+    c.fillStyle = '#000'; c.fillRect(0, 0, 192, 192);
+    safeDraw(c, imgCanvas, z.cx - half, z.cy - half, half * 2, half * 2, 0, 0, 192, 192);
+    z.olds.forEach(o => ring(c, 96 + (o.x - z.cx) * m, 96 + (o.y - z.cy) * m, Math.max(8, rh * m), '#f85149', 3));
+    ring(c, 96, 96, z.r * m + 8, '#d29922', 3, [8, 6]);
+    const info = document.createElement('div');
+    info.innerHTML = `<b>Zone ${i + 1}</b><div class="hint">${z.olds.length ? z.olds.length + ' impact(s) ancien(s) (rouge) · ' : ''}estimation automatique : ${z.est}</div>
+      <div class="stepper"><button data-d="-1">−</button><b>${z.est}</b><button data-d="1">+</button><span class="hint">nouveau(x)</span></div>`;
+    info.querySelectorAll('button').forEach(b => b.onclick = () => { z.est = clamp(z.est + +b.dataset.d, 0, 20); info.querySelector('b + .hint, .stepper b').textContent = z.est; });
+    row.append(cv, info); list.appendChild(row);
+  });
+  $('ambModal').hidden = false;
+}
+function applyAmb() {
+  snapshot();
+  for (const z of S.amb) {
+    const k = z.est + z.olds.length; if (!z.est || !k) continue;
+    let C = kmeans(z.xs, z.ys, k);
+    for (const o of z.olds) { // retirer les centres correspondant aux anciens trous
+      let bi = -1, bd = Infinity; C.forEach((c, i) => { const d = hyp(c[0] - o.x, c[1] - o.y); if (d < bd) { bd = d; bi = i; } });
+      if (bi >= 0) C.splice(bi, 1);
+    }
+    C.slice(0, z.est).forEach(([x, y]) => S.impacts.push({ x, y, conf: z.conf, flag: 'split' }));
+  }
+  S.amb = [];
+  $('ambModal').hidden = true;
+  rescore(); finalize();
+}
+
+// ============ STATISTIQUES ============
+function mpiOf(L) { return { x: L.reduce((s, i) => s + i.x, 0) / L.length, y: L.reduce((s, i) => s + i.y, 0) / L.length }; }
+function computeStats() {
+  const L = S.impacts, n = L.length;
+  if (!n || !hasCal()) return null;
+  const mm = mmpp(), w = S.cal.w, d = dist();
+  const total = L.reduce((s, i) => s + i.score, 0), dec = L.reduce((s, i) => s + i.dec, 0);
+  let m = mpiOf(L), rad = L.map(i => hyp(i.x - m.x, i.y - m.y)), mr = rad.reduce((a, b) => a + b, 0) / n, flyers = 0;
+  if (n >= 5) {
+    const fl = L.filter((_, j) => rad[j] > Math.max(2.5 * mr, w));
+    if (fl.length && fl.length <= Math.floor(n / 4)) {
+      const core = L.filter(i => !fl.includes(i)); m = mpiOf(core);
+      mr = core.reduce((s, i) => s + hyp(i.x - m.x, i.y - m.y), 0) / core.length; flyers = fl.length;
+    }
+  }
+  let es = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) es = Math.max(es, hyp(L[i].x - L[j].x, L[i].y - L[j].y));
+  const dx = (m.x - S.cal.cx) * mm, dy = (m.y - S.cal.cy) * mm, off = hyp(dx, dy);
+  let ang = Math.atan2(dx, -dy) * 180 / Math.PI; if (ang < 0) ang += 360;
+  const clock = Math.round(ang / 30) % 12 || 12;
+  return { n, total, dec, avg: total / n, m, mr, mrmm: mr * mm, mrR: mr / w, esmm: es * mm, moa: d > 0 && n > 1 ? es * mm / (d * 0.2909) : null, dx, dy, off, clock, flyers };
+}
+const fmm = v => v >= 100 ? (v / 10).toFixed(1) + ' cm' : v.toFixed(v < 10 ? 1 : 0) + ' mm';
+function regLabel(mrR) {
+  if (mrR < 0.6) return ['🌟 Excellente', 'good'];
+  if (mrR < 1.2) return ['✅ Bonne', 'good'];
+  if (mrR < 2) return ['⚠️ Moyenne', 'mid'];
+  return ['❌ Faible', 'bad'];
+}
+function updateStats() {
+  const st = computeStats(), set = (id, t, cls) => { const e = $(id); e.textContent = t; e.className = 'v' + (cls ? ' ' + cls : ''); };
+  if (!st) {
+    ['sTotal', 'sDec', 'sAvg', 'sMpi', 'sGroup', 'sMr', 'sReg'].forEach(id => set(id, '—'));
+    set('sN', String(S.impacts.length)); $('impList').innerHTML = ''; diag(null); return;
+  }
+  const isDec = ['pistolet', 'carabine'].includes($('discipline').value);
+  set('sTotal', String(st.total)); $('sTotal').style.color = 'var(--ac)';
+  set('sDec', isDec ? st.dec.toFixed(1) : '—'); $('sDec').style.cssText = 'font-size:18px';
+  set('sN', String(st.n)); set('sAvg', st.avg.toFixed(2));
+  const hz = Math.abs(st.dx) < 0.5 ? '' : `${fmm(Math.abs(st.dx))} ${st.dx > 0 ? 'droite' : 'gauche'}`;
+  const vt = Math.abs(st.dy) < 0.5 ? '' : `${fmm(Math.abs(st.dy))} ${st.dy > 0 ? 'bas' : 'haut'}`;
+  set('sMpi', st.off < 0.5 ? 'Centré' : `${fmm(st.off)} à ${st.clock}h` + (hz || vt ? ` (${[hz, vt].filter(Boolean).join(', ')})` : ''));
+  set('sGroup', st.n > 1 ? fmm(st.esmm) + (st.moa ? ` · ${st.moa.toFixed(1)} MOA` : '') : '—');
+  set('sMr', st.n > 1 ? fmm(st.mrmm) : '—');
+  if (st.n > 1) { const [t, c] = regLabel(st.mrR); set('sReg', t, c); } else set('sReg', '—');
+  $('impList').innerHTML = S.impacts.map((i, k) => `<div><span>#${k + 1}${i.flag === 'doubt' ? ' ⚠️' : i.flag === 'manual' ? ' 👆' : ''}</span><span>${i.score === 0 ? 'Manqué' : i.score + ' pts'}${isDec ? ' · ' + i.dec.toFixed(1) : ''}</span></div>`).join('');
+  diag(st);
+}
+function diag(st) {
+  const el = $('diag');
+  if (!st) { el.innerHTML = '<p class="hint">Les conseils apparaissent après l\'analyse.</p>'; return; }
+  if (st.n < 3) { el.innerHTML = `<p class="hint">Au moins 3 impacts sont nécessaires pour un diagnostic fiable (${st.n} actuellement).</p>`; return; }
+  const left = $('leftHanded').checked, w = S.cal.w;
+  const offPx = hyp(st.m.x - S.cal.cx, st.m.y - S.cal.cy);
+  let html = '';
+  if (offPx <= Math.max(0.5 * st.mr, 0.5 * w)) {
+    html = `<h4 class="good">✅ Centrage correct</h4><p>Point moyen à ${fmm(st.off)} du centre : décalage non significatif par rapport à la dispersion.</p>`;
+  } else {
+    let ang = Math.atan2(-(st.m.y - S.cal.cy), st.m.x - S.cal.cx) * 180 / Math.PI; if (ang < 0) ang += 360;
+    const keys = ['droite', 'hautDroite', 'haut', 'hautGauche', 'gauche', 'basGauche', 'bas', 'basDroite'];
+    let key = keys[Math.round(ang / 45) % 8];
+    const shown = key;
+    if (left) key = key.replace('Droite', '#').replace('Gauche', 'Droite').replace('#', 'Gauche').replace(/^droite$/, '#').replace(/^gauche$/, 'droite').replace('#', 'gauche');
+    const a = (ADVICE[$('discipline').value] || ADVICE.autre)[key] || ADVICE.autre[key];
+    const lbl = { hautDroite: 'haut-droite', haut: 'haut', hautGauche: 'haut-gauche', gauche: 'gauche', basGauche: 'bas-gauche', bas: 'bas', basDroite: 'bas-droite', droite: 'droite' }[shown];
+    html = `<h4>${a.title}</h4><p><b>Position :</b> point moyen décalé de ${fmm(st.off)} vers ${lbl} (${st.clock}h).</p>
+      <p><b>Cause probable :</b> ${a.cause}</p><ul>${a.corrections.map(c => `<li>${c}</li>`).join('')}</ul>
+      <div class="drill"><b>🎯 Exercice :</b> ${a.drills}</div>
+      <p class="hint" style="margin-top:6px">Si le décalage est identique d'une série à l'autre et la technique constante, réglez plutôt les organes de visée : ramener le groupement de ${fmm(Math.abs(st.dx))} vers la ${st.dx > 0 ? 'gauche' : 'droite'} et ${fmm(Math.abs(st.dy))} vers le ${st.dy > 0 ? 'haut' : 'bas'}.</p>`;
+  }
+  if (st.mrR > 1.2) html += `<div class="drill"><b>Priorité : le groupement.</b> Rayon moyen ${fmm(st.mrmm)} (${st.mrR.toFixed(1)} anneau). Avant de corriger un décalage, travaillez la régularité : même position, même départ du coup, même respiration.</div>`;
+  else if (offPx <= Math.max(0.5 * st.mr, 0.5 * w)) html += `<div class="drill"><b>🎯 Prochain défi :</b> resserrer encore le groupement (rayon moyen actuel ${fmm(st.mrmm)}).</div>`;
+  if (st.flyers) html += `<p class="hint">${st.flyers} coup(s) isolé(s) exclu(s) du calcul du point moyen.</p>`;
+  html += `<p class="hint" style="margin-top:6px">Conseils pour un tireur ${left ? 'gaucher' : 'droitier'}.</p>`;
+  el.innerHTML = html;
+}
+
+// ============ SÉRIES / HISTORIQUE ============
+function save() {
+  try {
+    localStorage.setItem('tir_v4', JSON.stringify({
+      history: S.history, target: S.target,
+      params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
+    }));
+  } catch (e) { console.warn('stockage indisponible', e); }
+}
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem('tir_v4');
+    if (raw) {
+      const d = JSON.parse(raw);
+      S.history = Array.isArray(d.history) ? d.history : [];
+      S.target = d.target && Array.isArray(d.target.series) ? d.target : { series: [] };
+      const p = d.params || {};
+      Object.entries(p).forEach(([k, v]) => { const e = $(k); if (!e) return; if (e.type === 'checkbox') e.checked = !!v; else if (v != null && v !== '') e.value = v; });
+    } else {
+      const old = JSON.parse(localStorage.getItem('tir_history') || '[]'); // migration v3
+      S.history = old.map(s => ({ date: s.date, discipline: s.discipline, distance: s.distance, n: s.count, total: s.total, avg: s.avg }));
+      applyPreset();
+    }
+  } catch (e) { applyPreset(); }
+  $('distanceCustom').hidden = $('distance').value !== 'custom';
+  if (!$('ringMm').value) applyPreset();
+  $('sensVal').textContent = $('sensitivity').value;
+}
+function validateSeries() {
+  const st = computeStats(); if (!st) return;
+  const w = S.cal.w;
+  const imps = S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: +o.x.toFixed(4), dy: +o.y.toFixed(4), score: i.score, dec: i.dec }; });
+  const rec = { date: new Date().toISOString(), discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1) };
+  S.target.series.push({ ...rec, impacts: imps });
+  S.history.push(rec);
+  S.impacts = []; S.amb = []; S.undo = [];
+  save(); refresh();
+  banner(`✅ Série ${S.target.series.length} enregistrée (${rec.total} pts). Tirez la suivante puis photographiez la même cible.`, 'ok');
+  toast('Série enregistrée', 'ok');
+  goStep('photo');
+}
 function renderHistory() {
-  const spark = $('spark');
-  const info = $('historyInfo');
-  if (!state.sessionHistory.length) {
-    spark.innerHTML = '';
-    info.textContent = 'Aucune session enregistrée';
+  const H = S.history, spark = $('spark');
+  if (!H.length) { spark.innerHTML = ''; $('histInfo').textContent = 'Aucune série enregistrée'; }
+  else {
+    const last = H.slice(-24);
+    spark.innerHTML = last.map(s => `<div style="height:${Math.max(4, s.avg / 10 * 100)}%" title="${s.avg} pts"></div>`).join('');
+    const avg = H.reduce((a, s) => a + s.avg, 0) / H.length;
+    $('histInfo').textContent = `${H.length} série(s) · moyenne générale ${avg.toFixed(2)} · dernière ${H[H.length - 1].avg}`;
+  }
+  $('seriesList').innerHTML = S.target.series.map((s, i) => `<div><span>Cible en cours · série ${i + 1}</span><span>${s.total} pts · moy ${s.avg}${s.mr_mm != null ? ' · R ' + fmm(s.mr_mm) : ''}</span></div>`).join('');
+}
+function updateTargetInfo() {
+  const n = S.target.series.length, k = S.target.series.reduce((a, s) => a + s.impacts.length, 0);
+  $('targetInfo').innerHTML = n ? `<b>${n} série(s)</b> déjà enregistrée(s) sur cette cible · ${k} impact(s) mémorisé(s).<br>La prochaine photo sera la <b>série ${n + 1}</b>.` : 'Nouvelle cible — aucune série enregistrée.';
+  $('statusPill').textContent = `Série ${n + 1}` + (S.impacts.length ? ` · ${S.impacts.length} impact(s)` : '');
+}
+
+// ============ ÉTAT DE L'INTERFACE ============
+function setMode(m, msg) {
+  S.mode = m; S.aim = null;
+  if (m !== 'warp') S.warpPts = [];
+  ({ center: 'btnCenter', ring: 'btnRing', warp: 'btnWarp', manual: 'btnManual', del: 'btnDelete' });
+  [['btnCenter', 'center'], ['btnRing', 'ring'], ['btnWarp', 'warp'], ['btnManual', 'manual'], ['btnDelete', 'del']].forEach(([id, mm]) => $(id).classList.toggle('on', m === mm));
+  if (msg) banner(msg, 'act'); else $('bannerDone').hidden = m === 'idle';
+  hideLoupe(); drawOverlay();
+  if (m !== 'idle') showStage();
+}
+// ramène la photo à l'écran (sur téléphone, le panneau peut l'avoir fait sortir)
+function showStage() {
+  const r = stage.getBoundingClientRect(), top = document.querySelector('header').offsetHeight + 6;
+  if (r.top < top - 1 || r.bottom > innerHeight) window.scrollTo({ top: Math.max(0, scrollY + r.top - top), behavior: 'smooth' });
+}
+function goStep(s) {
+  if (s === 'res' && matchMedia('(min-width:1000px)').matches) s = 'impacts';
+  document.body.dataset.step = s;
+  document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('on', b.dataset.step === s));
+}
+function refresh() {
+  rescore(); drawOverlay(); updateStats(); renderHistory(); updateTargetInfo(); updateButtons();
+}
+function updateButtons() {
+  const has = !!S.src, cal = hasCal(), ctr = hasCenter(), n = S.impacts.length, any = n || S.amb.length;
+  const dis = (id, v) => { $(id).disabled = !!v; };
+  dis('btnAuto', !has); dis('btnCenter', !has); dis('btnRing', !ctr); dis('btnWarp', !has); dis('btnUnwarp', !S.warpUndo); dis('btnResetCal', !ctr);
+  ['nu', 'nd', 'nl', 'nr', 'nc'].forEach(id => dis(id, !ctr)); dis('rp', !cal); dis('rm', !cal);
+  dis('btnDetect', !cal); dis('btnManual', !cal); dis('btnDelete', !any); dis('btnUndo', !S.undo.length); dis('btnClear', !any);
+  $('btnAmb').hidden = !S.amb.length; $('btnAmb').textContent = `⚠️ Vérifier ${S.amb.length} zone(s) douteuse(s)`;
+  dis('btnValidate', !n || !cal); dis('btnReport', !n); dis('btnPng', !has); dis('btnClearHist', !S.history.length);
+  const st = { photo: has, cible: cal, impacts: n > 0, res: S.history.length > 0 };
+  document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('done', !!st[b.dataset.step]));
+}
+
+// ============ INTERACTIONS TACTILES ============
+const ptrs = new Map(); let gest = null;
+const AIM = ['center', 'ring', 'manual', 'warp'];
+function rel(e) { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+function aimAt(sx, sy) { const [x, y] = toImg(sx, sy); S.aim = { x, y }; drawOverlay(); showLoupe(sx, sy); }
+function commit(x, y) {
+  if (S.mode === 'center') {
+    S.cal.cx = x; S.cal.cy = y;
+    if (!S.cal.w) { setMode('ring', `② Glissez jusqu'au bord de l'anneau ${P().edge} puis relâchez`); refresh(); return; }
+    setMode('idle'); banner('✅ Centre placé — affinez avec les flèches si besoin', 'ok');
+  } else if (S.mode === 'ring') {
+    const d = hyp(x - S.cal.cx, y - S.cal.cy);
+    if (d < 3) { toast('Trop près du centre', 'err'); return; }
+    S.cal.w = d / edgeRings(); setMode('idle'); banner('✅ Cible calibrée — passez à ③ Impacts', 'ok');
+  } else if (S.mode === 'manual') {
+    snapshot(); S.impacts.push({ x, y, conf: 999, flag: 'manual' });
+  } else if (S.mode === 'warp') { manualWarpPoint(x, y); return; }
+  refresh();
+}
+function deleteAt(sx, sy) {
+  let best = -1, bd = 30, isAmb = false;
+  S.impacts.forEach((im, i) => { const d = hyp(V.tx + im.x * V.k - sx, V.ty + im.y * V.k - sy); if (d < bd) { bd = d; best = i; isAmb = false; } });
+  S.amb.forEach((z, i) => { const d = hyp(V.tx + z.cx * V.k - sx, V.ty + z.cy * V.k - sy) - z.r * V.k; if (d < bd) { bd = d; best = i; isAmb = true; } });
+  if (best < 0) return;
+  snapshot();
+  if (isAmb) S.amb.splice(best, 1); else S.impacts.splice(best, 1);
+  refresh();
+}
+stage.addEventListener('pointerdown', e => {
+  if (!S.src || e.target.closest('button, .banner, .zoom')) return; // les boutons posés sur la photo ne comptent pas comme un tap
+  e.preventDefault();
+  try { stage.setPointerCapture(e.pointerId); } catch (_) {}
+  const [sx, sy] = rel(e); ptrs.set(e.pointerId, [sx, sy]);
+  if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()];
+    gest = { t: 'pinch', d0: hyp(a[0] - b[0], a[1] - b[1]) || 1, m0: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], k0: V.k, tx0: V.tx, ty0: V.ty };
+    S.aim = null; hideLoupe(); drawOverlay(); return;
+  }
+  if (ptrs.size > 2) return;
+  if (AIM.includes(S.mode)) { gest = { t: 'aim', sx, sy }; aimAt(sx, sy); }
+  else gest = { t: 'pan', sx0: sx, sy0: sy, tx0: V.tx, ty0: V.ty, moved: 0 };
+}, { passive: false });
+stage.addEventListener('pointermove', e => {
+  if (!S.src) return;
+  const [sx, sy] = rel(e);
+  if (!ptrs.has(e.pointerId)) { // survol souris
+    if (e.pointerType === 'mouse' && AIM.includes(S.mode)) aimAt(sx, sy);
     return;
   }
-  const maxAvg = Math.max(...state.sessionHistory.map(s => s.avg), 10);
-  spark.innerHTML = state.sessionHistory.slice(-20).map(s => {
-    const h = (s.avg / maxAvg) * 100;
-    return `<div class="bar" style="height:${Math.max(4, h)}%" title="${s.avg.toFixed(1)} pts"></div>`;
-  }).join('');
-  const last = state.sessionHistory[state.sessionHistory.length - 1];
-  info.textContent = `${state.sessionHistory.length} session(s) • Dernière : ${last.avg.toFixed(1)} pts`;
+  ptrs.set(e.pointerId, [sx, sy]);
+  if (!gest) return;
+  if (gest.t === 'pinch' && ptrs.size >= 2) {
+    const [a, b] = [...ptrs.values()], d = hyp(a[0] - b[0], a[1] - b[1]), m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const nk = clamp(gest.k0 * d / gest.d0, V.fitK, Math.max(V.fitK * 20, 6));
+    const ix = (gest.m0[0] - gest.tx0) / gest.k0, iy = (gest.m0[1] - gest.ty0) / gest.k0;
+    V.k = nk; V.tx = m[0] - ix * nk; V.ty = m[1] - iy * nk; clampView(); applyView();
+  } else if (gest.t === 'aim') { gest.sx = sx; gest.sy = sy; aimAt(sx, sy); }
+  else if (gest.t === 'pan') {
+    gest.moved = Math.max(gest.moved, hyp(sx - gest.sx0, sy - gest.sy0));
+    V.tx = gest.tx0 + sx - gest.sx0; V.ty = gest.ty0 + sy - gest.sy0; clampView(); applyView();
+  }
+});
+function endPtr(e) {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if (!gest) return;
+  if (gest.t === 'pinch') { if (!ptrs.size) gest = null; return; }
+  const g = gest; gest = null;
+  if (g.t === 'aim') {
+    S.aim = null; hideLoupe();
+    if (e.type === 'pointerup') { const [x, y] = toImg(g.sx, g.sy); commit(x, y); } else drawOverlay();
+  } else if (g.t === 'pan' && g.moved < 8 && e.type === 'pointerup' && S.mode === 'del') { const [sx, sy] = rel(e); deleteAt(sx, sy); }
 }
+stage.addEventListener('pointerup', endPtr);
+stage.addEventListener('pointercancel', endPtr);
+stage.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !ptrs.size) { S.aim = null; hideLoupe(); drawOverlay(); } });
+stage.addEventListener('wheel', e => { if (!S.src) return; e.preventDefault(); const [sx, sy] = rel(e); zoomAt(e.deltaY < 0 ? 1.18 : 1 / 1.18, sx, sy); }, { passive: false });
+stage.addEventListener('contextmenu', e => e.preventDefault());
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+stage.addEventListener('dblclick', e => e.preventDefault());
+
+// ============ BOUTONS ============
+const on = (id, f) => $(id).addEventListener('click', f);
+on('btnCamera', () => $('cameraInput').click());
+on('btnGallery', () => $('fileInput').click());
+['fileInput', 'cameraInput'].forEach(id => $(id).addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); e.target.value = ''; }));
+on('btnNewTarget', () => {
+  if (S.target.series.length && !confirm('Commencer une nouvelle cible ? Les séries de la cible actuelle restent dans l\'historique.')) return;
+  S.target = { series: [] }; S.align = { th: 0, tx: 0, ty: 0 }; save(); refresh(); toast('Nouvelle cible', 'ok');
+});
+on('btnSample', makeSample);
+on('zIn', () => { const { w, h } = stageSize(); zoomAt(1.5, w / 2, h / 2); });
+on('zOut', () => { const { w, h } = stageSize(); zoomAt(1 / 1.5, w / 2, h / 2); });
+on('zFit', fitView);
+on('bannerDone', () => { setMode('idle'); banner('Mode terminé', ''); });
+document.querySelectorAll('#steps button').forEach(b => b.addEventListener('click', () => goStep(b.dataset.step)));
+
+$('viewMode').addEventListener('change', renderView);
+['brightness', 'contrast', 'threshold'].forEach(id => $(id).addEventListener('input', e => {
+  $(id + 'Val').textContent = e.target.value + (id === 'threshold' ? '' : '%');
+  if (id !== 'threshold' && $('viewMode').value === 'normal') $('viewMode').value = 'enhanced';
+  if (id === 'threshold') $('viewMode').value = 'binary';
+  clearTimeout(renderView.t); renderView.t = setTimeout(renderView, 60);
+}));
+on('btnResetFilter', () => {
+  $('viewMode').value = 'normal'; $('brightness').value = 100; $('contrast').value = 100; $('threshold').value = 90;
+  $('brightnessVal').textContent = '100%'; $('contrastVal').textContent = '100%'; $('thresholdVal').textContent = '90';
+  renderView();
+});
+$('sensitivity').addEventListener('input', e => { $('sensVal').textContent = e.target.value; });
+['discipline', 'distance'].forEach(id => $(id).addEventListener('change', () => {
+  $('distanceCustom').hidden = $('distance').value !== 'custom';
+  applyPreset(); save(); refresh();
+}));
+['distanceCustom', 'ringMm', 'calMm', 'ringSelect', 'expected', 'sensitivity', 'shooter', 'lineRule', 'leftHanded'].forEach(id => $(id).addEventListener('change', () => { save(); refresh(); }));
+
+on('btnAuto', () => { setMode('idle'); autoTarget(false); });
+on('btnCenter', () => setMode('center', '① Posez le doigt près du centre, glissez avec la loupe, relâchez'));
+on('btnRing', () => setMode('ring', `② Glissez jusqu'au bord de l'anneau ${P().edge}, relâchez`));
+on('btnWarp', () => { setMode('warp', `📐 Touchez le bord de l'anneau ${P().edge} : ① en HAUT`); });
+on('btnUnwarp', () => {
+  if (!S.warpUndo) return;
+  const u = S.warpUndo; S.warpUndo = null; freeCanvas(S.src); S.src = u.src; S.cal = u.cal;
+  S.impacts = []; S.amb = []; S.undo = []; sizeImgCanvas(); renderView(); fitView(); refresh(); toast('Redressement annulé', 'ok');
+});
+on('btnResetCal', () => { S.cal = { cx: null, cy: null, w: null }; S.impacts = []; S.amb = []; setMode('idle'); refresh(); banner('Calibrage réinitialisé', ''); });
+const nudge = (dx, dy) => { const st = Math.max(0.25, 1 / V.k); S.cal.cx += dx * st; S.cal.cy += dy * st; refresh(); };
+on('nu', () => nudge(0, -1)); on('nd', () => nudge(0, 1)); on('nl', () => nudge(-1, 0)); on('nr', () => nudge(1, 0));
+on('nc', () => centerOn(S.cal.cx, S.cal.cy, Math.max(V.k, V.fitK * 4)));
+on('rp', () => { S.cal.w *= 1.004; refresh(); }); on('rm', () => { S.cal.w /= 1.004; refresh(); });
+
+on('btnDetect', runDetect);
+on('btnAmb', openAmb);
+on('ambOk', applyAmb);
+on('ambLater', () => { $('ambModal').hidden = true; refresh(); banner(`⚠️ ${S.amb.length} zone(s) à vérifier (orange) — bouton ⚠️ dans ③`, 'warn'); });
+on('btnManual', () => setMode(S.mode === 'manual' ? 'idle' : 'manual', '👆 Glissez sur chaque impact manquant et relâchez'));
+on('btnDelete', () => setMode(S.mode === 'del' ? 'idle' : 'del', '🗑 Touchez un impact (ou une zone orange) pour le supprimer'));
+on('btnUndo', () => { const u = S.undo.pop(); if (!u) return; S.impacts = u.impacts; S.amb = u.amb; refresh(); });
+on('btnClear', () => { snapshot(); S.impacts = []; S.amb = []; refresh(); });
+on('btnValidate', validateSeries);
+on('btnClearHist', () => { if (!confirm('Effacer tout l\'historique et la cible en cours ?')) return; S.history = []; S.target = { series: [] }; save(); refresh(); });
 
 // ============ EXPORT ============
-$('btnExportText').addEventListener('click', () => {
-  if (!state.impacts.length) return;
-  const total = state.impacts.reduce((s, i) => s + i.score, 0);
-  const diagText = $('diagnostic').innerText;
-  const report = `RAPPORT D'ANALYSE DE TIR
-==============================
-Tireur : ${$('shooterName').value || 'Anonyme'}
-Discipline : ${$('discipline').options[$('discipline').selectedIndex].text}
-Distance : ${getDistance()} m
+async function shareBlob(blob, name) {
+  try {
+    const file = new File([blob], name, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+on('btnReport', () => {
+  const st = computeStats(); if (!st) return;
+  const txt = `RAPPORT D'ANALYSE DE TIR
+==========================
+Tireur : ${$('shooter').value || 'Anonyme'}
+Discipline : ${$('discipline').selectedOptions[0].text} · ${dist()} m
 Date : ${new Date().toLocaleString('fr-FR')}
+Cible : série ${S.target.series.length + 1}
 
 RÉSULTATS
----------
-Impacts : ${state.impacts.length}
-Score total : ${total}
-Moyenne : ${(total / state.impacts.length).toFixed(2)}
-MPI : ${$('mpi').textContent}
-Dispersion : ${$('dispersion').textContent}
-Groupement : ${$('groupment').textContent}
-Régularité : ${$('regularity').textContent}
+Impacts : ${st.n}
+Score : ${st.total}  (décimal ${st.dec.toFixed(1)})
+Moyenne : ${st.avg.toFixed(2)}
+Point moyen : ${$('sMpi').textContent}
+Groupement : ${$('sGroup').textContent}
+Rayon moyen : ${$('sMr').textContent}
+Régularité : ${$('sReg').textContent}
 
 DIAGNOSTIC
-----------
-${diagText}
+${$('diag').innerText}
 
 IMPACTS
--------
-${state.impacts.map((i, n) => `${n+1}. ${i.score} pts${i.isNew ? ' [nouveau]' : ''}`).join('\n')}
+${S.impacts.map((i, k) => `${k + 1}. ${i.score} pts (${i.dec.toFixed(1)})`).join('\n')}
 `;
-  shareOrDownload(report, `rapport-tir-${Date.now()}.txt`, 'text/plain');
+  shareBlob(new Blob([txt], { type: 'text/plain;charset=utf-8' }), `rapport-tir-${Date.now()}.txt`);
 });
-
-$('btnExportImage').addEventListener('click', () => {
-  if (!state.displayImage) return;
-  canvas.toBlob(blob => shareOrDownloadBlob(blob, `cible-${Date.now()}.png`));
+on('btnPng', () => {
+  if (!S.src) return;
+  const c = document.createElement('canvas'); c.width = S.src.width; c.height = S.src.height;
+  const x = c.getContext('2d'); x.drawImage(imgCanvas, 0, 0);
+  drawMarks(x, (a, b) => [a, b], 1, Math.max(1, S.src.width / 700));
+  c.toBlob(b => { c.width = c.height = 0; if (b) shareBlob(b, `cible-${Date.now()}.png`); }, 'image/png');
 });
-
-$('btnExportJSON').addEventListener('click', () => {
-  const data = {
-    version: '3.0',
-    exported: new Date().toISOString(),
-    history: state.sessionHistory,
-    current: { calibration: state.calibration, impacts: state.impacts }
-  };
-  shareOrDownload(JSON.stringify(data, null, 2), `sauvegarde-tir-${Date.now()}.json`, 'application/json');
+on('btnJson', () => {
+  const data = { version: 4, exported: new Date().toISOString(), history: S.history, target: S.target };
+  shareBlob(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }), `sauvegarde-tir-${Date.now()}.json`);
 });
-
-$('btnImportJSON').addEventListener('click', () => $('jsonInput').click());
+on('btnImport', () => $('jsonInput').click());
 $('jsonInput').addEventListener('change', e => {
-  const f = e.target.files[0];
-  if (!f) return;
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   const r = new FileReader();
   r.onload = ev => {
     try {
       const d = JSON.parse(ev.target.result);
-      if (d.history) { state.sessionHistory = d.history; renderHistory(); }
-      if (d.current) {
-        state.calibration = d.current.calibration || state.calibration;
-        state.impacts = d.current.impacts || [];
-      }
-      redraw();
-      updateStats();
-      updateButtons();
-      toast('Import réussi', 'success');
-    } catch (err) { toast('Fichier invalide', 'error'); }
+      if (Array.isArray(d.history)) S.history = d.history;
+      if (d.target && Array.isArray(d.target.series)) S.target = d.target;
+      save(); refresh(); toast('Import réussi', 'ok');
+    } catch (err) { toast('Fichier invalide', 'err'); }
   };
   r.readAsText(f);
 });
+on('btnPrint', () => window.print());
 
-async function shareOrDownload(text, filename, mime) {
-  const blob = new Blob([text], { type: mime + ';charset=utf-8' });
-  await shareOrDownloadBlob(blob, filename);
-}
-
-async function shareOrDownloadBlob(blob, filename) {
-  if (navigator.share && navigator.canShare) {
-    try {
-      const file = new File([blob], filename, { type: blob.type });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: filename });
-        return;
-      }
-    } catch (e) {}
-  }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+// ============ EXEMPLE (cible photographiée en biais) ============
+function makeSample() {
+  const W = 1200, H = 1500, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.fillStyle = '#5a5146'; x.fillRect(0, 0, W, H);
+  x.save(); x.translate(W / 2, H / 2); x.rotate(0.12); x.scale(1, 0.9);
+  x.fillStyle = '#ece6d6'; x.fillRect(-520, -640, 1040, 1280);
+  const w = 44, q = 1, rh = 5.6 / 25 * w / 2, R = n => (q + 10 - n) * w;
+  x.fillStyle = '#151515'; x.beginPath(); x.arc(0, 0, R(7), 0, 7); x.fill();
+  for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(0, 0, R(n), 0, 7); x.lineWidth = 2; x.strokeStyle = n >= 7 ? '#e6e6e6' : '#222'; x.stroke(); }
+  x.font = 'bold 22px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  for (let n = 1; n <= 8; n++) { const rr = (R(n) + R(n + 1)) / 2; x.fillStyle = n >= 7 ? '#e6e6e6' : '#222'; [[0, -rr], [0, rr], [-rr, 0], [rr, 0]].forEach(([a, b]) => x.fillText(String(n), a, b)); }
+  const holes = [[0.3, -0.5], [-0.9, 0.6], [1.4, 0.2], [-1.8, -1.2], [2.6, 1.9], [0.9, 2.4], [-2.9, 0.4], [4.6, -3.1], [1.2, 1.25], [1.42, 1.38]];
+  holes.forEach(([a, b]) => {
+    const hx = a * w, hy = b * w, inBlack = hyp(hx, hy) < R(7);
+    x.beginPath(); x.arc(hx, hy, rh, 0, 7); x.fillStyle = inBlack ? '#8d8a84' : '#2a2622'; x.fill();
+  });
+  x.restore();
+  const d = x.getImageData(0, 0, W, H), p = d.data;
+  for (let i = 0; i < p.length; i += 4) { const nz = (Math.random() - 0.5) * 18; p[i] += nz; p[i + 1] += nz; p[i + 2] += nz; }
+  x.putImageData(d, 0, 0);
+  $('discipline').value = 'pistolet'; $('distance').value = '25'; $('distanceCustom').hidden = true; applyPreset(); $('expected').value = 10;
+  setImage(c);
 }
 
 // ============ INIT ============
-(function init() {
-  try {
-    const h = localStorage.getItem('tir_history');
-    if (h) state.sessionHistory = JSON.parse(h);
-    const l = localStorage.getItem('tir_last');
-    if (l) state.previousImpacts = JSON.parse(l).impacts || [];
-  } catch (e) {}
-  renderHistory();
-  updateStats();
-  updateButtons();
-  setMode('Chargez une photo de cible pour commencer');
-  setStatus('Prêt', 'ready');
-})();
+new ResizeObserver(() => { if (S.src) { if (Math.abs(V.k - V.fitK) < 1e-6) fitView(); else { clampView(); applyView(); } } else drawOverlay(); }).observe(stage);
+loadSaved();
+refresh();
+banner('Chargez une photo de cible pour commencer', '');
+window.__tir = { S, V, P, detect, autoTarget, findTarget, computeStats, setImage, validateSeries, applyAmb, finalize, loadFile, scoreAt };
 </script>
-
 </body>
 </html>
