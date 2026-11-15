@@ -1,5 +1,5 @@
 // Mouche — service worker : fonctionne hors ligne, se met à jour dès qu'Internet est disponible
-const CACHE = 'mouche-v13';
+const CACHE = 'mouche-v14';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

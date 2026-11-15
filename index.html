@@ -255,6 +255,8 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
 .sumk{grid-template-columns:1.3fr 1fr 1fr 1fr;margin:10px 0}.sumch{display:grid;gap:10px}.sumch canvas,#trendChart{width:100%;border-radius:14px}
 .learn-body .good{color:#34d399}.learn-body .warnc{color:#fbbf24}.learn-body ul{padding-left:20px;display:grid;gap:6px}
 #trendSeg{margin:8px 0;flex-wrap:wrap}
+.sub-box{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--s2);border:1px solid var(--line)}
+body:not(.free) .onlyfree,body.free .nofree{display:none!important}
 </style>
 </head>
 <body data-step="photo" data-view="analyse">
@@ -343,7 +345,18 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
             </select></label>
           </div>
           <input type="number" id="distanceCustom" placeholder="Distance en mètres" hidden>
-          <label class="f adv">Modèle de cible<select id="model"><option value="auto">Automatique (selon discipline et distance)</option><option value="ap10">ISSF pistolet 10 m (air)</option><option value="pp25">Pistolet 25 m / 50 m précision</option><option value="rf25">ISSF pistolet vitesse 25 m</option><option value="ar10">ISSF carabine 10 m (air)</option><option value="r50">ISSF carabine 50 m</option><option value="r300">ISSF carabine 300 m</option><option value="wa40">Arc — blason 40 cm</option><option value="wa40c">Arc — blason 40 cm réduit (6 zones)</option><option value="wa60">Arc — blason 60 cm</option><option value="wa80">Arc — blason 80 cm</option><option value="wa122">Arc — blason 122 cm</option><option value="autre">Autre cible</option></select></label>
+          <label class="f">Modèle de cible<select id="model"><option value="auto">Automatique (selon discipline et distance)</option><option value="ap10">ISSF pistolet 10 m (air)</option><option value="pp25">Pistolet 25 m / 50 m précision</option><option value="rf25">ISSF pistolet vitesse 25 m</option><option value="ar10">ISSF carabine 10 m (air)</option><option value="r50">ISSF carabine 50 m</option><option value="r300">ISSF carabine 300 m</option><option value="wa40">Arc — blason 40 cm</option><option value="wa40c">Arc — blason 40 cm réduit (6 zones)</option><option value="wa60">Arc — blason 60 cm</option><option value="wa80">Arc — blason 80 cm</option><option value="wa122">Arc — blason 122 cm</option><option value="perso">Cible à anneaux personnalisée…</option><option value="libre">Sans anneaux : feuille, silhouette, point…</option><option value="autre">Autre cible</option></select></label>
+          <div class="sub-box" id="persoBox" hidden>
+            <p class="hint">Mesurez votre cible (diamètres en mm). Le visuel noir peut être 0 si la cible n'en a pas.</p>
+            <div class="row"><label class="f">Diamètre du 10<input type="number" id="persoD10" step="0.1" min="0.1" value="32"></label><label class="f">Largeur d'anneau<input type="number" id="persoRing" step="0.1" min="0.1" value="16"></label></div>
+            <div class="row"><label class="f">Diamètre du noir<input type="number" id="persoBlack" step="0.1" min="0" value="100"></label><label class="f">Diamètre mouche (X)<input type="number" id="persoX" step="0.1" min="0" value="0"></label></div>
+            <label class="f">Plus petit anneau imprimé<select id="persoMin"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></label>
+          </div>
+          <div class="sub-box" id="freeBox" hidden>
+            <p class="hint">Cible sans anneaux : on mesure le groupement et l'écart au point visé en mm. La feuille sert d'échelle.</p>
+            <label class="f">Taille de la feuille<select id="freeFmt"><option value="a4">A4 (21 × 29,7 cm)</option><option value="a3">A3 (29,7 × 42 cm)</option><option value="us">Lettre US</option><option value="c14">Carton 14 × 14 cm</option><option value="c17">Carton 17 × 17 cm</option><option value="c50">Carton 50 × 50 cm</option><option value="c55">C50 / 55 × 52 cm</option><option value="sil">Silhouette 45 × 75 cm</option><option value="custom">Autre taille…</option></select></label>
+            <div class="row" id="freeCustom" hidden><label class="f">Largeur (mm)<input type="number" id="freeW" value="210"></label><label class="f">Hauteur (mm)<input type="number" id="freeH" value="297"></label></div>
+          </div>
           <label class="f">Arme utilisée<select id="armSel"><option value="">Aucune (conseils généraux)</option></select></label>
         </div>
         <details class="card adv">
@@ -366,12 +379,12 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
           <div class="card-h"><i data-ic="target"></i><h3>Repérer la cible</h3></div>
           <button class="btn pri" id="btnAuto"><i data-ic="spark"></i>Repérer automatiquement</button>
           <details class="sub"><summary>Réglage manuel</summary>
-          <button class="btn" id="btn3pts"><i data-ic="circle"></i>Toucher 3 points du bord</button>
+          <button class="btn nofree" id="btn3pts"><i data-ic="circle"></i>Toucher 3 points du bord</button>
           <div class="row">
             <button class="btn" id="btnCenter">① Centre</button>
-            <button class="btn" id="btnRing">② Limite</button>
+            <button class="btn nofree" id="btnRing">② Limite</button><button class="btn onlyfree" id="btnScale">② Échelle</button>
           </div>
-          <button class="btn" id="btnRefine"><i data-ic="crosshair"></i>Ajuster sur les anneaux</button>
+          <button class="btn nofree" id="btnRefine"><i data-ic="crosshair"></i>Ajuster sur les anneaux</button>
           <p class="hint">Posez le doigt, glissez en regardant la loupe, relâchez. Deux doigts pour zoomer.</p>
           <div class="adj">
             <div class="pad">
@@ -379,7 +392,7 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
               <button id="nl" aria-label="Centre vers la gauche">←</button><button id="nc" aria-label="Recentrer la vue">◎</button><button id="nr" aria-label="Centre vers la droite">→</button>
               <span></span><button id="nd" aria-label="Centre vers le bas">↓</button><span></span>
             </div>
-            <div class="rsz"><button id="rp" aria-label="Agrandir les anneaux">＋</button><span class="hint">anneaux</span><button id="rm" aria-label="Réduire les anneaux">－</button></div>
+            <div class="rsz nofree"><button id="rp" aria-label="Agrandir les anneaux">＋</button><span class="hint">anneaux</span><button id="rm" aria-label="Réduire les anneaux">－</button></div>
           </div>
           </details>
         </div>
@@ -760,8 +773,17 @@ const MODELS = {
   wa60: { nom: 'Arc — blason 60 cm', ring: 30, r10: 30, black: 60, cal: 7, x: 15, arc: 1 },
   wa80: { nom: 'Arc — blason 80 cm', ring: 40, r10: 40, black: 80, cal: 7, x: 20, arc: 1 },
   wa122: { nom: 'Arc — blason 122 cm', ring: 61, r10: 61, black: 122, cal: 7, x: 30.5, arc: 1 },
-  autre: { nom: 'Autre cible', ring: 25, r10: 25, black: 100, cal: 9, x: 12.5 }
+  autre: { nom: 'Autre cible', ring: 25, r10: 25, black: 100, cal: 9, x: 12.5 },
+  libre: { nom: 'Sans anneaux (feuille, silhouette, point…)', ring: 25, r10: 25, black: 0, cal: 9, x: 0, free: 1 },
+  perso: { nom: 'Cible à anneaux personnalisée', ring: 16, r10: 8, black: 50, cal: 5.6, x: 0 }
 };
+// cible personnalisée : dimensions saisies (diamètres en mm)
+function persoModel() {
+  const v = id => parseFloat(($(id) || {}).value), ring = v('persoRing') > 0 ? v('persoRing') : 16, d10 = v('persoD10') > 0 ? v('persoD10') : 2 * ring;
+  return { nom: 'Cible personnalisée', ring, r10: d10 / 2, black: Math.max(0, v('persoBlack') || 0) / 2, cal: 5.6, x: Math.max(0, v('persoX') || 0) / 2, min: clamp(parseInt(($('persoMin') || {}).value) || 1, 1, 9) };
+}
+const FMT = { a4: [210, 297, 'A4'], a3: [297, 420, 'A3'], us: [216, 279, 'Lettre US'], c14: [140, 140, 'carton 14 × 14 cm'], c17: [170, 170, 'carton 17 × 17 cm'], c50: [500, 500, '50 × 50 cm'], c55: [550, 520, 'C50 / 55 × 52 cm'], sil: [450, 750, 'silhouette 45 × 75 cm'] };
+function freeFmt() { const f = $('freeFmt').value; if (f === 'custom') { const a = parseFloat($('freeW').value) || 210, b = parseFloat($('freeH').value) || 297; return [Math.min(a, b), Math.max(a, b), `${a} × ${b} mm`]; } return FMT[f] || FMT.a4; }
 function autoModel(disc, d) {
   switch (disc) {
     case 'pistolet': return d <= 10 ? 'ap10' : 'pp25';
@@ -771,8 +793,8 @@ function autoModel(disc, d) {
   }
 }
 function presetById(id) {
-  const m = MODELS[id] || MODELS.autre;
-  return { id, nom: m.nom, ring: m.ring, cal: m.cal, q: m.r10 / m.ring, blackR: m.black / m.ring, min: m.min || 1, xR: m.x / m.ring, edge: 0, arc: !!m.arc };
+  const m = id === 'perso' ? persoModel() : MODELS[id] || MODELS.autre;
+  return { id, nom: m.nom, ring: m.ring, cal: m.cal, q: m.r10 / m.ring, blackR: m.black / m.ring, min: m.min || 1, xR: m.x / m.ring, edge: 0, arc: !!m.arc, free: !!m.free };
 }
 // sans argument : modèle choisi (ou automatique) ; avec discipline/distance (ou un id) : pour un ancien enregistrement
 function preset(disc, d) {
@@ -781,6 +803,7 @@ function preset(disc, d) {
   return presetById(autoModel(disc, d == null ? 25 : d));
 }
 const isArc = () => preset().arc;
+const isFree = () => preset().free;
 function P() {
   const p = preset();
   const e = parseInt($('ringSelect').value);
@@ -798,6 +821,7 @@ function mmpp() { return P().ring / S.cal.w; }
 function edgeRings() { const p = P(); return p.edge === 0 ? preset().blackR : p.q + 10 - p.edge; }
 
 function scoreAt(x, y) {
+  if (isFree()) return { s: 0, dec: 0, x: false };
   const p = P();
   let d = hyp(x - S.cal.cx, y - S.cal.cy);
   if ($('lineRule').checked) d = Math.max(0, d - holeR());
@@ -855,7 +879,7 @@ function arcWords() {
 const simpleOn = () => $('simpleMode').checked;
 function setImage(c, opts = {}) {
   snapshot();
-  S.warpUndo = null;
+  S.warpUndo = null; S.paper = null;
   S.src = c;
   S.impacts = []; S.amb = []; S.warpPts = []; S.aim = null; S.reserve = [];
   S.align = { th: 0, tx: 0, ty: 0 };
@@ -993,8 +1017,8 @@ function drawMarks(c, map, k, u) {
   drawGrid(c, map, k, u);
   if (hasCenter()) {
     const [sx, sy] = map(cal.cx, cal.cy);
-    if (cal.w && p.edge === 0) ring(c, sx, sy, blackR() * k, 'rgba(255,193,7,.95)', 2 * u);
-    if (cal.w) for (let n = p.min; n <= 10; n++) {
+    if (cal.w && p.edge === 0 && !isFree()) ring(c, sx, sy, blackR() * k, 'rgba(255,193,7,.95)', 2 * u);
+    if (cal.w && !isFree()) for (let n = p.min; n <= 10; n++) {
       const isEdge = n === p.edge;
       ring(c, sx, sy, (p.q + 10 - n) * cal.w * k, isEdge ? 'rgba(255,193,7,.95)' : 'rgba(255,193,7,.42)', (isEdge ? 2 : 1) * u);
     }
@@ -1013,7 +1037,7 @@ function drawMarks(c, map, k, u) {
   S.impacts.forEach(im => {
     const [a, b] = map(im.x, im.y), r = Math.max(6 * u, rh * k), col = im.flag === 'doubt' || im.flag === 'check' ? '#d29922' : '#3fb950';
     ring(c, a, b, r, col, 2.5 * u);
-    if (!S.impacts.some(o => o !== im && hyp(o.x - im.x, o.y - im.y) * k < 26 * u)) label(c, im.score === 0 ? 'M' : String(im.score), a + r + 3 * u, b - 4 * u, col, u); // chiffres serrés : visibles en zoomant
+    if (!isFree() && !S.impacts.some(o => o !== im && hyp(o.x - im.x, o.y - im.y) * k < 26 * u)) label(c, im.score === 0 ? 'M' : String(im.score), a + r + 3 * u, b - 4 * u, col, u); // chiffres serrés : visibles en zoomant
   });
   if (S.impacts.length >= 2 && hasCal()) {
     const st = computeStats(); const [a, b] = map(st.m.x, st.m.y);
@@ -1371,6 +1395,7 @@ function fillHoles(lab, c, w, h) {
 }
 function autoTarget(silent, noSnap) {
   if (!S.src) return false;
+  if (isFree()) return autoFree(silent, noSnap);
   if (!noSnap) snapshot();
   try {
     let res = findTarget(S.src);
@@ -1399,6 +1424,60 @@ function autoTarget(silent, noSnap) {
     refresh();
     return false;
   }
+}
+
+// feuille claire la plus grande + repère sombre compact près du centre (point, carré, silhouette)
+function findPaper(src) {
+  const sc = Math.min(1, 420 / Math.max(src.width, src.height)), w = Math.max(8, Math.round(src.width * sc)), h = Math.max(8, Math.round(src.height * sc));
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(src, 0, 0, w, h);
+  const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  const t = otsu(g), lab = new Int32Array(w * h).fill(-1), comp = (test, seedOk) => {
+    const out = []; lab.fill(-1);
+    for (let i = 0; i < w * h; i++) { if (lab[i] >= 0 || !test(i)) continue; const id = out.length, st = [i]; lab[i] = id; let n = 0, sx = 0, sy = 0, x0 = w, y0 = h, x1 = 0, y1 = 0;
+      while (st.length) { const q = st.pop(), qx = q % w, qy = (q / w) | 0; n++; sx += qx; sy += qy; if (qx < x0) x0 = qx; if (qx > x1) x1 = qx; if (qy < y0) y0 = qy; if (qy > y1) y1 = qy;
+        for (const nb of [q - 1, q + 1, q - w, q + w]) { if (nb < 0 || nb >= w * h || lab[nb] >= 0 || Math.abs((nb % w) - qx) > 1 || !test(nb)) continue; lab[nb] = id; st.push(nb); } }
+      out.push({ id, n, cx: sx / n, cy: sy / n, x0, y0, x1, y1 }); }
+    return out; };
+  const P0 = comp(i => g[i] > t).sort((a, b) => b.n - a.n)[0]; if (!P0 || P0.n < 0.05 * w * h) return null;
+  // repère sombre : composant compact dans la zone centrale de la feuille
+  const pw = P0.x1 - P0.x0, ph = P0.y1 - P0.y0, inP = i => { const X = i % w, Y = (i / w) | 0; return X > P0.x0 + 0.08 * pw && X < P0.x1 - 0.08 * pw && Y > P0.y0 + 0.08 * ph && Y < P0.y1 - 0.08 * ph; };
+  // ouverture binaire (~5 mm) : détache les impacts collés au repère
+  const fsh = freeFmt()[0], rO = Math.max(1, Math.round(5 * Math.min(pw, ph) / fsh)), M0 = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) M0[i] = inP(i) && g[i] < 0.55 * t ? 1 : 0;
+  const box = (A, mx) => { const B = new Uint8Array(w * h), C = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = mx ? 0 : 1; for (let d = -rO; d <= rO; d++) { const xx = x + d; const a = xx < 0 || xx >= w ? 0 : A[y * w + xx]; v = mx ? v | a : v & a; } B[y * w + x] = v; }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = mx ? 0 : 1; for (let d = -rO; d <= rO; d++) { const yy = y + d; const a = yy < 0 || yy >= h ? 0 : B[yy * w + x]; v = mx ? v | a : v & a; } C[y * w + x] = v; }
+    return C; };
+  const MO = box(box(M0, false), true);
+  const D = comp(i => MO[i] === 1).filter(o => { const bw = o.x1 - o.x0 + 1, bh = o.y1 - o.y0 + 1; return o.n > 0.0015 * pw * ph && o.n / (bw * bh) > 0.45 && Math.max(bw, bh) / Math.min(bw, bh) < 3; })
+    .sort((a, b) => b.n - a.n)[0];
+  const k = 1 / sc, edge = (v, m) => v <= 1 || v >= m - 2;
+  if (D) { // repère compact (point, carré) : traité comme un visuel noir ; silhouette allongée : non
+    const bw = D.x1 - D.x0 + 1, bh = D.y1 - D.y0 + 1;
+    D.round = Math.max(bw, bh) / Math.min(bw, bh) < 1.35 && D.n / (bw * bh) > 0.5;
+    const ext = (bw + bh) / 4; D.r = Math.sqrt(ext * ext + rO * rO);
+  }
+  return { x0: P0.x0 * k, y0: P0.y0 * k, x1: (P0.x1 + 1) * k, y1: (P0.y1 + 1) * k, cutX: edge(P0.x0, w) || edge(P0.x1, w), cutY: edge(P0.y0, h) || edge(P0.y1, h), aim: D ? { x: D.cx * k, y: D.cy * k, r: D.r * k, round: D.round } : null };
+}
+function freeRoi() { // rayon de recherche : de l'origine jusqu'au coin le plus éloigné de la feuille (ou de la photo)
+  const b = S.paper || { x0: 0, y0: 0, x1: S.src.width, y1: S.src.height };
+  const R = Math.max(...[[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]].map(([x, y]) => hyp(x - S.cal.cx, y - S.cal.cy))) + 5;
+  S.cal.q = R / S.cal.w - 9;
+}
+function autoFree(silent, noSnap) {
+  if (!noSnap) snapshot();
+  const p = findPaper(S.src), [fs, fl, fn] = freeFmt();
+  if (!p) { S.paper = null; banner('Feuille non trouvée : placez ① le point visé puis ② l\'échelle', 'warn'); refresh(); return false; }
+  const bw = p.x1 - p.x0, bh = p.y1 - p.y0, port = bh >= bw, mmW = port ? fs : fl, mmH = port ? fl : fs;
+  const sc = [!p.cutX && bw / mmW, !p.cutY && bh / mmH].filter(Boolean);
+  const pxmm = sc.length ? sc.reduce((a, b) => a + b, 0) / sc.length : Math.max(bw / mmW, bh / mmH);
+  S.paper = p;
+  S.cal = { cx: p.aim ? p.aim.x : (p.x0 + p.x1) / 2, cy: p.aim ? p.aim.y : (p.y0 + p.y1) / 2, w: pxmm * P().ring };
+  if (p.aim && p.aim.round) S.cal.rb = p.aim.r; // point noir rond : traité comme un visuel
+  freeRoi();
+  banner(`✅ Feuille ${fn} repérée · point visé : ${p.aim ? 'repère imprimé' : 'centre de la feuille'}${sc.length ? '' : ' · échelle approximative (feuille coupée)'} — corrigez avec ① ou ② si besoin`, sc.length ? 'ok' : 'warn');
+  refresh(); return true;
 }
 
 // ============ REDRESSEMENT (HOMOGRAPHIE) ============
@@ -1563,7 +1642,7 @@ function detect(opt = {}) {
   const K = Math.max(Math.ceil(r * 1.2), Math.min(Math.round(r * 4), Math.floor((0.9 * spacing - 1) / 2)), 2);
   const clo = mmf(mmf(g1, w, h, K, true), w, h, K, false);          // fermeture : bouche les trous sombres
   const opn = mmf(mmf(g1, w, h, K, false), w, h, K, true);          // ouverture : efface les trous clairs
-  const colorTarget = isArc();
+  const colorTarget = isArc() || (isFree() && !S.cal.rb);
   const bgm = colorTarget ? mmf(mmf(clo, w, h, K, false), w, h, K, true) : null;
   // zones du visuel noir connues par le calibrage : trous clairs dans le noir, sombres dans le blanc
   const Rb = blackR() / sx, band = 1.3 * r + 1;
@@ -1674,7 +1753,7 @@ function detect(opt = {}) {
   };
   comps.forEach(c => { c.pr = polar(c); });
   let phi = null;
-  if (!isArc()) {
+  if (!isArc() && !isFree()) {
     const votes = new Float32Array(90);
     comps.forEach(c => {
       const pr = c.pr; if (pr.r < p.q + 0.3 || pr.r > p.q + 10.2 - p.min) return;
@@ -1939,16 +2018,17 @@ function updateStats() {
     set('sN', String(S.impacts.length)); $('impList').innerHTML = ''; diag(null); return;
   }
   const isDec = ['pistolet', 'carabine'].includes($('discipline').value);
-  set('sTotal', String(st.total)); $('sTotal').style.color = 'var(--ac)';
-  set('sDec', isDec ? st.dec.toFixed(1) : '—'); $('sDec').style.cssText = 'font-size:18px';
-  set('sN', st.n + (preset().xR > 0 ? ` · ${st.xs} mouche${st.xs > 1 ? 's' : ''}` : '')); set('sAvg', st.avg.toFixed(2));
+  const fr = isFree(); $('sTotal').previousElementSibling.textContent = fr ? 'Impacts' : 'Score';
+  set('sTotal', String(fr ? st.n : st.total)); $('sTotal').style.color = 'var(--ac)';
+  set('sDec', isDec && !fr ? st.dec.toFixed(1) : '—'); $('sDec').style.cssText = 'font-size:18px';
+  set('sN', st.n + (preset().xR > 0 ? ` · ${st.xs} mouche${st.xs > 1 ? 's' : ''}` : '')); set('sAvg', fr ? '—' : st.avg.toFixed(2));
   const hz = Math.abs(st.dx) < 0.5 ? '' : `${fmm(Math.abs(st.dx))} ${st.dx > 0 ? 'droite' : 'gauche'}`;
   const vt = Math.abs(st.dy) < 0.5 ? '' : `${fmm(Math.abs(st.dy))} ${st.dy > 0 ? 'bas' : 'haut'}`;
   set('sMpi', st.off < 0.5 ? 'Centré' : `${fmm(st.off)} à ${st.clock}h` + (hz || vt ? ` (${[hz, vt].filter(Boolean).join(', ')})` : ''));
   set('sGroup', st.n > 1 ? fmm(st.esmm) + (st.moa ? ` · ${st.moa.toFixed(1)} MOA` : '') : '—');
   set('sMr', st.n > 1 ? fmm(st.mrmm) : '—');
   if (st.n > 1) { const [t, c] = regLabel(st.mrR); set('sReg', t, c); } else set('sReg', '—');
-  $('impList').innerHTML = S.impacts.map((i, k) => `<div><span>#${k + 1}${i.flag === 'doubt' || i.flag === 'check' ? ' ⚠️' : i.flag === 'manual' ? ' 👆' : ''}</span><span>${i.score === 0 ? 'Manqué' : i.score + ' pts'}${isDec ? ' · ' + i.dec.toFixed(1) : ''}</span></div>`).join('');
+  $('impList').innerHTML = S.impacts.map((i, k) => `<div><span>#${k + 1}${i.flag === 'doubt' || i.flag === 'check' ? ' ⚠️' : i.flag === 'manual' ? ' 👆' : ''}</span><span>${fr ? fmm(hyp(i.x - S.cal.cx, i.y - S.cal.cy) * mmpp()) + ' du point visé' : (i.score === 0 ? 'Manqué' : i.score + ' pts') + (isDec ? ' · ' + i.dec.toFixed(1) : '')}</span></div>`).join('');
   diag(st);
 }
 function diag(st) {
@@ -1974,7 +2054,7 @@ function diag(st) {
       <div class="drill"><b>Exercice :</b> ${a.drills}</div>
       <p class="hint" style="margin-top:6px">Si le décalage est identique d'une série à l'autre et la technique constante, réglez plutôt les organes de visée : ramener le groupement de ${fmm(Math.abs(st.dx))} vers la ${st.dx > 0 ? 'gauche' : 'droite'} et ${fmm(Math.abs(st.dy))} vers le ${st.dy > 0 ? 'haut' : 'bas'}.</p>`;
   }
-  if (st.mrR > 1.2) html += `<div class="drill"><b>Priorité : le groupement.</b> Rayon moyen ${fmm(st.mrmm)} (${st.mrR.toFixed(1)} anneau). Avant de corriger un décalage, travaillez la régularité : même position, même départ du coup, même respiration.</div>`;
+  if (st.mrR > 1.2) html += `<div class="drill"><b>Priorité : le groupement.</b> Rayon moyen ${fmm(st.mrmm)}${isFree() ? '' : ` (${st.mrR.toFixed(1)} anneau)`}. Avant de corriger un décalage, travaillez la régularité : même position, même départ du coup, même respiration.</div>`;
   else if (offPx <= Math.max(0.5 * st.mr, 0.5 * w)) html += `<div class="drill"><b>Prochain défi :</b> resserrer encore le groupement (rayon moyen actuel ${fmm(st.mrmm)}).</div>`;
   if (st.flyers) html += `<p class="hint">${st.flyers} coup(s) isolé(s) exclu(s) du calcul du point moyen.</p>`;
   html += speedTips(st) + armTips(dirKey, st);
@@ -1989,7 +2069,7 @@ function save() {
   try {
     localStorage.setItem(dataKey(), JSON.stringify({
       history: S.history, target: S.target, learn: S.learn || {}, prog: S.prog || { c: {}, d: {} }, arms: S.arms || [],
-      params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'model', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity', 'shotMode', 'seriesTime', 'armSel'].map(k => [k, $(k).value]).concat([['simpleMode', $('simpleMode').checked], ['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
+      params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'model', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity', 'shotMode', 'seriesTime', 'armSel', 'persoD10', 'persoRing', 'persoBlack', 'persoX', 'persoMin', 'freeFmt', 'freeW', 'freeH'].map(k => [k, $(k).value]).concat([['simpleMode', $('simpleMode').checked], ['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
     }));
   } catch (e) { console.warn('stockage indisponible', e); }
 }
@@ -2019,6 +2099,7 @@ function loadSaved() {
   if (!S.target.id) S.target.id = uid();
   S.target.series.forEach(t => { if (!t.id) { t.id = uid(); t.targetId = S.target.id; } });
 }
+const ptsTxt = h => h.free ? `${h.n} impacts · R ${fmm(h.mr_mm)}` : `${h.total} pts`;
 function validateSeries() {
   const st = computeStats(); if (!st || S.review) return;
   snapshot();
@@ -2026,18 +2107,19 @@ function validateSeries() {
   const w = S.cal.w;
   const imps = S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: +o.x.toFixed(4), dy: +o.y.toFixed(4), score: i.score, dec: i.dec }; });
   const rec = { id: uid(), targetId: S.target.id, num: S.target.series.length + 1, date: new Date().toISOString(), model: preset().id, x: st.xs, mode: $('shotMode').value, time: $('shotMode').value === 'vitesse' ? +$('seriesTime').value : null, arm: (activeArm() || {}).name || null, discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1), impacts: imps };
+  if (isFree()) Object.assign(rec, { free: 1, total: null, avg: null, dec: null });
   storePhoto(rec.id);
   learnFrom(); S.detSet = null;
   S.target.series.push(rec);
   S.history.push(rec);
   S.impacts = []; S.amb = [];
   save(); refresh();
-  banner(`✅ Série ${S.target.series.length} enregistrée (${rec.total} pts). Tirez la suivante puis photographiez la même cible.`, 'ok');
+  banner(`✅ Série ${S.target.series.length} enregistrée (${ptsTxt(rec)}). Tirez la suivante puis photographiez la même cible.`, 'ok');
   toast('Série enregistrée', 'ok');
   goStep('photo');
 }
 function renderHistory() {
-  const H = S.history, spark = $('spark');
+  const H = S.history.filter(h => h.avg != null), spark = $('spark');
   if (!H.length) { spark.innerHTML = ''; $('histInfo').textContent = 'Aucune série enregistrée'; }
   else {
     const last = H.slice(-24);
@@ -2048,7 +2130,7 @@ function renderHistory() {
   const TS = S.target.series, tn = TS.reduce((a, x) => a + (x.n || 0), 0), tt = TS.reduce((a, x) => a + (x.total || 0), 0), td = TS.reduce((a, x) => a + (x.dec || 0), 0);
   $('targetTotal').hidden = !TS.length;
   $('targetTotal').innerHTML = `<div><div class="l">Total ${isArc() ? 'manche' : 'match'}</div><div class="v">${tt}${td ? ` <small>(${td.toFixed(1)})</small>` : ''}</div></div><div><div class="l">${isArc() ? 'Volées' : 'Séries'}</div><div class="v">${TS.length}</div></div><div><div class="l">${isArc() ? 'Flèches' : 'Coups'}</div><div class="v">${tn}</div></div><div><div class="l">Moyenne</div><div class="v">${tn ? (tt / tn).toFixed(2) : '—'}</div></div>`;
-  $('seriesList').innerHTML = S.target.series.length ? S.target.series.map((s, i) => srow(s, `Série ${i + 1} · ${s.total} pts · moy ${s.avg}${s.mr_mm != null ? ' · R ' + fmm(s.mr_mm) : ''}`)).join('') : '<p class="hint">Aucune série validée sur cette cible.</p>';
+  $('seriesList').innerHTML = S.target.series.length ? S.target.series.map((s, i) => srow(s, `Série ${i + 1} · ${ptsTxt(s)}${s.free ? '' : ' · moy ' + s.avg}${!s.free && s.mr_mm != null ? ' · R ' + fmm(s.mr_mm) : ''}`)).join('') : '<p class="hint">Aucune série validée sur cette cible.</p>';
   renderCalendar(); renderDash();
 }
 function updateTargetInfo() {
@@ -2142,7 +2224,7 @@ async function review(id) {
   sizeImgCanvas(); $('stageEmpty').hidden = true; renderView(); fitView();
   $('cmpModal').hidden = true; $('bannerDone').textContent = 'Retour';
   setView('analyse'); refresh(); goStep('res'); showStage();
-  banner(`👁 Série ${rec.num || ''} du ${fdate(rec.date)} · ${rec.total} pts (lecture seule)`, 'act');
+  banner(`👁 Série ${rec.num || ''} du ${fdate(rec.date)} · ${ptsTxt(rec)} (lecture seule)`, 'act');
 }
 function endReview() {
   const st = S.stash; S.review = null; S.stash = null; $('bannerDone').textContent = 'Terminer';
@@ -2161,7 +2243,7 @@ function curRec() {
 function cmpRecs() { const L = S.history.filter(h => h.impacts && h.id).slice().reverse(), c = curRec(); return c ? [c, ...L] : L; }
 function openCompare(idA) {
   const L = cmpRecs(); if (!L.length) { toast('Pas encore de série à comparer', 'warn'); return; }
-  const opt = L.map(h => `<option value="${h.id}">${h.id === 'cur' ? 'Série en cours' : fdate(h.date) + ' · S' + (h.num || '?')} · ${h.total} pts</option>`).join('');
+  const opt = L.map(h => `<option value="${h.id}">${h.id === 'cur' ? 'Série en cours' : fdate(h.date) + ' · S' + (h.num || '?')} · ${h.total == null && h.free ? ptsTxt(h) : h.total + ' pts'}</option>`).join('');
   $('cmpA').innerHTML = opt; $('cmpB').innerHTML = opt;
   const A = L.find(h => h.id === idA) || L[0];
   let B = null;
@@ -2215,7 +2297,7 @@ function renderCalendar() {
   $('calGrid').innerHTML = html;
   const L = by[S.calDay] || [];
   $('dayList').innerHTML = L.length
-    ? L.map(h => srow(h, `${new Date(h.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · S${h.num || '?'} · <b>${h.total} pts</b> · moy ${h.avg}${h.distance ? ' · ' + h.distance + ' m' : ''}`)).join('')
+    ? L.map(h => srow(h, `${new Date(h.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · S${h.num || '?'} · <b>${ptsTxt(h)}</b>${h.free ? '' : ' · moy ' + h.avg}${h.distance ? ' · ' + h.distance + ' m' : ''}`)).join('')
     : (S.calDay ? '<p class="hint">Aucune série ce jour-là.</p>' : '<p class="hint">Les séries validées apparaîtront ici, jour par jour.</p>');
 }
 
@@ -2265,7 +2347,7 @@ function lineChart(c, vals, m, opt = {}) {
 }
 // séance = séries validées le même jour (discipline courante) ; par défaut le dernier jour de tir
 function sessionSeries() {
-  const disc = $('discipline').value, H = S.history.filter(h => (h.discipline || disc) === disc && h.avg != null); if (!H.length) return [];
+  const disc = $('discipline').value, H = S.history.filter(h => (h.discipline || disc) === disc && (h.avg != null || h.free)); if (!H.length) return [];
   const day = d => new Date(d).toDateString(), last = day(H.at(-1).date);
   return H.filter(h => day(h.date) === last);
 }
@@ -2273,21 +2355,22 @@ const DIRW = ['droite', 'haut-droite', 'haut', 'haut-gauche', 'gauche', 'bas-gau
 function openSummary() {
   const L = sessionSeries(); if (!L.length) { toast('Validez au moins une série pour obtenir la synthèse', 'err'); return; }
   const arc = isArc(), U = arc ? ['volée', 'volées', 'flèches'] : ['série', 'séries', 'coups'];
-  const n = L.reduce((a, h) => a + h.n, 0), tot = L.reduce((a, h) => a + h.total, 0), dec = L.reduce((a, h) => a + (h.dec || 0), 0);
-  const avg = tot / n, best = L.reduce((a, h) => h.avg > a.avg ? h : a), worst = L.reduce((a, h) => h.avg < a.avg ? h : a);
+  const fr = L.some(h => h.free); if (fr) L.splice(0, L.length, ...L.filter(h => h.free));
+  const n = L.reduce((a, h) => a + h.n, 0), tot = fr ? 0 : L.reduce((a, h) => a + h.total, 0), dec = fr ? 0 : L.reduce((a, h) => a + (h.dec || 0), 0);
+  const avg = fr ? 0 : tot / n, best = L.reduce((a, h) => h.avg > a.avg ? h : a), worst = L.reduce((a, h) => h.avg < a.avg ? h : a);
   const mrs = L.map(h => h.mr_mm).filter(v => v != null), mr = mrs.length ? mrs.reduce((a, b) => a + b, 0) / mrs.length : null;
   const W = L.reduce((a, h) => a + h.n, 0) || 1, dx = L.reduce((a, h) => a + (h.dx_mm || 0) * h.n, 0) / W, dy = L.reduce((a, h) => a + (h.dy_mm || 0) * h.n, 0) / W, off = Math.hypot(dx, dy);
   const sd = Math.sqrt(L.reduce((a, h) => a + (h.avg - avg) ** 2, 0) / L.length);
   const tips = [], good = [], work = [];
   // évolution pendant la séance
-  if (L.length >= 3) {
+  if (L.length >= 3 && !fr) {
     const k = Math.floor(L.length / 2), a1 = L.slice(0, k).reduce((a, h) => a + h.avg, 0) / k, a2 = L.slice(-k).reduce((a, h) => a + h.avg, 0) / k, d = a2 - a1;
     if (d > 0.3) good.push(`Progression pendant la séance : +${d.toFixed(2)} pt par coup entre le début et la fin. Votre échauffement est peut-être trop court : commencez par quelques ${U[2]} à sec.`);
     else if (d < -0.3) work.push(`Baisse en fin de séance (${d.toFixed(2)} pt par coup) : fatigue ou baisse de concentration. Faites des pauses plus longues, ou raccourcissez la séance pour garder la qualité.`);
     else if (L.slice(-2).every(h => h.avg < avg - 0.2) && Math.max(...L.map(h => h.avg)) - L.at(-1).avg > 0.6) work.push(`Les 2 dernières ${U[1]} sont sous votre moyenne (pic à ${Math.max(...L.map(h => h.avg))}, fin à ${L.at(-1).avg}) : arrêtez-vous plus tôt ou faites une vraie pause quand la qualité baisse.`);
     else good.push('Niveau stable du début à la fin de la séance.');
   }
-  if (L.length >= 2) (sd < 0.35 ? good : work).push(sd < 0.35 ? `Séance régulière : écart entre ${U[1]} faible (±${sd.toFixed(2)}).` : `Résultats irréguliers d’une ${U[0]} à l’autre (±${sd.toFixed(2)}) : soignez la routine pour que chaque ${U[0]} se déroule de la même façon.`);
+  if (L.length >= 2 && !fr) (sd < 0.35 ? good : work).push(sd < 0.35 ? `Séance régulière : écart entre ${U[1]} faible (±${sd.toFixed(2)}).` : `Résultats irréguliers d’une ${U[0]} à l’autre (±${sd.toFixed(2)}) : soignez la routine pour que chaque ${U[0]} se déroule de la même façon.`);
   // centrage
   const same = L.filter(h => h.dx_mm != null && (h.dx_mm * dx + h.dy_mm * dy) > 0).length / L.length;
   if (mr != null && off > 0.5 * mr) {
@@ -2298,25 +2381,30 @@ function openSummary() {
   // groupement
   if (mrs.length >= 2) { const g = mrs.at(-1) - mrs[0]; if (g < -0.1 * mrs[0]) good.push(`Groupement resserré pendant la séance (${fmm(mrs[0])} → ${fmm(mrs.at(-1))}).`); else if (g > 0.15 * mrs[0]) work.push(`Groupement qui s’ouvre en fin de séance (${fmm(mrs[0])} → ${fmm(mrs.at(-1))}) : signe de fatigue de la tenue.`); }
   const dirKey = mr != null && off > 0.5 * mr ? (Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? 'bas' : 'haut') : (dx > 0 ? 'droite' : 'gauche')) : 'center';
-  const dr = DRILLS.find(d => d.id === (sd >= 0.35 || (mr != null && L.some(h => h.mr_mm > 1.3 * mr)) ? 'blanc' : drillFor(dirKey)));
+  const dr = DRILLS.find(d => d.id === ((!fr && sd >= 0.35) || (mr != null && L.some(h => h.mr_mm > 1.3 * mr)) ? 'blanc' : drillFor(dirKey)));
   const lab = L.map((h, i) => String(i + 1)), ch = id => `<canvas class="chart" id="${id}" width="640" height="240"></canvas>`;
   $('sumBody').innerHTML = `<div class="card-h">${ICON('chart')}<span class="l">Synthèse de séance · ${fdate(L[0].date)}</span></div>
     <h2>${$('discipline').selectedOptions[0].text} · ${L[0].distance} m${L[0].arm ? ' · ' + esc(L[0].arm) : ''}</h2>
-    <div class="ttot sumk"><div><div class="l">Total</div><div class="v">${tot}${dec ? ` <small>(${dec.toFixed(1)})</small>` : ''}</div></div><div><div class="l">${U[1]}</div><div class="v">${L.length}</div></div><div><div class="l">${U[2]}</div><div class="v">${n}</div></div><div><div class="l">Moy./coup</div><div class="v">${avg.toFixed(2)}</div></div></div>
-    <p class="hint">Meilleure ${U[0]} : n°${L.indexOf(best) + 1} (${best.avg}) · moins bonne : n°${L.indexOf(worst) + 1} (${worst.avg})${mr != null ? ' · groupement moyen ' + fmm(mr) : ''}</p>
+    <div class="ttot sumk">${fr ? `<div><div class="l">Groupement</div><div class="v">${fmm(mr)}</div></div><div><div class="l">Décalage</div><div class="v">${fmm(off)}</div></div>` : `<div><div class="l">Total</div><div class="v">${tot}${dec ? ` <small>(${dec.toFixed(1)})</small>` : ''}</div></div><div><div class="l">${U[1]}</div><div class="v">${L.length}</div></div>`}<div><div class="l">${U[2]}</div><div class="v">${n}</div></div>${fr ? `<div><div class="l">${U[1]}</div><div class="v">${L.length}</div></div>` : `<div><div class="l">Moy./coup</div><div class="v">${avg.toFixed(2)}</div></div>`}</div>
+    ${fr ? '' : `<p class="hint">Meilleure ${U[0]} : n°${L.indexOf(best) + 1} (${best.avg}) · moins bonne : n°${L.indexOf(worst) + 1} (${worst.avg})${mr != null ? ' · groupement moyen ' + fmm(mr) : ''}</p>`}
     ${good.length ? `<h3 class="ex-h good">✅ Points forts</h3><ul>${good.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
     ${work.length ? `<h3 class="ex-h warnc">🎯 À travailler</h3><ul>${work.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
     ${dr ? `<h3 class="ex-h">Pour la prochaine séance</h3><button class="ex-rel" data-learn="drills:${dr.id}">${ICON(dr.ic)}<span><b>${dr.t}</b><small>${dr.dur}</small></span></button>` : ''}
     ${L.length >= 2 ? `<h3 class="ex-h">Évolution ${U[0]} par ${U[0]}</h3><div class="sumch">${ch('sc1')}${ch('sc2')}${ch('sc3')}</div><p class="hint">Trait pointillé : tendance (vert = amélioration, rouge = dégradation).</p>` : `<p class="hint">Validez au moins 2 ${U[1]} pour voir les graphiques d’évolution.</p>`}`;
-  if (L.length >= 2) { lineChart($('sc1'), L.map(METRIC.avg.f), METRIC.avg, { labels: lab }); lineChart($('sc2'), L.map(METRIC.mr.f), METRIC.mr, { labels: lab, color: '#a78bfa' }); lineChart($('sc3'), L.map(METRIC.off.f), METRIC.off, { labels: lab, color: '#fbbf24' }); }
-  S.sumText = `Mouche — séance du ${fdate(L[0].date)}\n${L.length} ${U[1]}, ${n} ${U[2]} : ${tot} pts (moy. ${avg.toFixed(2)})\n` + good.map(t => '+ ' + t).concat(work.map(t => '- ' + t)).join('\n');
+  if (L.length >= 2) { if (fr) $('sc1').remove(); else lineChart($('sc1'), L.map(METRIC.avg.f), METRIC.avg, { labels: lab }); lineChart($('sc2'), L.map(METRIC.mr.f), METRIC.mr, { labels: lab, color: '#a78bfa' }); lineChart($('sc3'), L.map(METRIC.off.f), METRIC.off, { labels: lab, color: '#fbbf24' }); }
+  S.sumText = `Mouche — séance du ${fdate(L[0].date)}\n${L.length} ${U[1]}, ${n} ${U[2]} : ${fr ? 'groupement ' + fmm(mr) : tot + ' pts (moy. ' + avg.toFixed(2) + ')'}\n` + good.map(t => '+ ' + t).concat(work.map(t => '- ' + t)).join('\n');
   $('sumModal').hidden = false;
 }
 function renderDash() {
   const disc = $('discipline').value, H = S.history.filter(h => (h.discipline || disc) === disc && h.avg != null);
   const lbl = $('discipline').selectedOptions[0].text;
   ['trendChart', 'heatPlot', 'heatTitle', 'trendSeg', 'trendHint'].forEach(id => $(id).hidden = H.length < 2); $('btnSummary2').hidden = !H.length;
-  if (!H.length) { $('dashStats').innerHTML = `<p class="hint">Validez des séries en ${lbl} pour voir vos records et votre progression.</p>`; return; }
+  const HF = S.history.filter(h => (h.discipline || disc) === disc && h.free);
+  if (!H.length) {
+    $('dashStats').innerHTML = HF.length ? `<p class="hint">${HF.length} série(s) sur cible sans anneaux : suivez votre groupement et votre décalage ci-dessous.</p>` : `<p class="hint">Validez des séries en ${lbl} pour voir vos records et votre progression.</p>`;
+    if (HF.length >= 2) { if (trendM === 'avg' || trendM === 'dec') trendM = 'mr'; ['trendChart', 'trendSeg', 'trendHint'].forEach(id => $(id).hidden = false); document.querySelectorAll('#trendSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === trendM)); $('trendHint').textContent = METRIC[trendM].hint; lineChart($('trendChart'), HF.slice(-40).map(METRIC[trendM].f), METRIC[trendM], { labels: HF.slice(-40).map(h => fdate(h.date).slice(0, 5)) }); }
+    $('btnSummary2').hidden = !HF.length; return;
+  }
   const mean = a => a.reduce((t, h) => t + h.avg, 0) / a.length;
   const best = H.reduce((a, h) => h.avg > a.avg ? h : a), last = H.slice(-5), prev = H.slice(-10, -5);
   const tr = prev.length ? mean(last) - mean(prev) : null, nImp = H.reduce((t, h) => t + (h.n || 0), 0);
@@ -2973,6 +3061,10 @@ function refresh() {
   rescore(); drawOverlay(); updateStats(); renderHistory(); updateTargetInfo(); updateButtons();
 }
 function updateButtons() {
+  const fr = isFree(); document.body.classList.toggle('free', fr);
+  $('freeBox').hidden = !fr; $('persoBox').hidden = $('model').value !== 'perso'; $('freeCustom').hidden = $('freeFmt').value !== 'custom';
+  $('btnCenter').textContent = fr ? '① Point visé' : '① Centre';
+  $('btnAuto').lastChild.textContent = fr ? 'Repérer la feuille automatiquement' : 'Repérer automatiquement';
   document.body.classList.toggle('simple', simpleOn()); arcWords();
   $('suiviEmpty').hidden = S.history.length > 0;
   const has = !!S.src, cal = hasCal(), ctr = hasCenter(), n = S.impacts.length, any = n || S.amb.length;
@@ -2994,12 +3086,13 @@ function updateButtons() {
 
 // ============ INTERACTIONS TACTILES ============
 const ptrs = new Map(); let gest = null;
-const AIM = ['center', 'ring', 'manual', 'warp', 'circle'];
+const AIM = ['center', 'ring', 'manual', 'warp', 'circle', 'scale'];
 function rel(e) { const r = stage.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
 function aimAt(sx, sy) { const [x, y] = toImg(sx, sy); S.aim = { x, y }; drawOverlay(); showLoupe(sx, sy); }
 function commit(x, y) {
   if (S.mode === 'center') {
     snapshot(); S.cal.cx = x; S.cal.cy = y;
+    if (isFree()) { if (!S.cal.w) { S.scalePts = []; setMode('scale', '② Touchez 2 points dont vous connaissez l\'écart (ex. 2 coins de la feuille)'); refresh(); return; } freeRoi(); }
     if (!S.cal.w) { setMode('ring', `② Glissez jusqu'au bord ${edgeLabel()} puis relâchez`); refresh(); return; }
     setMode('idle'); banner('✅ Centre placé — affinez avec les flèches si besoin', 'ok');
   } else if (S.mode === 'ring') {
@@ -3009,6 +3102,16 @@ function commit(x, y) {
   } else if (S.mode === 'manual') {
     snapshot(); S.impacts.push({ x, y, conf: 999, flag: 'manual' });
   } else if (S.mode === 'warp') { manualWarpPoint(x, y); return; }
+  else if (S.mode === 'scale') {
+    (S.scalePts = S.scalePts || []).push([x, y]);
+    if (S.scalePts.length < 2) { banner('② Premier point posé — touchez le second', 'act'); refresh(); return; }
+    const [[ax, ay], [bx, by]] = S.scalePts, dpx = hyp(bx - ax, by - ay); S.scalePts = [];
+    const mm = parseFloat(String(prompt('Distance réelle entre ces 2 points, en mm :', String(freeFmt()[0])) || '').replace(',', '.'));
+    if (!(mm > 0) || dpx < 5) { setMode('idle'); banner('Échelle annulée', 'warn'); refresh(); return; }
+    snapshot(); S.cal.w = dpx / mm * P().ring;
+    if (!hasCenter()) { S.cal.cx = (ax + bx) / 2; S.cal.cy = (ay + by) / 2; }
+    freeRoi(); setMode('idle'); banner(`✅ Échelle : ${(dpx / mm).toFixed(2)} px/mm — placez le point visé (①) si besoin`, 'ok');
+  }
   else if (S.mode === 'circle') {
     S.circPts.push([x, y]);
     if (S.circPts.length >= 3) {
@@ -3117,11 +3220,14 @@ on('btnResetFilter', () => {
 $('sensitivity').addEventListener('input', e => { $('sensVal').textContent = e.target.value; });
 ['discipline', 'distance', 'model'].forEach(id => $(id).addEventListener('change', () => {
   $('distanceCustom').hidden = $('distance').value !== 'custom';
-  applyPreset(); save(); refresh();
+  applyPreset(); save(); if (id === 'model' && S.src && !S.review) { autoTarget(false); } refresh();
 }));
 ['distanceCustom', 'ringMm', 'calMm', 'ringSelect', 'expected', 'sensitivity', 'shooter', 'lineRule', 'leftHanded', 'simpleMode'].forEach(id => $(id).addEventListener('change', () => { save(); refresh(); }));
 
 on('btnAuto', () => { setMode('idle'); autoTarget(false); });
+on('btnScale', () => { S.scalePts = []; setMode(S.mode === 'scale' ? 'idle' : 'scale', '② Touchez 2 points dont vous connaissez l\'écart (ex. 2 coins de la feuille)'); });
+['persoD10', 'persoRing', 'persoBlack', 'persoX', 'persoMin'].forEach(id => $(id).addEventListener('change', () => { applyPreset(); save(); refresh(); }));
+['freeFmt', 'freeW', 'freeH'].forEach(id => $(id).addEventListener('change', () => { save(); if (S.src && isFree()) autoTarget(false); refresh(); }));
 on('btnCenter', () => setMode('center', '① Posez le doigt près du centre, glissez avec la loupe, relâchez'));
 on('btnRing', () => setMode('ring', `② Glissez jusqu'au bord ${edgeLabel()}, relâchez`));
 on('btnWarp', () => { setMode('warp', `📐 Touchez le bord ${edgeLabel()} : ① en HAUT`); });
