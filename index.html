@@ -209,11 +209,13 @@ input[type=range]{width:100%;accent-color:var(--ac)}
           </select></label>
         </div>
         <input type="number" id="distanceCustom" placeholder="Distance en mètres" hidden>
+        <label class="f">Modèle de cible<select id="model"><option value="auto">Automatique (selon discipline et distance)</option><option value="ap10">ISSF pistolet 10 m (air)</option><option value="pp25">ISSF pistolet 25/50 m précision (C50)</option><option value="rf25">ISSF pistolet vitesse 25 m</option><option value="ar10">ISSF carabine 10 m (air)</option><option value="r50">ISSF carabine 50 m</option><option value="r300">ISSF carabine 300 m</option><option value="wa40">Arc — blason 40 cm</option><option value="wa60">Arc — blason 60 cm</option><option value="wa80">Arc — blason 80 cm</option><option value="wa122">Arc — blason 122 cm</option><option value="autre">Autre cible</option></select></label>
         <div class="row">
           <label class="f">Largeur d'anneau (mm)<input type="number" id="ringMm" step="0.1" min="0.5"></label>
           <label class="f">Diamètre impact (mm)<input type="number" id="calMm" step="0.1" min="1"></label>
         </div>
         <label class="f">Limite de référence<select id="ringSelect">
+          <option value="0" selected>Bord du visuel (noir, ou jaune à l'arc)</option>
           <option value="1">Bord extérieur de l'anneau 1</option><option value="2">Bord de l'anneau 2</option><option value="3">Bord de l'anneau 3 (noir carabine 50 m)</option>
           <option value="4">Bord de l'anneau 4 (noir carabine 10 m)</option><option value="5">Bord de l'anneau 5</option><option value="6">Bord de l'anneau 6</option>
           <option value="7">Bord de l'anneau 7 (noir pistolet)</option><option value="8">Bord de l'anneau 8</option><option value="9">Bord de l'anneau 9 (jaune arc)</option><option value="10">Bord de l'anneau 10</option>
@@ -502,19 +504,43 @@ function dist() {
   return v === 'custom' ? (parseFloat($('distanceCustom').value) || 0) : parseFloat(v);
 }
 // ring = largeur d'anneau (mm), cal = diamètre impact (mm), q = rayon du 10 / largeur d'anneau, edge = anneau du bord du visuel
-function preset(disc = $('discipline').value, d = dist()) {
+// Modèles officiels (cotes ISSF / World Archery, en mm) : rayon du 10, largeur d'anneau, rayon du visuel, mouche (10 intérieur)
+const MODELS = {
+  ap10: { nom: 'ISSF pistolet 10 m (air)', ring: 8, r10: 5.75, black: 29.75, cal: 4.5, x: 2.5 },
+  pp25: { nom: 'ISSF pistolet 25/50 m précision (C50)', ring: 25, r10: 25, black: 100, cal: 5.6, x: 12.5 },
+  rf25: { nom: 'ISSF pistolet vitesse 25 m', ring: 40, r10: 50, black: 250, cal: 5.6, x: 25, min: 5 },
+  ar10: { nom: 'ISSF carabine 10 m (air)', ring: 2.5, r10: 0.25, black: 15.25, cal: 4.5, x: 0 },
+  r50: { nom: 'ISSF carabine 50 m', ring: 8, r10: 5.2, black: 56.2, cal: 5.6, x: 2.5 },
+  r300: { nom: 'ISSF carabine 300 m', ring: 50, r10: 50, black: 300, cal: 7.8, x: 25 },
+  wa40: { nom: 'Arc — blason 40 cm', ring: 20, r10: 20, black: 40, cal: 7, x: 10, arc: 1 },
+  wa60: { nom: 'Arc — blason 60 cm', ring: 30, r10: 30, black: 60, cal: 7, x: 15, arc: 1 },
+  wa80: { nom: 'Arc — blason 80 cm', ring: 40, r10: 40, black: 80, cal: 7, x: 20, arc: 1 },
+  wa122: { nom: 'Arc — blason 122 cm', ring: 61, r10: 61, black: 122, cal: 7, x: 30.5, arc: 1 },
+  autre: { nom: 'Autre cible', ring: 25, r10: 25, black: 100, cal: 9, x: 12.5 }
+};
+function autoModel(disc, d) {
   switch (disc) {
-    case 'pistolet': return d <= 10 ? { ring: 8, cal: 4.5, q: 0.72, edge: 7 } : { ring: 25, cal: 5.6, q: 1, edge: 7 };
-    case 'carabine': return d <= 10 ? { ring: 2.5, cal: 4.5, q: 0.1, edge: 4 } : { ring: 8, cal: 5.6, q: 0.65, edge: 3 };
-    case 'arc_pointe': case 'arc_epaule': case 'arc_compound':
-      return { ring: d <= 18 ? 20 : d <= 30 ? 40 : 61, cal: 7, q: 1, edge: 9 };
-    case 'arbalete': return { ring: 15, cal: 8, q: 1, edge: 7 };
-    default: return { ring: 25, cal: 9, q: 1, edge: 7 };
+    case 'pistolet': return d <= 10 ? 'ap10' : 'pp25';
+    case 'carabine': return d <= 10 ? 'ar10' : d <= 100 ? 'r50' : 'r300';
+    case 'arc_pointe': case 'arc_epaule': case 'arc_compound': return d <= 18 ? 'wa40' : d <= 25 ? 'wa60' : d <= 50 ? 'wa80' : 'wa122';
+    default: return 'autre';
   }
 }
+function presetById(id) {
+  const m = MODELS[id] || MODELS.autre;
+  return { id, nom: m.nom, ring: m.ring, cal: m.cal, q: m.r10 / m.ring, blackR: m.black / m.ring, min: m.min || 1, xR: m.x / m.ring, edge: 0, arc: !!m.arc };
+}
+// sans argument : modèle choisi (ou automatique) ; avec discipline/distance (ou un id) : pour un ancien enregistrement
+function preset(disc, d) {
+  if (disc && MODELS[disc]) return presetById(disc);
+  if (disc === undefined) { const m = $('model').value; return presetById(m && m !== 'auto' && MODELS[m] ? m : autoModel($('discipline').value, dist())); }
+  return presetById(autoModel(disc, d == null ? 25 : d));
+}
+const isArc = () => preset().arc;
 function P() {
   const p = preset();
-  return { ring: parseFloat($('ringMm').value) || p.ring, cal: parseFloat($('calMm').value) || p.cal, q: S.cal && S.cal.q != null ? S.cal.q : p.q, edge: parseInt($('ringSelect').value) || p.edge };
+  const e = parseInt($('ringSelect').value);
+  return { ring: parseFloat($('ringMm').value) || p.ring, cal: parseFloat($('calMm').value) || p.cal, q: S.cal && S.cal.q != null ? S.cal.q : p.q, edge: isNaN(e) ? 0 : e, min: p.min, xR: p.xR };
 }
 function applyPreset() { const p = preset(); $('ringMm').value = p.ring; $('calMm').value = p.cal; $('ringSelect').value = p.edge; }
 const hasCenter = () => S.cal.cx != null;
@@ -522,22 +548,24 @@ const hasCal = () => hasCenter() && S.cal.w > 0;
 // rayon d'un impact en px : réglage × facteur mesuré sur la photo (hs) ou appris sur les séries précédentes
 function holeR() { const p = P(); return Math.max(1.5, p.cal / p.ring * S.cal.w / 2 * (S.cal.hs || learnGet().hs || 1)); }
 // rayon du visuel noir (mesuré si possible)
-function blackR() { return S.cal.rb || (P().q + 10 - preset().edge) * S.cal.w; }
+function blackR() { return S.cal.rb || preset().blackR * S.cal.w; }
+const edgeLabel = () => P().edge === 0 ? (isArc() ? 'du jaune' : 'du visuel noir') : 'de l\'anneau ' + P().edge;
 function mmpp() { return P().ring / S.cal.w; }
-function edgeRings() { const p = P(); return p.q + 10 - p.edge; }
+function edgeRings() { const p = P(); return p.edge === 0 ? preset().blackR : p.q + 10 - p.edge; }
 
 function scoreAt(x, y) {
   const p = P();
   let d = hyp(x - S.cal.cx, y - S.cal.cy);
   if ($('lineRule').checked) d = Math.max(0, d - holeR());
   const r = d / S.cal.w;
-  const s = r <= p.q ? 10 : Math.max(0, 10 - Math.ceil(r - p.q - 1e-9));
+  let s = r <= p.q ? 10 : Math.max(0, 10 - Math.ceil(r - p.q - 1e-9));
+  if (s < p.min) s = 0;
   const dec = s === 0 ? 0 : Math.floor(Math.min(10.9, 10 + p.q - r) * 10 + 1e-6) / 10;
-  return { s, dec: Math.max(s, dec) };
+  return { s, dec: Math.max(s, dec), x: s === 10 && p.xR > 0 && r <= p.xR };
 }
 function rescore() {
   if (!hasCal() || S.review) return;
-  S.impacts.forEach(i => { const t = scoreAt(i.x, i.y); i.score = t.s; i.dec = t.dec; });
+  S.impacts.forEach(i => { const t = scoreAt(i.x, i.y); i.score = t.s; i.dec = t.dec; i.mx = t.x; });
 }
 
 // Impacts des séries précédentes (repère de la cible -> image courante)
@@ -623,7 +651,7 @@ function renderView() {
 function boostDark() {
   const W = imgCanvas.width, H = imgCanvas.height;
   let x0 = 0, y0 = 0, x1 = W, y1 = H, Rb = null;
-  if (hasCal() && !$('discipline').value.startsWith('arc')) {
+  if (hasCal() && !isArc()) {
     Rb = blackR() + 3;
     x0 = clamp(Math.floor(S.cal.cx - Rb), 0, W); y0 = clamp(Math.floor(S.cal.cy - Rb), 0, H);
     x1 = clamp(Math.ceil(S.cal.cx + Rb), 0, W); y1 = clamp(Math.ceil(S.cal.cy + Rb), 0, H);
@@ -650,7 +678,7 @@ function toggleDark() {
   if (!S.src) return;
   S.darkBoost = !S.darkBoost; renderView(); updateButtons();
   if (S.darkBoost) {
-    if (hasCal() && !$('discipline').value.startsWith('arc')) {
+    if (hasCal() && !isArc()) {
       const Rb = blackR(), { w, h } = stageSize();
       centerOn(S.cal.cx, S.cal.cy, Math.min(w, h) * 0.46 / Rb);
     }
@@ -713,7 +741,8 @@ function drawMarks(c, map, k, u) {
   const rh = hasCal() ? holeR() : 4;
   if (hasCenter()) {
     const [sx, sy] = map(cal.cx, cal.cy);
-    if (cal.w) for (let n = 1; n <= 10; n++) {
+    if (cal.w && p.edge === 0) ring(c, sx, sy, blackR() * k, 'rgba(255,193,7,.95)', 2 * u);
+    if (cal.w) for (let n = p.min; n <= 10; n++) {
       const isEdge = n === p.edge;
       ring(c, sx, sy, (p.q + 10 - n) * cal.w * k, isEdge ? 'rgba(255,193,7,.95)' : 'rgba(255,193,7,.42)', (isEdge ? 2 : 1) * u);
     }
@@ -722,7 +751,7 @@ function drawMarks(c, map, k, u) {
   // aperçu pendant la visée
   if (S.aim) {
     const [ax, ay] = map(S.aim.x, S.aim.y);
-    if (S.mode === 'center' && cal.w) for (const n of [p.edge, 10]) ring(c, ax, ay, (p.q + 10 - n) * cal.w * k, '#39c5ff', 1.5 * u, [6 * u, 4 * u]);
+    if (S.mode === 'center' && cal.w) for (const rr of [edgeRings(), p.q]) ring(c, ax, ay, rr * cal.w * k, '#39c5ff', 1.5 * u, [6 * u, 4 * u]);
     if (S.mode === 'ring' && hasCenter()) { const [sx, sy] = map(cal.cx, cal.cy); ring(c, sx, sy, hyp(ax - sx, ay - sy), '#39c5ff', 2 * u, [6 * u, 4 * u]); }
   }
   (S.circPts || []).forEach(([a0, b0]) => { const [a, b] = map(a0, b0); cross(c, a, b, 9 * u, '#000', 4 * u); cross(c, a, b, 9 * u, '#39c5ff', 2 * u); });
@@ -906,7 +935,7 @@ function fitEllipse(pts, cx, cy, R) {
 
 // ============ CENTRE ET LIMITE AUTOMATIQUES ============
 function findTarget(src) {
-  const archery = $('discipline').value.startsWith('arc');
+  const archery = isArc();
   const sc = Math.min(1, 640 / Math.max(src.width, src.height));
   const w = Math.round(src.width * sc), h = Math.round(src.height * sc), N = w * h;
   const tc = document.createElement('canvas'); tc.width = w; tc.height = h;
@@ -1049,7 +1078,7 @@ function analyzeRings(src, cx, cy, wEst, rEdge) {
   }
   const good = peaks.filter(([r]) => { const d = ((r - phi) % w + w) % w; return Math.min(d, w - d) < 0.1 * w; });
   if (good.length < 5 || Math.abs(w / wEst - 1) > 0.8) return null;
-  let q = phi / w; if (q < 0.06) q += 1;
+  const qm = preset().q; let q = phi / w; q += Math.round(qm - q);   // la fraction est mesurée, l'entier vient du modèle
   let edge = null;
   if (rEdge) { const e = q + 10 - rEdge / w, n2 = Math.round(e); if (Math.abs(e - n2) < 0.25 && n2 >= 1 && n2 <= 10) edge = n2; }
   return { cx: bx, cy: by, w, q: +q.toFixed(3), edge, lines: good.length };
@@ -1060,7 +1089,6 @@ function refineRings(rEdge, quiet) {
   const res = analyzeRings(S.src, S.cal.cx, S.cal.cy, S.cal.w, rEdge || S.cal.rb);
   if (!res) { if (!quiet) toast('Anneaux pas assez nets pour affiner — ajustez à la main', 'warn', 3500); return false; }
   S.cal = { cx: res.cx, cy: res.cy, w: res.w, q: res.q, rb: rEdge || S.cal.rb || null };
-  if (res.edge && res.edge !== P().edge && !$('discipline').value.startsWith('arc')) { $('ringSelect').value = res.edge; save(); }
   return res;
 }
 function fillHoles(lab, c, w, h) {
@@ -1089,7 +1117,7 @@ function autoTarget(silent, noSnap) {
   try {
     let res = findTarget(S.src);
     if (!res) throw new Error('visuel introuvable');
-    const er = edgeRings();
+    const er = preset().blackR;
     if (res.ell && res.ratio < 0.975) {
       const e = res.ell, c = Math.cos(e.th), s = Math.sin(e.th);
       const srcPts = [[e.x0 + e.a * c, e.y0 + e.a * s], [e.x0 - e.b * s, e.y0 + e.b * c], [e.x0 - e.a * c, e.y0 - e.a * s], [e.x0 + e.b * s, e.y0 - e.b * c]];
@@ -1102,8 +1130,8 @@ function autoTarget(silent, noSnap) {
       S.cal = { cx: res.cx, cy: res.cy, w: res.R / er, rb: res.R };
     }
     const m = refineRings(S.cal.rb, true);
-    banner(m ? `✅ Calibré sur ${m.lines} anneaux mesurés sur la photo (bord du visuel = anneau ${P().edge}) — vérifiez avec la loupe`
-             : `✅ Centre et limite (anneau ${P().edge}) proposés — vérifiez avec la loupe`, 'ok');
+    banner(m ? `✅ Calibré sur ${m.lines} anneaux mesurés sur la photo — vérifiez avec la loupe`
+             : `✅ Centre et limite proposés — vérifiez avec la loupe`, 'ok');
     refresh();
     return true;
   } catch (e) {
@@ -1162,7 +1190,7 @@ function manualWarpPoint(x, y) {
   S.warpPts.push([x, y]);
   const lbl = ['② à DROITE', '③ en BAS', '④ à GAUCHE'];
   if (S.warpPts.length === 4) snapshot();
-  if (S.warpPts.length < 4) { banner(`📐 Touchez le bord de l'anneau ${P().edge} : ${lbl[S.warpPts.length - 1]}`, 'act'); drawOverlay(); return; }
+  if (S.warpPts.length < 4) { banner(`📐 Touchez le bord ${edgeLabel()} : ${lbl[S.warpPts.length - 1]}`, 'act'); drawOverlay(); return; }
   try {
     doWarp(S.warpPts, [-90, 0, 90, 180], edgeRings());
     setMode('idle');
@@ -1252,7 +1280,7 @@ function redo() { if (S.review || !U.redo.length) return; U.stack.push(capture()
 function detect(opt = {}) {
   if (!hasCal()) { toast('Calibrez la cible d\'abord', 'err'); return; }
   const p = P(), cal = S.cal, rh = holeR(), W = imgCanvas.width, H = imgCanvas.height;
-  const Rmax = (p.q + 9) * cal.w + 2 * rh;   // bord extérieur de l'anneau 1
+  const Rmax = (p.q + 10 - p.min) * cal.w + 2 * rh;   // bord extérieur de la cible
   const x0 = clamp(Math.floor(cal.cx - Rmax), 0, W), y0 = clamp(Math.floor(cal.cy - Rmax), 0, H);
   const x1 = clamp(Math.ceil(cal.cx + Rmax), 0, W), y1 = clamp(Math.ceil(cal.cy + Rmax), 0, H);
   const w0 = x1 - x0, h0 = y1 - y0;
@@ -1277,12 +1305,12 @@ function detect(opt = {}) {
   const K = Math.max(Math.ceil(r * 1.2), Math.min(Math.round(r * 4), Math.floor((0.9 * spacing - 1) / 2)), 2);
   const clo = mmf(mmf(g1, w, h, K, true), w, h, K, false);          // fermeture : bouche les trous sombres
   const opn = mmf(mmf(g1, w, h, K, false), w, h, K, true);          // ouverture : efface les trous clairs
-  const colorTarget = $('discipline').value.startsWith('arc');
+  const colorTarget = isArc();
   const bgm = colorTarget ? mmf(mmf(clo, w, h, K, false), w, h, K, true) : null;
   // zones du visuel noir connues par le calibrage : trous clairs dans le noir, sombres dans le blanc
   const Rb = blackR() / sx, band = 1.3 * r + 1;
   // dans la bande du bord : fond = médiane par secteur angulaire et par rayon (le bord s'annule, le trou ressort)
-  const NS = 48, rIn = Math.max(0, Rb - band - 2), NB = Math.ceil(2 * band + 4) + 1, prof = new Float32Array(NS * NB);
+  const NS = clamp(Math.floor(2 * Math.PI * Rb / (8 * r)), 8, 48), rIn = Math.max(0, Rb - band - 2), NB = Math.ceil(2 * band + 4) + 1, prof = new Float32Array(NS * NB);
   if (!colorTarget) {
     const bins = Array.from({ length: NS * NB }, () => []);
     const y0b = Math.max(0, Math.floor(ccy - Rb - band - 3)), y1b = Math.min(h - 1, Math.ceil(ccy + Rb + band + 3));
@@ -1296,7 +1324,26 @@ function detect(opt = {}) {
   }
   const inRoi = new Uint8Array(N);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (hyp(x - ccx, y - ccy) <= RR) inRoi[y * w + x] = 1;
-  // trous plus noirs que le noir de la cible : écart sombre amplifié selon le bruit mesuré dans le noir
+  // trous plus noirs que le noir : écart sombre moyenné sur la taille d'un trou (le bruit s'efface, le cœur sombre ressort)
+  let Dk = null, kD = 0;
+  if (!colorTarget) {
+    // niveau du papier noir : médiane par secteur et par couronne (insensible aux chiffres blancs et aux trous)
+    const NSb = 32, ringB = Math.max(4, 2.5 * r), NRb = Math.ceil(Rb / ringB) + 1, lv = Array.from({ length: NSb * NRb }, () => []);
+    const secB = (x, y) => Math.floor((Math.atan2(y - ccy, x - ccx) + Math.PI) / (2 * Math.PI) * NSb) % NSb;
+    for (let i = 0; i < N; i += 3) { const x = i % w, y = (i / w) | 0, d = hyp(x - ccx, y - ccy); if (d >= Rb - band) continue; lv[secB(x, y) * NRb + Math.floor(d / ringB)].push(g1[i]); }
+    const lvl = lv.map(a => { if (!a.length) return 0; a.sort((u, v) => u - v); return a[a.length >> 1]; });
+    const dark = new Float32Array(N);
+    for (let i = 0; i < N; i++) { const x = i % w, y = (i / w) | 0, d = hyp(x - ccx, y - ccy); if (d >= Rb - band) continue; dark[i] = Math.max(0, lvl[secB(x, y) * NRb + Math.floor(d / ringB)] - 2 - g1[i]); }
+    Dk = boxBlur(dark, w, h, Math.max(3, Math.round(r) | 1));
+    const hd = new Uint32Array(1024); let nd = 0;
+    for (let i = 0; i < N; i += 2) { if (!inRoi[i] || hyp(i % w - ccx, ((i / w) | 0) - ccy) >= Rb - band) continue; hd[clamp(Dk[i] * 8 | 0, 0, 1023)]++; nd++; }
+    if (nd > 200) {
+      let a = 0, md = 0; for (let v = 0; v < 1024; v++) { a += hd[v]; if (a >= nd / 2) { md = v; break; } }
+      const dv = new Uint32Array(1024); for (let v = 0; v < 1024; v++) dv[Math.abs(v - md)] += hd[v];
+      let mad = 0; a = 0; for (let v = 0; v < 1024; v++) { a += dv[v]; if (a >= nd / 2) { mad = v; break; } }
+      kD = Math.min(6, (+$('sensitivity').value) / Math.max(3, (md + 9 * Math.max(2, mad)) / 8));
+    }
+  }
   let kd = 0, darkCut = -1;
   if (!colorTarget) {
     const hd = new Uint32Array(256); let nd = 0;
@@ -1325,7 +1372,7 @@ function detect(opt = {}) {
     if (colorTarget) f = Math.abs(g1[i] - bgm[i]);
     else {
       const d = hyp(i % w - ccx, ((i / w) | 0) - ccy), fl = g1[i] - opn[i], fd = clo[i] - g1[i];
-      if (d < Rb - band) f = g1[i] < darkCut ? Math.max(fl, (clo[i] - g1[i]) * kd) : fl;
+      if (d < Rb - band) f = Math.max(fl, Dk ? Dk[i] * kD : 0, g1[i] < darkCut ? (clo[i] - g1[i]) * kd : 0);
       else if (d > Rb + band) f = clo[i] < 0.7 * paperLvl ? 0 : fd;   // hors du papier (sol, bord déchiré) : ignoré
       else {
         const x = i % w, y = (i / w) | 0, bi = clamp(Math.round(d - rIn), 0, NB - 1);
@@ -1361,18 +1408,18 @@ function detect(opt = {}) {
   // chiffres imprimés : sur les 4 axes de la cible, au milieu des anneaux (et artefacts au bord du visuel)
   const polar = c => { const [X, Y] = toI(c.cx, c.cy), dx = (X - cal.cx) / cal.w, dy = (Y - cal.cy) / cal.w; return { r: hyp(dx, dy), a: Math.atan2(dy, dx) }; };
   const digitSpot = (pr, phi) => {
-    if (pr.r < p.q + 1.2 || pr.r > p.q + 9.2) return false;
+    if (pr.r < p.q + 0.3 || pr.r > p.q + 10.2 - p.min) return false;
     let da = ((pr.a - phi) % (Math.PI / 2) + Math.PI / 2) % (Math.PI / 2); da = Math.min(da, Math.PI / 2 - da);
     if (da * pr.r > 0.38) return false;
     const fr = ((pr.r - p.q - 0.5) % 1 + 1) % 1;   // 0 = milieu d'anneau
-    return Math.min(fr, 1 - fr) < 0.32 || Math.abs(pr.r - edgeRings()) < 0.22;
+    return Math.min(fr, 1 - fr) < 0.32 || Math.abs(pr.r - blackR() / cal.w) < 0.22;
   };
   comps.forEach(c => { c.pr = polar(c); });
   let phi = null;
-  if (!$('discipline').value.startsWith('arc')) {
+  if (!isArc()) {
     const votes = new Float32Array(90);
     comps.forEach(c => {
-      const pr = c.pr; if (pr.r < p.q + 1.2 || pr.r > p.q + 9.2) return;
+      const pr = c.pr; if (pr.r < p.q + 0.3 || pr.r > p.q + 10.2 - p.min) return;
       const fr = ((pr.r - p.q - 0.5) % 1 + 1) % 1; if (Math.min(fr, 1 - fr) > 0.2) return;
       const deg = ((pr.a * 180 / Math.PI) % 90 + 90) % 90;
       for (let k = -2; k <= 2; k++) votes[(Math.round(deg) + k + 90) % 90] += 1 - Math.abs(k) / 3;
@@ -1443,15 +1490,19 @@ function detect(opt = {}) {
     const [ix, iy] = toI(c.cx, c.cy);
     // une tache bien ronde = un seul impact (même un peu grosse)
     if (n < 1.55 || (n < 2.3 && round >= 0.62 && asp <= 1.35)) { if (asp <= 2.2 && fill >= 0.4) singles.push({ x: ix, y: iy, n, conf, c }); }
-    else if (n <= 25 && fill >= 0.22) groups.push({ x: ix, y: iy, n, est: Math.max(2, Math.round(n)), conf, c });
+    else if (n <= 25 && fill >= 0.22 && asp <= 3.2) groups.push({ x: ix, y: iy, n, est: Math.max(2, Math.round(n)), conf, c });
   }
   // contraste : on écarte les taches nettement plus pâles que les vrais impacts (bruit, restes de lignes)
   const exp0 = parseInt($('expected').value) || 0;
-  const confs = singles.concat(groups).map(d => d.conf).sort((a, b) => b - a);
-  const ref = confs.length ? confs[Math.min(confs.length - 1, Math.max(2, Math.floor((exp0 || 6) / 2)))] : 0;
-  const cmin = Math.max(1.25 * thr, (learnGet().ratio || 0.4) * ref);
-  S.detRef = ref;
-  for (const L of [singles, groups]) for (let k = L.length - 1; k >= 0; k--) if (L[k].conf < cmin) L.splice(k, 1);
+  const zoneOf = d => colorTarget ? 0 : (hyp(d.x - cal.cx, d.y - cal.cy) < blackR() ? 1 : 0);
+  const refs = [0, 1].map(z => {
+    const cf = singles.concat(groups).filter(d => zoneOf(d) === z).map(d => d.conf).sort((a, b) => b - a);
+    if (colorTarget) return cf.length ? cf[Math.min(cf.length - 1, Math.max(2, Math.floor((exp0 || 6) / 2)))] : 0;
+    return cf.length >= 3 ? cf[Math.min(cf.length - 1, Math.max(2, Math.floor(cf.length / 3)))] : 0;
+  });
+  const ratio = learnGet().ratio || 0.4, cmins = refs.map(rf => Math.max(1.25 * thr, ratio * rf));
+  S.detRef = Math.max(refs[0], refs[1]) || 1;
+  for (const L of [singles, groups]) for (let k = L.length - 1; k >= 0; k--) if (L[k].conf < cmins[zoneOf(L[k])]) L.splice(k, 1);
   // candidats écartés (position de chiffre) gardés en réserve si des impacts manquent
   S.reserve = digits.filter(c => c.n >= 0.5 * A1 && c.n < 1.8 * A1 && c.circ >= 0.45).map(c => { const [x, y] = toI(c.cx, c.cy); return { x, y, circ: c.circ }; });
   // centres approximatifs des groupes (pour le recalage)
@@ -1599,7 +1650,7 @@ function computeStats() {
   const L = S.impacts, n = L.length;
   if (!n || !hasCal()) return null;
   const mm = mmpp(), w = S.cal.w, d = dist();
-  const total = L.reduce((s, i) => s + i.score, 0), dec = L.reduce((s, i) => s + i.dec, 0);
+  const total = L.reduce((s, i) => s + i.score, 0), dec = L.reduce((s, i) => s + i.dec, 0), xs = L.filter(i => i.mx).length;
   let m = mpiOf(L), rad = L.map(i => hyp(i.x - m.x, i.y - m.y)), mr = rad.reduce((a, b) => a + b, 0) / n, flyers = 0;
   if (n >= 5) {
     const fl = L.filter((_, j) => rad[j] > Math.max(2.5 * mr, w));
@@ -1612,7 +1663,7 @@ function computeStats() {
   const dx = (m.x - S.cal.cx) * mm, dy = (m.y - S.cal.cy) * mm, off = hyp(dx, dy);
   let ang = Math.atan2(dx, -dy) * 180 / Math.PI; if (ang < 0) ang += 360;
   const clock = Math.round(ang / 30) % 12 || 12;
-  return { n, total, dec, avg: total / n, m, mr, mrmm: mr * mm, mrR: mr / w, esmm: es * mm, moa: d > 0 && n > 1 ? es * mm / (d * 0.2909) : null, dx, dy, off, clock, flyers };
+  return { n, xs, total, dec, avg: total / n, m, mr, mrmm: mr * mm, mrR: mr / w, esmm: es * mm, moa: d > 0 && n > 1 ? es * mm / (d * 0.2909) : null, dx, dy, off, clock, flyers };
 }
 const fmm = v => v == null || isNaN(v) ? '—' : v >= 100 ? (v / 10).toFixed(1) + ' cm' : v.toFixed(v < 10 ? 1 : 0) + ' mm';
 function regLabel(mrR) {
@@ -1630,7 +1681,7 @@ function updateStats() {
   const isDec = ['pistolet', 'carabine'].includes($('discipline').value);
   set('sTotal', String(st.total)); $('sTotal').style.color = 'var(--ac)';
   set('sDec', isDec ? st.dec.toFixed(1) : '—'); $('sDec').style.cssText = 'font-size:18px';
-  set('sN', String(st.n)); set('sAvg', st.avg.toFixed(2));
+  set('sN', st.n + (preset().xR > 0 ? ` · ${st.xs} mouche${st.xs > 1 ? 's' : ''}` : '')); set('sAvg', st.avg.toFixed(2));
   const hz = Math.abs(st.dx) < 0.5 ? '' : `${fmm(Math.abs(st.dx))} ${st.dx > 0 ? 'droite' : 'gauche'}`;
   const vt = Math.abs(st.dy) < 0.5 ? '' : `${fmm(Math.abs(st.dy))} ${st.dy > 0 ? 'bas' : 'haut'}`;
   set('sMpi', st.off < 0.5 ? 'Centré' : `${fmm(st.off)} à ${st.clock}h` + (hz || vt ? ` (${[hz, vt].filter(Boolean).join(', ')})` : ''));
@@ -1674,7 +1725,7 @@ function save() {
   try {
     localStorage.setItem(dataKey(), JSON.stringify({
       history: S.history, target: S.target, learn: S.learn || {},
-      params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
+      params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'model', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
     }));
   } catch (e) { console.warn('stockage indisponible', e); }
 }
@@ -1708,7 +1759,7 @@ function validateSeries() {
   if (!S.target.id) S.target.id = uid();
   const w = S.cal.w;
   const imps = S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: +o.x.toFixed(4), dy: +o.y.toFixed(4), score: i.score, dec: i.dec }; });
-  const rec = { id: uid(), targetId: S.target.id, num: S.target.series.length + 1, date: new Date().toISOString(), discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1), impacts: imps };
+  const rec = { id: uid(), targetId: S.target.id, num: S.target.series.length + 1, date: new Date().toISOString(), model: preset().id, x: st.xs, discipline: $('discipline').value, distance: dist(), shooter: $('shooter').value || '', n: st.n, total: st.total, avg: +st.avg.toFixed(2), dec: +st.dec.toFixed(1), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1), impacts: imps };
   storePhoto(rec.id);
   learnFrom(); S.detSet = null;
   S.target.series.push(rec);
@@ -1834,7 +1885,7 @@ function endReview() {
 function curRec() {
   const st = computeStats(); if (!st || S.review) return null;
   const w = S.cal.w;
-  return { id: 'cur', num: S.target.series.length + 1, targetId: S.target.id, date: new Date().toISOString(), discipline: $('discipline').value, distance: dist(),
+  return { id: 'cur', num: S.target.series.length + 1, targetId: S.target.id, date: new Date().toISOString(), model: preset().id, x: st.xs, discipline: $('discipline').value, distance: dist(),
     n: st.n, total: st.total, avg: +st.avg.toFixed(2), mr_mm: +st.mrmm.toFixed(1), es_mm: +st.esmm.toFixed(1), dx_mm: +st.dx.toFixed(1), dy_mm: +st.dy.toFixed(1),
     impacts: S.impacts.map(i => { const o = invTf({ x: (i.x - S.cal.cx) / w, y: (i.y - S.cal.cy) / w }); return { dx: o.x, dy: o.y, score: i.score }; }) };
 }
@@ -1856,22 +1907,9 @@ function openCompare(idA) {
 function drawCompare() {
   const L = cmpRecs(), A = L.find(h => h.id === $('cmpA').value), B = L.find(h => h.id === $('cmpB').value);
   if (!A || !B) return;
-  const c = $('cmpPlot'), x = c.getContext('2d'), Wd = c.width, C = Wd / 2;
-  const pr = preset(A.discipline || 'autre', A.distance || 25), q = pr.q, er = q + 10 - pr.edge, arc = (A.discipline || '').startsWith('arc');
-  const all = A.impacts.concat(B.impacts);
-  const Rm = Math.min(q + 9.3, Math.max(er + 1, ...all.map(i => hyp(i.dx, i.dy) + 0.8))), k = (C - 8) / Rm;
-  const P2 = (dx, dy) => [C + dx * k, C + dy * k];
-  x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = '#ece6d6'; x.fillRect(0, 0, Wd, Wd);
-  if (arc) { const cols = ['#f2f2f2', '#f2f2f2', '#222', '#222', '#2878d2', '#2878d2', '#d72828', '#d72828', '#fad728', '#fad728']; for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.fillStyle = cols[n - 1]; x.fill(); } }
-  else { x.beginPath(); x.arc(C, C, er * k, 0, 7); x.fillStyle = '#151515'; x.fill(); }
-  for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.strokeStyle = (!arc && n >= pr.edge) ? '#cfcfcf' : '#555'; x.lineWidth = 1.5; x.stroke(); }
-  const plot = (h, col) => {
-    h.impacts.forEach(i => { const [a, b] = P2(i.dx, i.dy); x.beginPath(); x.arc(a, b, 10, 0, 7); x.fillStyle = col; x.fill(); x.lineWidth = 2.5; x.strokeStyle = '#000'; x.stroke(); });
-    const n = h.impacts.length; if (!n) return;
-    const [a, b] = P2(h.impacts.reduce((s, i) => s + i.dx, 0) / n, h.impacts.reduce((s, i) => s + i.dy, 0) / n);
-    cross(x, a, b, 20, '#000', 8); cross(x, a, b, 20, col, 4);
-  };
-  plot(A, '#3fb950'); plot(B, '#58a6ff');
+  const c = $('cmpPlot');
+  plotTarget(c.getContext('2d'), c.width, [{ imps: A.impacts, col: '#3fb950', r: 10, mpi: true, mpiCol: '#3fb950' }, { imps: B.impacts, col: '#58a6ff', r: 10, mpi: true }], A.model || A.discipline, A.distance);
+
   const sg = v => (v > 0 ? '+' : '') + v, off = h => hyp(h.dx_mm || 0, h.dy_mm || 0);
   const row = (l, a, b, d, good) => `<tr><td>${l}</td><td>${a}</td><td>${b}</td><td class="${d == null ? '' : good ? 'good' : 'bad'}">${d == null ? '' : d}</td></tr>`;
   const dm = (a, b) => (a == null || b == null) ? null : sg(+(b - a).toFixed(1)) + ' mm';
@@ -1915,13 +1953,13 @@ function renderCalendar() {
 // ============ TABLEAU DE BORD ============
 // dessine une cible et des impacts (coordonnées en anneaux) sur un canvas carré
 function plotTarget(x, Wd, sets, disc, distv) {
-  const C = Wd / 2, pr = preset(disc || 'autre', distv || 25), q = pr.q, er = q + 10 - pr.edge, arc = (disc || '').startsWith('arc');
+  const C = Wd / 2, pr = preset(disc || 'autre', distv || 25), q = pr.q, er = pr.blackR, arc = pr.arc;
   const all = sets.flatMap(s => s.imps);
-  const Rm = Math.min(q + 9.3, Math.max(er + 1, ...all.map(i => hyp(i.dx, i.dy) + 0.8))), k = (C - 6) / Rm;
+  const Rm = Math.min(q + 10.3 - pr.min, Math.max(er + 1, ...all.map(i => hyp(i.dx, i.dy) + 0.8))), k = (C - 6) / Rm;
   x.fillStyle = '#ece6d6'; x.fillRect(0, 0, Wd, Wd);
   if (arc) { const cols = ['#f2f2f2', '#f2f2f2', '#222', '#222', '#2878d2', '#2878d2', '#d72828', '#d72828', '#fad728', '#fad728']; for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.fillStyle = cols[n - 1]; x.fill(); } }
   else { x.beginPath(); x.arc(C, C, er * k, 0, 7); x.fillStyle = '#151515'; x.fill(); }
-  for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.strokeStyle = (!arc && n >= pr.edge) ? '#cfcfcf' : '#555'; x.lineWidth = Wd / 400; x.stroke(); }
+  for (let n = pr.min; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.strokeStyle = (!arc && (q + 10 - n) < er + 0.01) ? '#cfcfcf' : '#555'; x.lineWidth = Wd / 400; x.stroke(); }
   sets.forEach(s => {
     x.globalAlpha = s.alpha || 1;
     s.imps.forEach(i => { x.beginPath(); x.arc(C + i.dx * k, C + i.dy * k, s.r || Wd / 60, 0, 7); x.fillStyle = s.col; x.fill(); if (!s.alpha) { x.lineWidth = Wd / 250; x.strokeStyle = '#000'; x.stroke(); } });
@@ -1961,7 +1999,7 @@ function renderDash() {
   x.fillStyle = '#8b949e'; x.fillText('Moyenne par série' + (L.length >= 5 ? '  ·  tendance sur 5 (vert)' : ''), P2, 24);
   // carte de chaleur de tous les impacts
   const imps = H.flatMap(h => h.impacts || []);
-  plotTarget($('heatPlot').getContext('2d'), 640, [{ imps, col: '#3fb950', r: 9, alpha: 0.45, mpi: true }], disc, H[H.length - 1].distance);
+  plotTarget($('heatPlot').getContext('2d'), 640, [{ imps, col: '#3fb950', r: 9, alpha: 0.45, mpi: true }], H[H.length - 1].model || disc, H[H.length - 1].distance);
 }
 
 // ============ CARTE DE RÉSULTAT À PARTAGER ============
@@ -1977,10 +2015,10 @@ async function shareResult() {
   x.fillStyle = '#8b949e'; x.font = font(500, 30); x.textAlign = 'right';
   x.fillText(`${fdate(rec.date)} · ${(document.querySelector(`#discipline option[value="${rec.discipline}"]`) || {}).text || ''} · ${rec.distance} m`, W - 60, 100); x.textAlign = 'left';
   const pc = document.createElement('canvas'); pc.width = pc.height = 760;
-  plotTarget(pc.getContext('2d'), 760, [{ imps: rec.impacts, col: '#3fb950', r: 15, mpi: true }], rec.discipline, rec.distance);
+  plotTarget(pc.getContext('2d'), 760, [{ imps: rec.impacts, col: '#3fb950', r: 15, mpi: true }], rec.model || rec.discipline, rec.distance);
   x.save(); x.beginPath(); x.roundRect ? x.roundRect(160, 160, 760, 760, 36) : x.rect(160, 160, 760, 760); x.clip(); x.drawImage(pc, 160, 160); x.restore();
   x.fillStyle = '#58a6ff'; x.font = font(800, 150); x.textAlign = 'center'; x.fillText(String(rec.total), W / 2, 1100);
-  x.fillStyle = '#8b949e'; x.font = font(600, 34); x.fillText(`points sur ${rec.n * 10} · moyenne ${rec.avg}${rec.shooter ? ' · ' + rec.shooter : ''}`, W / 2, 1155);
+  x.fillStyle = '#8b949e'; x.font = font(600, 34); x.fillText(`points sur ${rec.n * 10}${rec.x ? ' · ' + rec.x + ' mouche' + (rec.x > 1 ? 's' : '') : ''} · moyenne ${rec.avg}${rec.shooter ? ' · ' + rec.shooter : ''}`, W / 2, 1155);
   const cells = [['Groupement', fmm(rec.es_mm)], ['Rayon moyen', fmm(rec.mr_mm)], ['Point moyen', fmm(hyp(rec.dx_mm || 0, rec.dy_mm || 0))]];
   cells.forEach(([l, v], i) => { const cx = 200 + i * 340; x.fillStyle = '#e6edf3'; x.font = font(700, 40); x.fillText(v, cx, 1245); x.fillStyle = '#8b949e'; x.font = font(500, 26); x.fillText(l, cx, 1285); });
   x.textAlign = 'left';
@@ -2080,12 +2118,12 @@ function aimAt(sx, sy) { const [x, y] = toImg(sx, sy); S.aim = { x, y }; drawOve
 function commit(x, y) {
   if (S.mode === 'center') {
     snapshot(); S.cal.cx = x; S.cal.cy = y;
-    if (!S.cal.w) { setMode('ring', `② Glissez jusqu'au bord de l'anneau ${P().edge} puis relâchez`); refresh(); return; }
+    if (!S.cal.w) { setMode('ring', `② Glissez jusqu'au bord ${edgeLabel()} puis relâchez`); refresh(); return; }
     setMode('idle'); banner('✅ Centre placé — affinez avec les flèches si besoin', 'ok');
   } else if (S.mode === 'ring') {
     const d = hyp(x - S.cal.cx, y - S.cal.cy);
     if (d < 3) { toast('Trop près du centre', 'err'); return; }
-    snapshot(); S.cal.w = d / edgeRings(); S.cal.rb = null; setMode('idle'); banner('✅ Cible calibrée — passez à ③ Impacts', 'ok');
+    snapshot(); S.cal.w = d / edgeRings(); S.cal.rb = P().edge === 0 ? d : null; setMode('idle'); banner('✅ Cible calibrée — passez à ③ Impacts', 'ok');
   } else if (S.mode === 'manual') {
     snapshot(); S.impacts.push({ x, y, conf: 999, flag: 'manual' });
   } else if (S.mode === 'warp') { manualWarpPoint(x, y); return; }
@@ -2095,11 +2133,10 @@ function commit(x, y) {
       let c; try { c = S.circPts.length >= 5 ? robustCircle(S.circPts) : fitCircle(S.circPts); } catch (e) { c = null; }
       if (c && c.r > 3) {
         if (S.circPts.length === 3) snapshot();
-        const edgeIsBlack = P().edge === preset().edge && !$('discipline').value.startsWith('arc');
-        S.cal = { cx: c.cx, cy: c.cy, w: c.r / edgeRings(), q: S.cal.q, rb: edgeIsBlack ? c.r : null };
+        S.cal = { cx: c.cx, cy: c.cy, w: c.r / edgeRings(), q: S.cal.q, rb: P().edge === 0 ? c.r : null };
         banner(`◯ ${S.circPts.length} points — cercle ajusté. Ajoutez des points ailleurs sur le bord, puis Terminer`, 'act');
       }
-    } else banner(`◯ Point ${S.circPts.length} posé — touchez le bord de l'anneau ${P().edge} ailleurs (au moins 3 points)`, 'act');
+    } else banner(`◯ Point ${S.circPts.length} posé — touchez le bord ${edgeLabel()} ailleurs (au moins 3 points)`, 'act');
   }
   refresh();
 }
@@ -2195,7 +2232,7 @@ on('btnResetFilter', () => {
   renderView();
 });
 $('sensitivity').addEventListener('input', e => { $('sensVal').textContent = e.target.value; });
-['discipline', 'distance'].forEach(id => $(id).addEventListener('change', () => {
+['discipline', 'distance', 'model'].forEach(id => $(id).addEventListener('change', () => {
   $('distanceCustom').hidden = $('distance').value !== 'custom';
   applyPreset(); save(); refresh();
 }));
@@ -2203,8 +2240,8 @@ $('sensitivity').addEventListener('input', e => { $('sensVal').textContent = e.t
 
 on('btnAuto', () => { setMode('idle'); autoTarget(false); });
 on('btnCenter', () => setMode('center', '① Posez le doigt près du centre, glissez avec la loupe, relâchez'));
-on('btnRing', () => setMode('ring', `② Glissez jusqu'au bord de l'anneau ${P().edge}, relâchez`));
-on('btnWarp', () => { setMode('warp', `📐 Touchez le bord de l'anneau ${P().edge} : ① en HAUT`); });
+on('btnRing', () => setMode('ring', `② Glissez jusqu'au bord ${edgeLabel()}, relâchez`));
+on('btnWarp', () => { setMode('warp', `📐 Touchez le bord ${edgeLabel()} : ① en HAUT`); });
 on('btnUnwarp', () => {
   if (!S.warpUndo) return;
   snapshot(); const u = S.warpUndo; S.warpUndo = null; S.src = u.src; S.cal = u.cal;
@@ -2226,7 +2263,7 @@ on('introSkip', closeIntro);
 on('introNext', () => { if (slideI < SLIDES.length - 1) { slideI++; showSlide(); } else closeIntro(); });
 on('btnInstall', async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; $('installCard').hidden = true; });
 on('btnInstallLater', () => { $('installCard').hidden = true; try { localStorage.setItem('mouche_install_later', '1'); } catch (e) {} });
-on('btn3pts', () => setMode(S.mode === 'circle' ? 'idle' : 'circle', `◯ Touchez le bord de l'anneau ${P().edge} en 3 endroits ou plus (loupe active)`));
+on('btn3pts', () => setMode(S.mode === 'circle' ? 'idle' : 'circle', `◯ Touchez le bord ${edgeLabel()} en 3 endroits ou plus (loupe active)`));
 on('btnRefine', () => {
   if (!hasCal()) return;
   banner('⏳ Mesure des anneaux…', 'act');
@@ -2298,7 +2335,8 @@ Date : ${new Date().toLocaleString('fr-FR')}
 Cible : série ${S.target.series.length + 1}
 
 RÉSULTATS
-Impacts : ${st.n}
+Impacts : ${st.n}${st.xs ? ' (' + st.xs + ' mouches)' : ''}
+Modèle de cible : ${preset().nom}
 Score : ${st.total}  (décimal ${st.dec.toFixed(1)})
 Moyenne : ${st.avg.toFixed(2)}
 Point moyen : ${$('sMpi').textContent}
