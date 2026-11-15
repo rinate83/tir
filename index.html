@@ -6,7 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d1117">
-<title>🎯 Analyseur de Tir Pro</title>
+<title>Mouche — Analyse de tir</title>
+<meta name="description" content="Analysez vos cibles de tir en photo : score, groupement, conseils et suivi de progression. Gratuit, sans compte, vos données restent sur votre téléphone.">
+<meta name="apple-mobile-web-app-title" content="Mouche">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 :root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--s3:#30363d;--bd:#30363d;--tx:#e6edf3;--mu:#8b949e;--ac:#58a6ff;--ok:#3fb950;--wa:#d29922;--er:#f85149;--r:12px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -17,6 +22,13 @@ button{cursor:pointer}
 [hidden]{display:none!important}
 header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(13,17,23,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--bd)}
 header b{font-size:17px}
+.brand{display:flex;align-items:center;gap:8px}.brand img{border-radius:7px}.brand b{font-size:18px;letter-spacing:.02em}
+.slide{display:flex;flex-direction:column;gap:8px;min-height:230px}
+.slide .big{font-size:44px;text-align:center}
+.slide h2{font-size:20px;text-align:center}
+.slide ul{padding-left:20px;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
+.dots{display:flex;gap:6px;justify-content:center}.dots i{width:8px;height:8px;border-radius:50%;background:var(--s3)}.dots i.on{background:var(--ac)}
+canvas.chart{width:100%;border-radius:10px;background:var(--s2)}
 .pill{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--s2);color:var(--mu);white-space:nowrap}
 .app{display:flex;flex-direction:column;gap:10px;padding:10px;max-width:1500px;margin:0 auto}
 .stage-wrap{display:flex;flex-direction:column;gap:8px}
@@ -124,7 +136,7 @@ input[type=range]{width:100%;accent-color:var(--ac)}
 </style>
 </head>
 <body data-step="photo">
-<header><div><b style="white-space:nowrap">🎯 <span class="long">Analyseur de </span>Tir</b></div><div style="display:flex;gap:6px;align-items:center"><button class="pill" id="profBtn" style="border:1px solid var(--bd);color:var(--tx)">👤</button><span class="pill" id="statusPill">Prêt</span></div></header>
+<header><div class="brand"><img src="icons/icon-192.png" alt="" width="28" height="28"><b>Mouche</b></div><div style="display:flex;gap:6px;align-items:center"><button class="pill" id="profBtn" style="border:1px solid var(--bd);color:var(--tx)">👤</button><span class="pill" id="statusPill">Prêt</span><button class="pill" id="btnAbout" aria-label="Aide et à propos" style="border:1px solid var(--bd);color:var(--tx)">?</button></div></header>
 
 <div class="app">
   <section class="stage-wrap">
@@ -132,7 +144,7 @@ input[type=range]{width:100%;accent-color:var(--ac)}
       <canvas id="imgCanvas" width="10" height="10"></canvas>
       <canvas id="ovCanvas"></canvas>
       <canvas id="loupe"></canvas>
-      <div class="empty" id="stageEmpty"><div class="big">📷</div><div>Prenez ou choisissez une photo de la cible</div><div class="hint">Pincez pour zoomer · glissez pour déplacer</div></div>
+      <div class="empty" id="stageEmpty"><div class="big">📷</div><div>Photographiez la cible <b>bien en face</b>, entière, avec une bonne lumière</div><div class="hint">Pincez pour zoomer · glissez pour déplacer</div></div>
       <div class="banner" id="banner"><span id="bannerTxt">Chargez une photo de cible pour commencer</span><button id="bannerDone" hidden>Terminer</button></div>
       <div class="hist"><button id="sUndo" aria-label="Annuler">↶</button><button id="sRedo" aria-label="Rétablir">↷</button><button id="sDark" aria-label="Éclaircir le noir">🔦</button></div>
       <div class="zoom"><button id="zIn" aria-label="Zoomer">＋</button><button id="zOut" aria-label="Dézoomer">－</button><button id="zFit" aria-label="Vue entière">⤢</button></div>
@@ -148,6 +160,12 @@ input[type=range]{width:100%;accent-color:var(--ac)}
   <div class="ctl">
     <!-- ① PHOTO -->
     <section class="panel" data-panel="photo">
+      <div class="card" id="installCard" hidden>
+        <h3>📲 Installer Mouche</h3>
+        <p id="installTxt" style="font-size:14px"></p>
+        <button class="btn pri" id="btnInstall" hidden>Installer l'application</button>
+        <button class="btn" id="btnInstallLater">Plus tard</button>
+      </div>
       <div class="card">
         <h3>Cible en cours</h3>
         <div class="info" id="targetInfo">Nouvelle cible</div>
@@ -266,6 +284,7 @@ input[type=range]{width:100%;accent-color:var(--ac)}
         <div class="stat"><div class="l">Régularité</div><div class="v" id="sReg">—</div></div>
       </div>
       <button class="btn ok" id="btnValidate">✅ Valider la série</button>
+      <button class="btn" id="btnShare">📤 Partager mon résultat</button>
     </div>
     <div class="card">
       <h3>Diagnostic</h3>
@@ -280,6 +299,13 @@ input[type=range]{width:100%;accent-color:var(--ac)}
       <h3>Cible en cours</h3>
       <div class="list" id="seriesList"></div>
       <button class="btn" id="btnCompare">⇄ Comparer des séries</button>
+    </div>
+    <div class="card">
+      <h3>Tableau de bord</h3>
+      <div id="dashStats"></div>
+      <canvas class="chart" id="trendChart" width="640" height="280" hidden></canvas>
+      <p class="hint" id="heatTitle" hidden>Tous vos impacts dans cette discipline (point bleu = point moyen)</p>
+      <canvas class="chart" id="heatPlot" width="640" height="640" hidden style="max-width:340px;align-self:center"></canvas>
     </div>
     <div class="card">
       <h3>Suivi des tirs</h3>
@@ -332,6 +358,24 @@ input[type=range]{width:100%;accent-color:var(--ac)}
     <div class="info" id="storeInfo"></div>
     <div class="row"><button class="btn" id="profExport">💾 Sauvegarder</button><button class="btn" id="profImport">📥 Restaurer</button></div>
     <button class="btn" id="profClose">Fermer</button>
+  </div>
+</div>
+<div class="modal" id="introModal" hidden>
+  <div class="sheet">
+    <div class="slide" id="introSlide"></div>
+    <div class="dots" id="introDots"></div>
+    <div class="row"><button class="btn" id="introSkip">Passer</button><button class="btn pri" id="introNext">Suivant</button></div>
+  </div>
+</div>
+<div class="modal" id="aboutModal" hidden>
+  <div class="sheet">
+    <div class="brand" style="justify-content:center"><img src="icons/icon-192.png" alt="" width="44" height="44"><b style="font-size:24px">Mouche</b></div>
+    <p style="text-align:center" class="hint">Analyse de cibles de tir · version 7</p>
+    <div class="info"><b>🔒 Confidentialité.</b> Mouche fonctionne entièrement sur votre téléphone. Aucune photo ni aucun résultat n'est envoyé sur Internet. Pas de compte, pas de publicité, pas de traceur.</div>
+    <div class="info"><b>💾 Vos données.</b> Elles restent sur cet appareil, par tireur. Installez Mouche sur l'écran d'accueil pour qu'elles soient conservées, et faites une sauvegarde de temps en temps (👤 → Sauvegarder).</div>
+    <div class="info"><b>📸 Bonnes photos.</b> Bien en face, cible entière, lumière homogène sans reflet, téléphone stable. Pas de zoom numérique : rapprochez-vous.</div>
+    <p class="hint">Mouche est un outil d'entraînement. Les scores calculés sont indicatifs et ne remplacent pas un arbitrage officiel. Mouche n'est pas affilié à l'ISSF ni à une fédération.</p>
+    <div class="row"><button class="btn" id="btnIntro">🎓 Revoir le tutoriel</button><button class="btn pri" id="aboutClose">Fermer</button></div>
   </div>
 </div>
 <div id="toasts"></div>
@@ -523,7 +567,9 @@ async function loadFile(file) {
     const x = c.getContext('2d', { willReadFrequently: true });
     x.imageSmoothingQuality = 'high'; x.drawImage(img, 0, 0, w, h);
     x.getImageData(0, 0, 1, 1);
+    const q0 = photoQuality(c);
     setImage(c);
+    qualityWarnings(q0);
   } catch (e) {
     console.error(e);
     toast('Erreur image : ' + e.message, 'err', 4000);
@@ -1683,7 +1729,7 @@ function renderHistory() {
     $('histInfo').textContent = `${H.length} série(s) · moyenne générale ${avg.toFixed(2)} · dernière ${H[H.length - 1].avg}`;
   }
   $('seriesList').innerHTML = S.target.series.length ? S.target.series.map((s, i) => srow(s, `Série ${i + 1} · ${s.total} pts · moy ${s.avg}${s.mr_mm != null ? ' · R ' + fmm(s.mr_mm) : ''}`)).join('') : '<p class="hint">Aucune série validée sur cette cible.</p>';
-  renderCalendar();
+  renderCalendar(); renderDash();
 }
 function updateTargetInfo() {
   const L = learnGet();
@@ -1732,7 +1778,7 @@ async function storageInfo() {
   try {
     const ps = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false;
     const est = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
-    txt = ps ? '✅ Stockage permanent accordé par le navigateur.' : '⚠️ Stockage non garanti : sur iPhone, Safari peut effacer les données d\'un site non ouvert pendant 7 jours. Ajoutez la page à l\'écran d\'accueil (Partager → « Sur l\'écran d\'accueil ») et sauvegardez de temps en temps.';
+    txt = isStandalone() ? '✅ Application installée : vos données sont conservées.' : ps ? '✅ Stockage permanent accordé par le navigateur.' : '⚠️ Stockage non garanti : sur iPhone, Safari peut effacer les données d\'un site non ouvert pendant 7 jours. Ajoutez la page à l\'écran d\'accueil (Partager → « Sur l\'écran d\'accueil ») et sauvegardez de temps en temps.';
     if (est && est.usage != null) txt += ` Espace utilisé : ${(est.usage / 1048576).toFixed(1)} Mo.`;
   } catch (e) { txt = 'Données enregistrées sur cet appareil.'; }
   $('storeInfo').textContent = txt;
@@ -1866,6 +1912,124 @@ function renderCalendar() {
     : (S.calDay ? '<p class="hint">Aucune série ce jour-là.</p>' : '<p class="hint">Les séries validées apparaîtront ici, jour par jour.</p>');
 }
 
+// ============ TABLEAU DE BORD ============
+// dessine une cible et des impacts (coordonnées en anneaux) sur un canvas carré
+function plotTarget(x, Wd, sets, disc, distv) {
+  const C = Wd / 2, pr = preset(disc || 'autre', distv || 25), q = pr.q, er = q + 10 - pr.edge, arc = (disc || '').startsWith('arc');
+  const all = sets.flatMap(s => s.imps);
+  const Rm = Math.min(q + 9.3, Math.max(er + 1, ...all.map(i => hyp(i.dx, i.dy) + 0.8))), k = (C - 6) / Rm;
+  x.fillStyle = '#ece6d6'; x.fillRect(0, 0, Wd, Wd);
+  if (arc) { const cols = ['#f2f2f2', '#f2f2f2', '#222', '#222', '#2878d2', '#2878d2', '#d72828', '#d72828', '#fad728', '#fad728']; for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.fillStyle = cols[n - 1]; x.fill(); } }
+  else { x.beginPath(); x.arc(C, C, er * k, 0, 7); x.fillStyle = '#151515'; x.fill(); }
+  for (let n = 1; n <= 10; n++) { x.beginPath(); x.arc(C, C, (q + 10 - n) * k, 0, 7); x.strokeStyle = (!arc && n >= pr.edge) ? '#cfcfcf' : '#555'; x.lineWidth = Wd / 400; x.stroke(); }
+  sets.forEach(s => {
+    x.globalAlpha = s.alpha || 1;
+    s.imps.forEach(i => { x.beginPath(); x.arc(C + i.dx * k, C + i.dy * k, s.r || Wd / 60, 0, 7); x.fillStyle = s.col; x.fill(); if (!s.alpha) { x.lineWidth = Wd / 250; x.strokeStyle = '#000'; x.stroke(); } });
+    x.globalAlpha = 1;
+    if (s.mpi && s.imps.length) { const n = s.imps.length, a = C + s.imps.reduce((t, i) => t + i.dx, 0) / n * k, b = C + s.imps.reduce((t, i) => t + i.dy, 0) / n * k; cross(x, a, b, Wd / 28, '#000', Wd / 70); cross(x, a, b, Wd / 28, s.mpiCol || '#58a6ff', Wd / 150); }
+  });
+}
+function renderDash() {
+  const disc = $('discipline').value, H = S.history.filter(h => (h.discipline || disc) === disc && h.avg != null);
+  const lbl = $('discipline').selectedOptions[0].text;
+  ['trendChart', 'heatPlot', 'heatTitle'].forEach(id => $(id).hidden = H.length < 2);
+  if (!H.length) { $('dashStats').innerHTML = `<p class="hint">Validez des séries en ${lbl} pour voir vos records et votre progression.</p>`; return; }
+  const mean = a => a.reduce((t, h) => t + h.avg, 0) / a.length;
+  const best = H.reduce((a, h) => h.avg > a.avg ? h : a), last = H.slice(-5), prev = H.slice(-10, -5);
+  const tr = prev.length ? mean(last) - mean(prev) : null, nImp = H.reduce((t, h) => t + (h.n || 0), 0);
+  const es = last.filter(h => h.es_mm != null), esm = es.length ? es.reduce((t, h) => t + h.es_mm, 0) / es.length : null;
+  $('dashStats').innerHTML = `<div class="stats">
+    <div class="stat"><div class="l">Séries · impacts</div><div class="v">${H.length} · ${nImp}</div></div>
+    <div class="stat"><div class="l">Moyenne générale</div><div class="v">${mean(H).toFixed(2)}</div></div>
+    <div class="stat"><div class="l">🏆 Meilleure série</div><div class="v">${best.avg} <span class="hint">${fdate(best.date)}</span></div></div>
+    <div class="stat"><div class="l">Tendance (5 dern.)</div><div class="v ${tr == null ? '' : tr >= 0 ? 'good' : 'bad'}">${tr == null ? '—' : (tr >= 0 ? '▲ +' : '▼ ') + tr.toFixed(2)}</div></div>
+    <div class="stat" style="grid-column:span 2"><div class="l">Groupement moyen (5 dernières)</div><div class="v">${fmm(esm)}</div></div></div>`;
+  if (H.length < 2) return;
+  // courbe de progression
+  const c = $('trendChart'), x = c.getContext('2d'), W = c.width, Hh = c.height, P2 = 36, L = H.slice(-40);
+  x.clearRect(0, 0, W, Hh); x.fillStyle = '#21262d'; x.fillRect(0, 0, W, Hh);
+  const lo = Math.max(0, Math.floor(Math.min(...L.map(h => h.avg)) - 0.5)), hi = 10;
+  const X = i => P2 + i * (W - 2 * P2) / Math.max(1, L.length - 1), Y = v => Hh - P2 - (v - lo) / (hi - lo) * (Hh - 2 * P2);
+  x.font = '20px -apple-system,system-ui,sans-serif'; x.fillStyle = '#8b949e'; x.strokeStyle = '#30363d'; x.lineWidth = 1;
+  for (let v = Math.ceil(lo); v <= hi; v++) { x.beginPath(); x.moveTo(P2, Y(v)); x.lineTo(W - 10, Y(v)); x.stroke(); x.fillText(String(v), 6, Y(v) + 7); }
+  x.strokeStyle = '#58a6ff'; x.lineWidth = 3; x.beginPath(); L.forEach((h, i) => i ? x.lineTo(X(i), Y(h.avg)) : x.moveTo(X(i), Y(h.avg))); x.stroke();
+  x.fillStyle = '#58a6ff'; L.forEach((h, i) => { x.beginPath(); x.arc(X(i), Y(h.avg), 5, 0, 7); x.fill(); });
+  if (L.length >= 5) { // moyenne glissante
+    x.strokeStyle = '#3fb950'; x.lineWidth = 3; x.setLineDash([10, 8]); x.beginPath();
+    L.forEach((h, i) => { if (i < 4) return; const m = mean(L.slice(i - 4, i + 1)); i === 4 ? x.moveTo(X(i), Y(m)) : x.lineTo(X(i), Y(m)); }); x.stroke(); x.setLineDash([]);
+  }
+  x.fillStyle = '#8b949e'; x.fillText('Moyenne par série' + (L.length >= 5 ? '  ·  tendance sur 5 (vert)' : ''), P2, 24);
+  // carte de chaleur de tous les impacts
+  const imps = H.flatMap(h => h.impacts || []);
+  plotTarget($('heatPlot').getContext('2d'), 640, [{ imps, col: '#3fb950', r: 9, alpha: 0.45, mpi: true }], disc, H[H.length - 1].distance);
+}
+
+// ============ CARTE DE RÉSULTAT À PARTAGER ============
+async function shareResult() {
+  const rec = S.review ? S.review.rec : curRec();
+  if (!rec || !rec.impacts) { toast('Analysez une série d\'abord', 'warn'); return; }
+  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0d1117'); g.addColorStop(1, '#1b2433'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const font = (w, sz) => `${w} ${sz}px -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif`;
+  [[36, '#ece6d6'], [21, '#151515'], [6, '#58a6ff']].forEach(([r, col]) => { x.beginPath(); x.arc(96, 88, r, 0, 7); x.fillStyle = col; x.fill(); }); // logo
+  x.fillStyle = '#e6edf3'; x.font = font(800, 54); x.fillText('Mouche', 150, 108);
+  x.fillStyle = '#8b949e'; x.font = font(500, 30); x.textAlign = 'right';
+  x.fillText(`${fdate(rec.date)} · ${(document.querySelector(`#discipline option[value="${rec.discipline}"]`) || {}).text || ''} · ${rec.distance} m`, W - 60, 100); x.textAlign = 'left';
+  const pc = document.createElement('canvas'); pc.width = pc.height = 760;
+  plotTarget(pc.getContext('2d'), 760, [{ imps: rec.impacts, col: '#3fb950', r: 15, mpi: true }], rec.discipline, rec.distance);
+  x.save(); x.beginPath(); x.roundRect ? x.roundRect(160, 160, 760, 760, 36) : x.rect(160, 160, 760, 760); x.clip(); x.drawImage(pc, 160, 160); x.restore();
+  x.fillStyle = '#58a6ff'; x.font = font(800, 150); x.textAlign = 'center'; x.fillText(String(rec.total), W / 2, 1100);
+  x.fillStyle = '#8b949e'; x.font = font(600, 34); x.fillText(`points sur ${rec.n * 10} · moyenne ${rec.avg}${rec.shooter ? ' · ' + rec.shooter : ''}`, W / 2, 1155);
+  const cells = [['Groupement', fmm(rec.es_mm)], ['Rayon moyen', fmm(rec.mr_mm)], ['Point moyen', fmm(hyp(rec.dx_mm || 0, rec.dy_mm || 0))]];
+  cells.forEach(([l, v], i) => { const cx = 200 + i * 340; x.fillStyle = '#e6edf3'; x.font = font(700, 40); x.fillText(v, cx, 1245); x.fillStyle = '#8b949e'; x.font = font(500, 26); x.fillText(l, cx, 1285); });
+  x.textAlign = 'left';
+  try { c.toBlob(b => { c.width = c.height = 0; if (b) shareBlob(b, `mouche-${dkey(rec.date)}.png`); }, 'image/png'); }
+  catch (e) { toast('Image impossible à créer : ' + e.message, 'err'); }
+}
+
+// ============ CONTRÔLE QUALITÉ DE LA PHOTO ============
+function photoQuality(src) {
+  const sc = Math.min(1, 500 / Math.max(src.width, src.height)), w = Math.round(src.width * sc), h = Math.round(src.height * sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(src, 0, 0, w, h); const g = grayOf(x.getImageData(0, 0, w, h).data, w * h); c.width = c.height = 0;
+  let s1 = 0, s2 = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) for (let i = y * w + 1; i < y * w + w - 1; i++) { const l = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w]; s1 += l; s2 += l * l; n++; }
+  return { sharp: s2 / n - (s1 / n) ** 2 };
+}
+function qualityWarnings(q0) {
+  const m = [];
+  if (q0 && q0.sharp < 25) m.push('la photo semble floue (tenez le téléphone stable, faites la mise au point sur la cible)');
+  if (hasCal()) { const R = (P().q + 9) * S.cal.w; if (R < 0.22 * Math.min(S.src.width, S.src.height)) m.push('la cible est petite dans la photo : rapprochez-vous pour détecter les petits trous'); }
+  if (m.length) toast('📸 ' + m.join(' · '), 'warn', 6000);
+}
+
+// ============ INSTALLATION, TUTORIEL, À PROPOS ============
+const isStandalone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let installEvt = null;
+function setupInstall() {
+  let later = false; try { later = localStorage.getItem('mouche_install_later') === '1'; } catch (e) {}
+  if (isStandalone() || later) return;
+  if (isIOS()) { $('installTxt').innerHTML = 'Pour garder vos séries dans le temps et utiliser Mouche hors ligne : touchez <b>Partager ⬆️</b> puis <b>« Sur l\'écran d\'accueil »</b>.'; $('installCard').hidden = false; }
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('installTxt').textContent = 'Installez Mouche comme une application : accès direct, hors ligne, données conservées.'; $('btnInstall').hidden = false; $('installCard').hidden = false; });
+}
+const SLIDES = [
+  ['🎯', 'Bienvenue sur Mouche', ['Analysez vos cibles de tir en une photo : score, groupement, conseils.', 'Suivez votre progression séance après séance.', 'Gratuit, sans compte : tout reste sur votre téléphone.']],
+  ['📸', 'Une bonne photo', ['Téléphone bien <b>en face</b> de la cible, cible <b>entière</b> dans l\'image.', 'Lumière homogène, sans reflet ni ombre forte.', 'Pas de zoom numérique : rapprochez-vous.']],
+  ['🎯', 'Calibrage automatique', ['Mouche trouve le centre et mesure les anneaux sur la photo.', 'Vérifiez avec la loupe ; si besoin, « ◯ 3 points sur le bord ».', '🔦 éclaircit le noir pour voir les trous.']],
+  ['🤖', 'Impacts et progression', ['Détection automatique ; les zones orange sont à confirmer.', 'Validez la série, puis photographiez la même cible pour la suivante.', 'Calendrier, comparaison, tableau de bord et carte à partager.']]
+];
+let slideI = 0;
+function showSlide() {
+  const [ic, t, li] = SLIDES[slideI];
+  $('introSlide').innerHTML = `<div class="big">${ic}</div><h2>${t}</h2><ul>${li.map(l => `<li>${l}</li>`).join('')}</ul>`;
+  $('introDots').innerHTML = SLIDES.map((_, i) => `<i class="${i === slideI ? 'on' : ''}"></i>`).join('');
+  $('introNext').textContent = slideI === SLIDES.length - 1 ? 'Commencer' : 'Suivant';
+}
+function openIntro() { slideI = 0; showSlide(); $('aboutModal').hidden = true; $('introModal').hidden = false; }
+function closeIntro() { $('introModal').hidden = true; try { localStorage.setItem('mouche_intro', '1'); } catch (e) {} }
+
 // ============ ÉTAT DE L'INTERFACE ============
 function setMode(m, msg) {
   S.mode = m; S.aim = null;
@@ -1901,7 +2065,8 @@ function updateButtons() {
   $('sDark').classList.toggle('on', S.darkBoost); $('btnDark').classList.toggle('lit', S.darkBoost); dis('sDark', !has); dis('btnDark', !has);
   dis('btnCompare', S.history.filter(h => h.impacts).length + (n ? 1 : 0) < 2);
   $('btnAmb').hidden = !S.amb.length; $('btnAmb').textContent = `⚠️ Vérifier ${S.amb.length} zone(s) douteuse(s)`;
-  dis('btnValidate', !n || !cal || S.review); dis('btnReport', !n); dis('btnPng', !has); dis('btnClearHist', !S.history.length);
+  dis('btnValidate', !n || !cal || S.review);
+  dis('btnShare', !(S.review || (n && cal))); dis('btnReport', !n); dis('btnPng', !has); dis('btnClearHist', !S.history.length);
   if (S.review) ['btnRefine', 'btn3pts', 'btnAuto', 'btnCenter', 'btnRing', 'btnWarp', 'btnUnwarp', 'btnResetCal', 'nu', 'nd', 'nl', 'nr', 'rp', 'rm', 'btnDetect', 'btnManual', 'btnDelete', 'btnClear', 'btnNewTarget'].forEach(id => dis(id, true));
   const st = { photo: has, cible: cal, impacts: n > 0, res: S.history.length > 0 };
   document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('done', !!st[b.dataset.step]));
@@ -2053,6 +2218,14 @@ const rscale = f => { snapshot('ring'); S.cal.w *= f; if (S.cal.rb) S.cal.rb *= 
 on('rp', () => rscale(1.004)); on('rm', () => rscale(1 / 1.004));
 
 on('btnDetect', runDetect);
+on('btnShare', shareResult);
+on('btnAbout', () => { $('aboutModal').hidden = false; });
+on('aboutClose', () => { $('aboutModal').hidden = true; });
+on('btnIntro', openIntro);
+on('introSkip', closeIntro);
+on('introNext', () => { if (slideI < SLIDES.length - 1) { slideI++; showSlide(); } else closeIntro(); });
+on('btnInstall', async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; $('installCard').hidden = true; });
+on('btnInstallLater', () => { $('installCard').hidden = true; try { localStorage.setItem('mouche_install_later', '1'); } catch (e) {} });
 on('btn3pts', () => setMode(S.mode === 'circle' ? 'idle' : 'circle', `◯ Touchez le bord de l'anneau ${P().edge} en 3 endroits ou plus (loupe active)`));
 on('btnRefine', () => {
   if (!hasCal()) return;
@@ -2117,8 +2290,8 @@ async function shareBlob(blob, name) {
 }
 on('btnReport', () => {
   const st = computeStats(); if (!st) return;
-  const txt = `RAPPORT D'ANALYSE DE TIR
-==========================
+  const txt = `MOUCHE — RAPPORT DE TIR
+=======================
 Tireur : ${$('shooter').value || profName()}
 Discipline : ${$('discipline').selectedOptions[0].text} · ${dist()} m
 Date : ${new Date().toLocaleString('fr-FR')}
@@ -2200,6 +2373,9 @@ loadProfiles();
 loadSaved();
 refresh(); renderProfiles();
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+setupInstall();
+try { if (!localStorage.getItem('mouche_intro')) openIntro(); } catch (e) {}
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 banner('Chargez une photo de cible pour commencer', '');
 window.__tir = { S, V, P, U, PROF, undo, redo, review, endReview, openCompare, switchProfile, toggleDark, IDB, detectRaw, detect, autoTarget, findTarget, computeStats, setImage, validateSeries, applyAmb, finalize, loadFile, scoreAt };
 </script>
