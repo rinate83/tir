@@ -213,6 +213,23 @@ table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:var(--mu
   .tabbar{left:50%;transform:translateX(-50%);bottom:14px;width:520px;border-radius:22px;border:1px solid var(--line2);height:var(--tab);padding:0;box-shadow:var(--sh)}
 }
 @media print{.topbar,.tabbar,.stage-wrap,.ctl,#toasts,.session-bar{display:none!important}.view{display:flex!important}.card,.stat{background:#fff;color:#000;border-color:#ccc}}
+.lprog{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.lprog .lp-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}.lprog .lp-top span{font-weight:800;font-size:20px;color:var(--acv)}
+.lprog small{display:block;color:var(--mu);font-size:12.5px;margin-top:8px}
+.pbar{display:block;height:6px;border-radius:6px;background:var(--s2);overflow:hidden;flex:1}.pbar.big{height:10px}
+.pbar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--acv,#4f8cff),color-mix(in srgb,var(--acv,#4f8cff) 60%,#fff));transition:width .4s}
+.lc .lc-t{flex:1;min-width:0}.lc-p{display:flex;align-items:center;gap:8px;margin-top:9px}.lc-p em{font-style:normal;font-size:11.5px;color:var(--mu);white-space:nowrap}
+.lc.done{border-color:color-mix(in srgb,#34d399 45%,var(--line))}.lc.done .lc-p em{color:#34d399;font-weight:700}.lc.done .pbar i{background:#34d399}
+.lp-in{display:flex;align-items:center;gap:10px;margin:4px 0 12px}.lp-in em{font-style:normal;font-weight:700;color:#fbbf24;font-size:13px}.lp-in .pbar i{background:#fbbf24}
+.learn-body .ex-h{margin:20px 0 10px;font-size:16px}
+.ex-list{display:grid;gap:8px}.ex{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:13px;background:var(--s2);border:1px solid var(--line);cursor:pointer}
+.ex input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:#34d399}.ex b{display:block;font-size:14.5px}.ex small{display:block;color:var(--mu);font-size:13px;margin-top:3px;line-height:1.45}
+.ex em{display:inline-block;font-style:normal;font-size:11.5px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,.12);padding:2px 8px;border-radius:20px;margin-top:6px}
+.ex.ok{border-color:rgba(52,211,153,.45)}.ex.ok b{color:#34d399}
+.ex-rel{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 12px;margin-bottom:8px;border-radius:13px;background:var(--s2);border:1px solid var(--line);color:var(--tx)}
+.ex-rel svg{width:20px;height:20px;color:#fbbf24;flex:none}.ex-rel b{display:block;font-size:14px}.ex-rel small{color:var(--mu);font-size:12px}
+#learnRead{margin-top:18px;width:100%}.ex-count{margin:18px 0 10px;color:var(--mu)}.ex-count b{font-size:22px;color:#fbbf24}
+.learn-body .row2{display:grid;grid-template-columns:1fr auto;gap:8px}
 </style>
 </head>
 <body data-step="photo" data-view="analyse">
@@ -441,6 +458,7 @@ table.cmp td:first-child,table.cmp th:first-child{text-align:left;color:var(--mu
   <!-- ===================== APPRENDRE ===================== -->
   <section class="view" data-view="apprendre">
     <h1 class="vt">Apprendre</h1>
+    <div class="lprog" id="learnProg"></div>
     <div class="seg" id="learnSeg"><button data-l="cours" class="on">Cours</button><button data-l="drills">Exercices</button></div>
     <div class="chips" id="learnFilter"></div>
     <div class="grid-cards" id="learnList"></div>
@@ -1924,20 +1942,20 @@ function diag(st) {
 function save() {
   try {
     localStorage.setItem(dataKey(), JSON.stringify({
-      history: S.history, target: S.target, learn: S.learn || {}, arms: S.arms || [],
+      history: S.history, target: S.target, learn: S.learn || {}, prog: S.prog || { c: {}, d: {} }, arms: S.arms || [],
       params: Object.fromEntries(['discipline', 'distance', 'distanceCustom', 'model', 'ringMm', 'calMm', 'ringSelect', 'shooter', 'expected', 'sensitivity', 'shotMode', 'seriesTime', 'armSel'].map(k => [k, $(k).value]).concat([['leftHanded', $('leftHanded').checked], ['lineRule', $('lineRule').checked]]))
     }));
   } catch (e) { console.warn('stockage indisponible', e); }
 }
 function loadSaved() {
   try {
-    S.history = []; S.target = { id: uid(), series: [] }; S.learn = {}; S.arms = []; renderArmSel();
+    S.history = []; S.target = { id: uid(), series: [] }; S.learn = {}; S.prog = { c: {}, d: {} }; S.arms = []; renderArmSel();
     const raw = localStorage.getItem(dataKey());
     if (raw) {
       const d = JSON.parse(raw);
       S.history = Array.isArray(d.history) ? d.history : [];
       S.target = d.target && Array.isArray(d.target.series) ? d.target : { series: [] };
-      S.learn = d.learn || {};
+      S.learn = d.learn || {}; S.prog = d.prog && d.prog.c ? d.prog : { c: {}, d: {} };
       S.arms = Array.isArray(d.arms) ? d.arms : []; renderArmSel();
       const p = d.params || {};
       Object.entries(p).forEach(([k, v]) => { const e = $(k); if (!e) return; if (e.type === 'checkbox') e.checked = !!v; else if (v != null && v !== '') e.value = v; });
@@ -2691,21 +2709,122 @@ const DRILLS = [
   { id: 'resp', ic: 'wind', t: 'Cycles de respiration', s: 'Trouver sa pause respiratoire', lvl: 'Débutant', dur: '5 min', tags: ['tous'], q: 'breathing technique shooting', b: `<p>Arme vide : inspirez en levant l'arme au-dessus de la cible, expirez à moitié en descendant dans la zone de visée, puis faites une pause naturelle de quelques secondes. Si la visée n'est pas acquise, reposez et recommencez. Répétez 10 cycles en notant combien de temps votre visée reste stable.</p>` },
   { id: 'arc5', ic: 'bow', t: 'Tir à 5 m sur paille vierge', s: 'L’ancrage et le lâcher, sans viser', lvl: 'Tous niveaux', dur: '3 × 6 flèches', tags: ['arc'], q: 'blank bale archery drill', b: `<p>À 5 m d'une butte sans blason, tirez les yeux ouverts puis fermés en vous concentrant sur une seule sensation : ancrage identique, puis lâcher relâché, puis suivi. Sans cible, l'attention va entièrement sur la technique.</p>` }
 ];
+
+// ---- exercices pratiques de chaque cours (d = déroulé, n = dose) + exercices liés ----
+const EXO = {
+  secu: { rel: ['sec'], ex: [
+    { t: 'Contrôle « arme vide » à voix haute', d: 'Avant chaque séance à sec : chargeur retiré, culasse ouverte, regard puis doigt dans la chambre. Annoncez chaque étape à voix haute, deux fois.', n: 'À chaque séance' },
+    { t: 'Doigt le long de la carcasse', d: 'Prenez l’arme vide, mettez en joue et reposez 20 fois : le doigt ne touche la détente qu’une fois les organes alignés sur la cible, et en sort avant de baisser l’arme.', n: '20 répétitions' },
+    { t: 'Ordres du stand', d: 'Faites-vous annoncer « Cessez le feu » au hasard pendant un tir à sec : doigt sorti, arme ouverte et posée, canon vers les cibles, en moins de 3 secondes.', n: '5 fois' } ] },
+  oeil: { rel: ['mur'], ex: [
+    { t: 'Test de l’œil directeur', d: 'Faites le test du triangle trois jours de suite, à des distances différentes : le résultat doit être le même.', n: '3 jours' },
+    { t: 'Bascule de netteté', d: 'Arme vide en visée sur un mur : mettez le guidon net 5 s, puis la cible nette 2 s, puis revenez au guidon. Apprenez à sentir la mise au point et à la garder sur le guidon.', n: '10 cycles' },
+    { t: 'Deux yeux ouverts', d: 'Placez un cache translucide (ou un ruban adhésif mat sur les lunettes) devant l’œil non directeur et faites une séance complète sans fermer un œil.', n: '1 séance' } ] },
+  pos1: { rel: ['tenue', 'mur'], ex: [
+    { t: 'Recherche du point naturel', d: 'En position, visez, fermez les yeux 5 s en vous relâchant puis rouvrez : si l’arme a dérivé, déplacez le pied arrière (pas le bras) et recommencez jusqu’à revenir au centre.', n: '5 essais par séance' },
+    { t: 'Marquer ses pieds', d: 'Une fois la position trouvée, tracez le contour de vos chaussures (craie ou ruban). Reprenez la position les yeux fermés et comparez.', n: '10 mises en place' },
+    { t: 'Tenue chronométrée', d: 'Bras tendu, arme vide, tenez la visée stable 10 s puis reposez 20 s. Augmentez jusqu’à 20 s de tenue.', n: '5 × 10 s, puis 20 s' } ] },
+  pos2: { rel: ['bill', 'dot'], ex: [
+    { t: 'Prise de position face cible', d: 'Arme vide, partez mains au niveau de la poitrine, poussez en extension et vérifiez que les organes arrivent alignés sans correction.', n: '20 extensions lentes' },
+    { t: 'Isocèle contre Weaver', d: 'Tirez 2 séries de 5 dans chaque position et comparez groupement et remontée du canon : gardez celle qui ramène le plus vite sur la cible.', n: '4 × 5 coups' },
+    { t: 'Contrôle du recul', d: 'Tirez des doublés lents (1 s entre les coups) en regardant le guidon monter puis revenir au même endroit.', n: '5 doublés' } ] },
+  prise: { rel: ['piece', 'balle'], ex: [
+    { t: 'Prise répétable', d: 'Saisissez l’arme 10 fois depuis la table sans regarder : la fourche du pouce doit arriver tout en haut de la poignée et le guidon centré dans le cran à chaque fois.', n: '10 saisies' },
+    { t: 'Pression constante', d: 'Serrez à fond, puis relâchez jusqu’à environ 70 % : c’est la bonne pression pour la plupart des tireurs. Tenez-la 30 s sans qu’elle change en appuyant sur la détente.', n: '5 fois' },
+    { t: 'Doigt indépendant', d: 'Main à plat sur la table, bougez seulement l’index d’avant en arrière. Les autres doigts ne doivent pas bouger.', n: '3 × 20 mouvements' } ] },
+  visee: { rel: ['piece', 'mur'], ex: [
+    { t: 'Alignement seul', d: 'Visez un mur blanc et regardez uniquement l’alignement guidon/cran : même lumière de chaque côté, haut du guidon à ras du cran.', n: '10 × 10 s' },
+    { t: 'Aire de visée', d: 'En visée sur la cible, acceptez le petit mouvement naturel et ne cherchez pas à lâcher « au passage » : comptez combien de temps la zone reste stable.', n: '10 visées' },
+    { t: 'Dioptre et anneau', d: 'Carabine : vérifiez que le visuel est centré dans l’anneau du guidon avec la même bande claire tout autour ; essayez deux tailles d’anneau et gardez celle qui donne la bande la plus fine que vous voyez bien.', n: '1 séance' } ] },
+  lacher: { rel: ['piece', 'balle', 'sec'], ex: [
+    { t: 'Départ en appui progressif', d: 'Arme vide : rattrapez la course morte, puis augmentez la pression lentement et régulièrement jusqu’au départ, sans savoir exactement quand il viendra.', n: '20 départs' },
+    { t: 'Départ les yeux fermés', d: 'Fermez les yeux après avoir visé et concentrez-vous seulement sur la sensation de l’index jusqu’au départ.', n: '10 départs' },
+    { t: 'Garder le doigt en arrière', d: 'Après le départ, gardez la détente en arrière une seconde, puis relâchez juste jusqu’au réarmement (le clic). Vérifiez que le guidon n’a pas bougé.', n: '15 départs' } ] },
+  resp: { rel: ['resp'], ex: [
+    { t: 'Respiration abdominale', d: 'Allongé, une main sur le ventre : inspirez 4 s par le ventre, expirez 6 s. Retrouvez ensuite la même respiration debout.', n: '5 min par jour' },
+    { t: 'Pause respiratoire', d: 'En position : 2 à 3 grandes respirations, puis expirez à moitié et bloquez sans forcer. Lâchez dans les 6 à 8 s, sinon reposez et respirez.', n: '10 cycles' },
+    { t: 'Récupération entre coups', d: 'Entre deux coups au stand, comptez 3 respirations calmes avant de remettre en joue, même si le coup précédent vous a déplu.', n: '1 série complète' } ] },
+  coord: { rel: ['annonce', 'tenue'], ex: [
+    { t: 'Garder la visée après le départ', d: 'Après chaque coup, gardez la visée et la détente en arrière en comptant « un, deux », puis annoncez où était le guidon au départ.', n: '1 série complète' },
+    { t: 'Départ pendant la tenue', d: 'Arme vide : mettez en joue, stabilisez, et lâchez dans la fenêtre de 4 à 8 s. Si la fenêtre est dépassée, reposez sans tirer.', n: '15 essais' },
+    { t: 'Comparer annonce et cible', d: 'Notez votre annonce coup par coup puis comparez avec la photo analysée : visez plus de 70 % d’annonces justes à un anneau près.', n: '10 coups' } ] },
+  mental: { rel: ['annonce', 'blanc'], ex: [
+    { t: 'Écrire sa routine', d: 'Écrivez votre routine coup par coup (respiration, mise en joue, visée, départ, tenue) en 5 étapes, et récitez-la avant chaque coup pendant une séance.', n: '1 séance' },
+    { t: 'Un coup à la fois', d: 'Ne regardez pas la cible pendant une série de 10 : jugez seulement si la routine a été respectée. Notez-vous sur 10 avant de voir le score.', n: '1 série' },
+    { t: 'Reset après un mauvais coup', d: 'Après un coup raté, reposez l’arme, faites 3 respirations et un geste de reset (taper la jambe, par exemple) avant de recommencer la routine.', n: 'À chaque séance' } ] },
+  vitesse: { rel: ['vit864', 'bill'], ex: [
+    { t: 'Rotation des épaules', d: 'Arme vide, passez d’une cible à l’autre en tournant le buste, bras bloqués, et arrêtez net sur chaque cible.', n: '10 passages' },
+    { t: 'Rythme régulier', d: 'Tirez à sec 5 départs en suivant un métronome réglé à 1 coup par seconde (60 battements par minute), puis augmentez la cadence.', n: '5 séries' },
+    { t: 'Départ du 45°', d: 'Partez bras à 45°, montez et lâchez au signal (minuteur de l’app) : le premier coup doit partir dès que la visée arrive, sans attendre.', n: '10 départs' } ] },
+  carabine: { rel: ['tenue', 'blanc'], ex: [
+    { t: 'Point naturel (couché ou debout)', d: 'Visez, fermez les yeux 5 s, rouvrez : corrigez la position du corps entier (pas les bras) jusqu’à ce que l’arme reste au centre.', n: '5 essais par séance' },
+    { t: 'Tenue debout', d: 'Carabine vide, tenez debout 15 s en visée, reposez 30 s. Notez à chaque fois la taille de votre zone de visée.', n: '8 tenues' },
+    { t: 'Bretelle et appuis', d: 'Couché : réglez la bretelle pour que l’arme repose sur l’os et non sur les muscles ; tirez 5 coups, détendez-vous totalement entre chaque.', n: '2 × 5 coups' } ] },
+  arc: { rel: ['arc5'], ex: [
+    { t: 'Ancrage au miroir', d: 'Avec un élastique d’entraînement, faites l’ancrage devant un miroir : corde au même point du menton et du nez à chaque fois.', n: '20 ancrages' },
+    { t: 'Tenue à l’ancrage', d: 'Arc à faible puissance, tenez à pleine allonge 5 s puis relâchez doucement sans tirer.', n: '3 × 10' },
+    { t: 'Volées de contrôle', d: 'À 10 m, tirez 6 volées de 3 flèches en notant seulement la qualité du lâcher, pas le score.', n: '6 volées' } ] },
+  reglage: { rel: ['blanc'], ex: [
+    { t: 'Groupement avant réglage', d: 'Tirez 5 à 10 coups appuyés et ne réglez que si le groupement est serré : on règle le centre du groupe, jamais un coup isolé.', n: '10 coups' },
+    { t: 'Correction calculée', d: 'Utilisez l’écart moyen affiché par Mouche et le nombre de clics conseillé, puis vérifiez avec 5 coups.', n: '2 × 5 coups' },
+    { t: 'Noter ses réglages', d: 'Notez les clics réglés pour chaque distance et chaque munition dans la fiche de votre arme (onglet Armes).', n: 'Après chaque réglage' } ] },
+  lecture: { rel: ['annonce'], ex: [
+    { t: 'Lire 3 séries passées', d: 'Ouvrez trois séries dans Suivi et notez la tendance (centre, écart, dispersion). Comparez avec les conseils de l’analyse.', n: '3 séries' },
+    { t: 'Trouver le coup qui sort', d: 'Sur une série, repérez les coups hors du groupe et essayez de vous rappeler ce qui s’est passé (respiration, départ, tenue).', n: 'Chaque séance' },
+    { t: 'Un seul défaut à la fois', d: 'Choisissez le défaut le plus fréquent indiqué par l’analyse et faites l’exercice conseillé pendant une semaine avant de juger.', n: '1 semaine' } ] }
+};
+const DGOAL = 10; // séances visées pour un exercice
+function prog() { S.prog = S.prog || { c: {}, d: {} }; return S.prog; }
+function coursPct(id) { const p = prog().c[id] || {}, n = (EXO[id] ? EXO[id].ex.length : 0) + 1; return ((p.lu ? 1 : 0) + (p.ex || []).filter(Boolean).length) / n; }
+function drillPct(id) { return Math.min(1, ((prog().d[id] || {}).n || 0) / DGOAL); }
+function globalPct() { const a = COURS.map(c => coursPct(c.id)).concat(DRILLS.map(d => drillPct(d.id))); return a.reduce((x, y) => x + y, 0) / a.length; }
+const pbar = (p, cls = '') => `<span class="pbar ${cls}"><i style="width:${Math.round(p * 100)}%"></i></span>`;
 let learnTab = 'cours', learnTag = 'tous';
 function renderLearn() {
   document.querySelectorAll('#learnSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === learnTab));
   const tags = [['tous', 'Tout'], ['pistolet', 'Pistolet'], ['carabine', 'Carabine'], ['arc', 'Arc']];
   $('learnFilter').innerHTML = tags.map(([k, l]) => `<button data-ltag="${k}" class="${k === learnTag ? 'on' : ''}">${l}</button>`).join('');
   const L = (learnTab === 'cours' ? COURS : DRILLS).filter(c => learnTag === 'tous' || c.tags.includes(learnTag) || c.tags.includes('tous'));
-  $('learnList').innerHTML = L.map(c => `<button class="lc" data-learn="${learnTab}:${c.id}"><span class="ico">${ICON(c.ic)}</span><span><b>${c.t}</b><small>${c.s}</small>${c.lvl ? `<span class="tags"><span>${c.lvl}</span><span>${c.dur}</span></span>` : ''}</span></button>`).join('');
+  const gp = globalPct(), nc = COURS.filter(c => coursPct(c.id) >= 1).length, nd = DRILLS.filter(d => drillPct(d.id) >= 1).length;
+  $('learnProg').innerHTML = `<div class="lp-top"><b>Ma progression</b><span>${Math.round(gp * 100)} %</span></div>${pbar(gp, 'big')}<small>${nc}/${COURS.length} cours terminés · ${nd}/${DRILLS.length} exercices maîtrisés (${DGOAL} séances)</small>`;
+  $('learnList').innerHTML = L.map(c => { const p = learnTab === 'cours' ? coursPct(c.id) : drillPct(c.id), sub = learnTab === 'cours' ? (EXO[c.id] ? EXO[c.id].ex.length + ' exercices' : '') : ((prog().d[c.id] || {}).n || 0) + '/' + DGOAL + ' séances';
+    return `<button class="lc${p >= 1 ? ' done' : ''}" data-learn="${learnTab}:${c.id}"><span class="ico">${ICON(c.ic)}</span><span class="lc-t"><b>${c.t}</b><small>${c.s}</small>${c.lvl ? `<span class="tags"><span>${c.lvl}</span><span>${c.dur}</span></span>` : ''}<span class="lc-p">${pbar(p)}<em>${p >= 1 ? '✓ Terminé' : Math.round(p * 100) + ' %'}${sub ? ' · ' + sub : ''}</em></span></span></button>`; }).join('');
 }
 function openLearn(key) {
   const [tab, id] = key.split(':'), c = (tab === 'cours' ? COURS : DRILLS).find(x => x.id === id); if (!c) return;
-  $('learnBody').innerHTML = `<div class="card-h">${ICON(c.ic)}<span class="l">${tab === 'cours' ? 'Cours' : 'Exercice'}${c.lvl ? ' · ' + c.lvl + ' · ' + c.dur : ''}</span></div><h2>${c.t}</h2><p class="hint">${c.s}</p>${c.b}`
-    + ((v => v ? `<a class="yt" href="https://www.youtube.com/watch?v=${v}" target="_blank" rel="noopener">${ICON('play')} Voir la vidéo</a>` : '')(VIDEO[(tab === 'cours' ? 'c_' : '') + c.id]))
+  const P = prog(), cp = tab === 'cours' ? (P.c[id] = P.c[id] || { lu: false, ex: [] }) : (P.d[id] = P.d[id] || { n: 0, last: '' });
+  const pct = tab === 'cours' ? coursPct(id) : drillPct(id), X = EXO[id];
+  let h = `<div class="card-h">${ICON(c.ic)}<span class="l">${tab === 'cours' ? 'Cours' : 'Exercice'}${c.lvl ? ' · ' + c.lvl + ' · ' + c.dur : ''}</span></div><h2>${c.t}</h2><p class="hint">${c.s}</p>`
+    + `<div class="lp-in">${pbar(pct)}<em>${Math.round(pct * 100)} %</em></div>${c.b}`;
+  h += (v => v ? `<a class="yt" href="https://www.youtube.com/watch?v=${v}" target="_blank" rel="noopener">${ICON('play')} Voir la vidéo</a>` : '')(VIDEO[(tab === 'cours' ? 'c_' : '') + c.id])
     + (c.q ? `<a class="yt alt" href="${YT(c.q)}" target="_blank" rel="noopener">Autres vidéos sur le sujet</a>` : '');
+  if (tab === 'cours') {
+    if (X) {
+      h += `<h3 class="ex-h">Exercices pratiques</h3><div class="ex-list">` + X.ex.map((e, i) => `<label class="ex${cp.ex[i] ? ' ok' : ''}"><input type="checkbox" data-ex="${i}" ${cp.ex[i] ? 'checked' : ''}><span><b>${e.t}</b><small>${e.d}</small><em>${e.n}</em></span></label>`).join('') + `</div>`;
+      const rel = (X.rel || []).map(r => DRILLS.find(d => d.id === r)).filter(Boolean);
+      if (rel.length) h += `<h3 class="ex-h">Pour aller plus loin</h3>` + rel.map(d => `<button class="ex-rel" data-learn="drills:${d.id}">${ICON(d.ic)}<span><b>${d.t}</b><small>${d.dur}</small></span></button>`).join('');
+    }
+    h += `<button class="btn ${cp.lu ? '' : 'pri'} wide" id="learnRead">${cp.lu ? '✓ Cours lu — annuler' : 'J’ai lu ce cours'}</button>`;
+  } else {
+    h += `<div class="ex-count"><b>${cp.n}</b> / ${DGOAL} séances${cp.last ? ` · dernière le ${new Date(cp.last).toLocaleDateString('fr-FR')}` : ''}</div>`
+      + `<div class="row2"><button class="btn pri" id="drillDone">+ Séance faite aujourd’hui</button><button class="btn" id="drillUndo" ${cp.n ? '' : 'disabled'}>−1</button></div>`;
+  }
+  $('learnBody').innerHTML = h; $('learnBody').dataset.key = key; $('learnBody').scrollTop = 0;
   $('learnModal').hidden = false;
 }
+function learnChanged(key) { save(); renderLearn(); openLearn(key); }
+$('learnBody').addEventListener('change', e => {
+  const i = e.target.dataset && e.target.dataset.ex; if (i == null) return;
+  const key = $('learnBody').dataset.key, id = key.split(':')[1];
+  prog().c[id].ex[+i] = e.target.checked; learnChanged(key);
+});
+$('learnBody').addEventListener('click', e => {
+  const key = $('learnBody').dataset.key, id = key.split(':')[1], b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'learnRead') { prog().c[id].lu = !prog().c[id].lu; learnChanged(key); }
+  else if (b.id === 'drillDone') { const d = prog().d[id]; d.n++; d.last = Date.now(); learnChanged(key); toast('Séance enregistrée ✓'); }
+  else if (b.id === 'drillUndo') { const d = prog().d[id]; d.n = Math.max(0, d.n - 1); learnChanged(key); }
+  else if (b.dataset.learn) openLearn(b.dataset.learn);
+});
 // exercices conseillés selon le diagnostic
 function drillFor(key) {
   if (/bas/.test(key)) return 'balle';
