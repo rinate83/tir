@@ -257,6 +257,7 @@ details.sub[open]{display:flex;flex-direction:column;gap:10px}
 #trendSeg{margin:8px 0;flex-wrap:wrap}
 .sub-box{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--s2);border:1px solid var(--line)}
 body:not(.free) .onlyfree,body.free .nofree{display:none!important}
+.btn.next{background:linear-gradient(135deg,#34d399,#10b981);color:#04261a}
 </style>
 </head>
 <body data-step="photo" data-view="analyse">
@@ -319,8 +320,8 @@ body:not(.free) .onlyfree,body.free .nofree{display:none!important}
             <button class="btn" id="btnGallery"><i data-ic="image"></i>Galerie</button>
             <button class="btn" id="btnSample"><i data-ic="spark"></i>Exemple</button>
           </div>
-          <button class="btn ghost dan" id="btnNewTarget"><i data-ic="refresh"></i>Nouvelle cible</button>
-          <p class="hint">Série suivante : re-photographiez la <b>même cible</b>, les impacts déjà comptés sont reconnus.</p>
+          <button class="btn" id="btnNewTarget"><i data-ic="refresh"></i>Nouvelle feuille</button>
+          <p class="hint" id="nextHint">Série suivante : re-photographiez la <b>même feuille</b>, les trous déjà comptés sont reconnus. Feuille neuve : reconnue automatiquement.</p>
         </div>
         <div class="card">
           <div class="card-h"><i data-ic="sliders"></i><h3>Séance</h3></div>
@@ -1881,6 +1882,7 @@ function detect(opt = {}) {
     return { cx: d.x, cy: d.y, r: Math.max(c.bw * sx, c.bh * sy) / 2, est, olds: ins, xs, ys, conf: d.conf };
   }
 
+  S.oldStat = { n: olds.length, seen: oUsed.size };
   snapshot();
   S.impacts = news.map(d => ({ x: d.x, y: d.y, conf: d.conf, flag: d.doubt ? 'check' : '' }));
   S.detSet = { ref: S.detRef || 1, list: news.map(d => ({ x: d.x, y: d.y, conf: d.conf })) };
@@ -1897,7 +1899,14 @@ function runDetect() {
   banner('🤖 Détection en cours…', 'act');
   setTimeout(() => {
     try {
-      detectRaw(); setMode('idle'); refresh();
+      detectRaw();
+      // feuille neuve (ou trous rebouchés) : les anciens trous ne sont presque plus visibles -> nouvelle cible
+      const os = S.oldStat, keep = S.forceSame; S.forceSame = false;
+      if (!keep && !S.review && os && os.n >= 3 && os.seen < 0.35 * os.n) {
+        const prev = S.target; S.target = { id: uid(), series: [] }; S.align = { th: 0, tx: 0, ty: 0 }; save(); detectRaw();
+        setTimeout(() => toastAction('Nouvelle feuille reconnue : série 1 d’une nouvelle cible', 'Même feuille', () => { S.target = prev; S.forceSame = true; save(); runDetect(); }, 6000), 400);
+      }
+      setMode('idle'); refresh();
       if (S.amb.length) { const nz = S.amb.length; S.ambNote = nz; applyAmb(); toastAction(`${nz} zone(s) groupée(s) répartie(s) automatiquement`, 'Vérifier', reviewAmb, 4500); }
       else { S.ambNote = 0; finalize(); }
     } catch (e) {
@@ -2128,8 +2137,8 @@ function validateSeries() {
   S.history.push(rec);
   S.impacts = []; S.amb = [];
   save(); refresh();
-  banner(`✅ Série ${S.target.series.length} enregistrée (${ptsTxt(rec)}). Tirez la suivante puis photographiez la même cible.`, 'ok');
-  toast('Série enregistrée', 'ok');
+  banner(`✅ Série ${S.target.series.length} enregistrée (${ptsTxt(rec)}). Tirez la suivante puis photographiez la même feuille.`, 'ok');
+  setTimeout(() => toastAction(`Série ${S.target.series.length} enregistrée ✓`, '📷 Série suivante', () => $('cameraInput').click(), 8000), 300);
   goStep('photo');
 }
 function renderHistory() {
@@ -3075,6 +3084,9 @@ function refresh() {
   rescore(); drawOverlay(); updateStats(); renderHistory(); updateTargetInfo(); updateButtons();
 }
 function updateButtons() {
+  { const ns = S.target.series.length, a = isArc(), cam = $('btnCamera');
+    cam.lastChild.textContent = ns ? `${a ? 'Volée' : 'Série'} ${ns + 1} : photographier la même feuille` : 'Prendre la cible en photo';
+    cam.classList.toggle('next', !!ns); $('btnNewTarget').hidden = !ns; $('nextHint').hidden = !ns; }
   const fr = isFree(); document.body.classList.toggle('free', fr);
   $('freeBox').hidden = !fr; $('persoBox').hidden = $('model').value !== 'perso'; $('freeCustom').hidden = $('freeFmt').value !== 'custom';
   $('btnCenter').textContent = fr ? '① Point visé' : '① Centre';
@@ -3208,8 +3220,9 @@ on('btnCamera', () => $('cameraInput').click());
 on('btnGallery', () => $('fileInput').click());
 ['fileInput', 'cameraInput'].forEach(id => $(id).addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); e.target.value = ''; }));
 on('btnNewTarget', () => {
-  if (S.target.series.length && !confirm('Commencer une nouvelle cible ? Les séries de la cible actuelle restent dans l\'historique.')) return;
-  snapshot(); S.target = { id: uid(), series: [] }; S.align = { th: 0, tx: 0, ty: 0 }; save(); refresh(); toast('Nouvelle cible', 'ok');
+  const prev = S.target; snapshot(); S.target = { id: uid(), series: [] }; S.align = { th: 0, tx: 0, ty: 0 }; save(); refresh();
+  if (prev.series.length) toastAction('Nouvelle feuille : photographiez-la', 'Annuler', () => { S.target = prev; save(); refresh(); });
+  $('cameraInput').click();
 });
 on('btnSample', makeSample);
 on('zIn', () => { const { w, h } = stageSize(); zoomAt(1.5, w / 2, h / 2); });
